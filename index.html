@@ -1,0 +1,147 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="theme-color" content="#0d0a13">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Business Ashram Tarot System - BATS</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icono-512.png" sizes="512x512">
+<link rel="apple-touch-icon" href="icono-512.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <button id="btn-menu" onclick="toggleMenu()" aria-label="Menú">☰</button>
+  <div style="display:flex;align-items:center;gap:8px">
+    <img id="logo-bats" src="icono-512.png" alt="BATS" style="height:32px;width:32px;border-radius:6px" onerror="this.style.display='none'">
+    <h1>BATS Tarot</h1>
+  </div>
+  <div style="width:40px"></div>
+</header>
+
+<div id="menu-overlay" onclick="toggleMenu()" role="presentation"></div>
+<nav id="menu-lateral" role="navigation" aria-label="Menú principal">
+  <h2>✦ Business Ashram Tarot System</h2>
+  <button class="menu-item" onclick="irA('inicio')">Inicio</button>
+  <button class="menu-item" onclick="irA('diaria')">Cruz Diaria</button>
+  <button class="menu-item" onclick="irA('relacion')">Tirada Relación</button>
+  <button class="menu-item" onclick="irA('bats-laboral')">BATS Laboral</button>
+  <button class="menu-item" onclick="irA('personalizada')">Tirada Personalizada</button>
+  <button class="menu-item" onclick="irA('ayuda')">Ayuda · Significados</button>
+  <button class="menu-item" onclick="irA('historial')">Historial</button>
+</nav>
+
+<section id="panel-inicio" class="panel active">
+  <h2>✦ Business Ashram Tarot System</h2>
+  <p>Tarot como herramienta de introspección, análisis y crecimiento.</p>
+  <div class="btn-group mt-16" style="flex-direction:column;align-items:stretch;max-width:400px;margin:16px auto">
+    <button class="btn btn-gold" onclick="irA('diaria')" style="text-align:left;display:flex;justify-content:space-between;align-items:center"><span>✦ Cruz Diaria</span><span style="font-size:.7rem;opacity:.7">5 cartas en cruz</span></button>
+    <button class="btn btn-outline" onclick="irA('relacion')" style="text-align:left;display:flex;justify-content:space-between;align-items:center"><span>❤ Tirada Relación</span><span style="font-size:.7rem;opacity:.7">4 cartas</span></button>
+    <button class="btn btn-outline" onclick="irA('bats-laboral')" style="text-align:left;display:flex;justify-content:space-between;align-items:center"><span>✦ BATS Laboral</span><span style="font-size:.7rem;opacity:.7">5 cartas en cruz</span></button>
+    <button class="btn btn-outline" onclick="irA('personalizada')" style="text-align:left;display:flex;justify-content:space-between;align-items:center"><span>✦ Tirada Personalizada</span><span style="font-size:.7rem;opacity:.7">elige cartas y posiciones</span></button>
+    <button class="btn btn-outline" onclick="irA('ayuda')" style="text-align:left;display:flex;justify-content:space-between;align-items:center"><span>📖 Ayuda · Significados</span><span style="font-size:.7rem;opacity:.7">busca por carta</span></button>
+    <button class="btn btn-outline" onclick="irA('historial')" style="text-align:left;display:flex;justify-content:space-between;align-items:center"><span>📋 Historial</span><span style="font-size:.7rem;opacity:.7">lecturas guardadas</span></button>
+  </div>
+</section>
+
+<section id="panel-diaria" class="panel">
+  <a class="back-link" onclick="irA('inicio')">← Inicio</a>
+  <h2>Cruz Diaria</h2>
+  <p>Cruz de 5 cartas: energía del día, qué frenar, qué impulsar, ayuda disponible y posible resultado.</p>
+  <div class="btn-group">
+    <button class="btn btn-gold" onclick="tirarDiaria()">✦ Tirar Cruz Diaria</button>
+    <button class="btn btn-outline btn-sm" onclick="tirarDiariaInv()">Con Invertidas</button>
+  </div>
+  <div id="r-diaria"></div>
+  <a class="back-link" onclick="irA('inicio')" style="display:block;text-align:center;margin-top:16px">← Inicio</a>
+</section>
+
+<section id="panel-relacion" class="panel">
+  <a class="back-link" onclick="irA('inicio')">← Inicio</a>
+  <h2>Tirada Relación</h2>
+  <p>4 cartas: energía del momento, energía de cada persona y dirección posible.</p>
+  <div class="form-group">
+    <label for="rel-p1">Persona 1</label>
+    <input type="text" id="rel-p1" value="Persona 1">
+    <label for="rel-p2">Persona 2</label>
+    <input type="text" id="rel-p2" value="Persona 2">
+  </div>
+  <div class="btn-group"><button class="btn btn-gold" onclick="tirarRelacion()">✦ Tirar</button></div>
+  <div id="r-relacion"></div>
+  <a class="back-link" onclick="irA('inicio')" style="display:block;text-align:center;margin-top:16px">← Inicio</a>
+</section>
+
+<section id="panel-bats-laboral" class="panel">
+  <a class="back-link" onclick="irA('inicio')">← Inicio</a>
+  <h2>BATS Laboral</h2>
+  <p>Cruz de 5 cartas con enfoque laboral: energía del trabajo, qué frenar, qué impulsar, ayuda y resultado.</p>
+  <div class="btn-group">
+    <button class="btn btn-gold" onclick="tirarLaboral()">✦ Tirar BATS Laboral</button>
+    <button class="btn btn-outline btn-sm" onclick="tirarLaboralInv()">Con Invertidas</button>
+  </div>
+  <div id="r-laboral"></div>
+  <a class="back-link" onclick="irA('inicio')" style="display:block;text-align:center;margin-top:16px">← Inicio</a>
+</section>
+
+<section id="panel-personalizada" class="panel">
+  <a class="back-link" onclick="irA('inicio')">← Inicio</a>
+  <h2>Tirada Personalizada</h2>
+  <p>Define tu propia tirada.</p>
+  <div class="form-group">
+    <label for="pers-cant">¿Cuántas cartas?</label>
+    <select id="pers-cant" onchange="actPos()">
+      <option value="1">1</option><option value="2">2</option><option value="3" selected>3</option>
+      <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+      <option value="7">7</option><option value="8">8</option><option value="9">9</option>
+      <option value="10">10</option>
+    </select>
+  </div>
+  <div class="form-group">
+    <label>Subconjunto</label>
+    <div class="radio-group" id="pers-subset">
+      <input type="radio" name="pers-subset" id="s-completo" value="completo" checked>
+      <label for="s-completo">78 Cartas</label>
+      <input type="radio" name="pers-subset" id="s-mayores" value="mayores">
+      <label for="s-mayores">Arcanos Mayores</label>
+      <input type="radio" name="pers-subset" id="s-menores" value="menores">
+      <label for="s-menores">Menores 2-10</label>
+      <input type="radio" name="pers-subset" id="s-corte" value="corte">
+      <label for="s-corte">Corte</label>
+    </div>
+  </div>
+  <div class="form-group" id="campos-posiciones"></div>
+  <div class="form-group">
+    <label><input type="checkbox" id="pers-inv"> Incluir invertidas</label>
+  </div>
+  <div class="btn-group"><button class="btn btn-gold" onclick="tirarPers()">✦ Tirar</button></div>
+  <div id="r-pers"></div>
+  <a class="back-link" onclick="irA('inicio')" style="display:block;text-align:center;margin-top:16px">← Inicio</a>
+</section>
+
+<section id="panel-ayuda" class="panel">
+  <a class="back-link" onclick="irA('inicio')">← Inicio</a>
+  <h2>Significados</h2>
+  <p>Busca por nombre, palabra clave o arcano.</p>
+  <input type="text" id="ayuda-q" placeholder="Ej: El Mago, Copas, cambio..." oninput="buscarAyuda()" aria-label="Buscar carta">
+  <div class="btn-group"><button class="btn btn-outline btn-sm" onclick="document.getElementById('ayuda-q').value='';buscarAyuda()">Mostrar todas</button></div>
+  <div id="r-ayuda"></div>
+  <a class="back-link" onclick="irA('inicio')" style="display:block;text-align:center;margin-top:16px">← Inicio</a>
+</section>
+
+<section id="panel-historial" class="panel">
+  <a class="back-link" onclick="irA('inicio')">← Inicio</a>
+  <h2>Historial</h2>
+  <p>Lecturas guardadas.</p>
+  <div class="btn-group"><button class="btn btn-danger btn-sm" onclick="limpiarHist()">Limpiar Historial</button></div>
+  <div id="r-historial"></div>
+  <a class="back-link" onclick="irA('inicio')" style="display:block;text-align:center;margin-top:16px">← Inicio</a>
+</section>
+
+<script src="datos_bats.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

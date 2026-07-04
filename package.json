@@ -1,0 +1,26 @@
+{
+  "name": "bats-tarot",
+  "version": "1.0.0",
+  "description": "Business Ashram Tarot System - PWA",
+  "main": "index.html",
+  "scripts": {
+    "build": "echo 'No build step needed - static PWA'",
+    "capacitor:init": "npx cap init BATS-Tarot com.bats.tarot --webDir .",
+    "capacitor:add:android": "npx cap add android",
+    "capacitor:sync": "npx cap sync",
+    "capacitor:open:android": "npx cap open android",
+    "capacitor:build:apk": "cd android && ./gradlew assembleDebug"
+  },
+  "keywords": [
+    "tarot",
+    "pwa",
+    "bats"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@capacitor/android": "^8.4.1",
+    "@capacitor/cli": "^8.4.1",
+    "@capacitor/core": "^8.4.1",
+    "localtunnel": "^2.0.2"
+  }
+}

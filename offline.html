@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Sin conexión - BATS Tarot</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0d0a13;color:#e8dcc8;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:20px;text-align:center}
+h1{color:#d4a847;font-size:1.5rem;margin-bottom:12px}
+p{color:#b8a898;margin-bottom:8px;max-width:400px}
+.icon{font-size:4rem;margin-bottom:16px;opacity:.6}
+.btn{display:inline-block;padding:10px 22px;background:#d4a847;color:#0d0a13;border:none;border-radius:8px;font-size:.92rem;font-weight:600;cursor:pointer;margin-top:16px;text-decoration:none}
+.btn:hover{background:#f0d080}
+</style>
+</head>
+<body>
+<div class="icon">📡</div>
+<h1>Sin conexión</h1>
+<p>No tienes conexión a internet. Las tiradas guardadas en tu historial aún están disponibles.</p>
+<p style="font-size:.82rem">Las imágenes de cartas nuevas podrían no cargar hasta que recuperes la conexión.</p>
+<button class="btn" onclick="window.location.reload()">Reintentar</button>
+</body>
+</html>
