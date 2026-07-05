@@ -191,10 +191,13 @@ function ponerBotones(dest,titulo){
   document.getElementById(dest).innerHTML+='<div class="btn-group mt-8">'+btnMD(titulo)+btnHTML(titulo)+btnGuardar(titulo)+'</div>';
 }
 
-function descargarMD(titulo,cartas){
+var BATS_BASE="https://sugusdeborbon-glitch.github.io/bats-tarot/";
+function descargarMD(titulo,cartas,descripcion){
+  if(descripcion===undefined){var de=document.getElementById('desc-'+window._lastPanel);descripcion=de?de.value:''}
   var f=new Date(),fs=f.toLocaleDateString("es-ES",{year:"numeric",month:"long",day:"numeric",hour:"2-digit",minute:"2-digit"});
   var fn=f.getFullYear()+"-"+z(f.getMonth()+1)+"-"+z(f.getDate())+"_"+z(f.getHours())+z(f.getMinutes());
   var md="# "+titulo+"\n\n_Fecha: "+fs+"_\n\n";
+  if(descripcion) md+="*"+descripcion+"*\n\n";
   cartas.forEach(function(it){
     var c=it.carta,inv=it.invertida,pos=it.posicion;
     md+="### "+(pos?pos+": ":"")+c.nombre+(inv?" (invertida)":"")+"\n\n";
@@ -209,9 +212,8 @@ function descargarMD(titulo,cartas){
   document.body.appendChild(a);a.click();
   document.body.removeChild(a);URL.revokeObjectURL(u);
 }
-
-function imgAbs(p){var l=window.location.href;return l.substring(0,l.lastIndexOf("/")+1)+p}
-function descargarHTML(titulo,cartas){
+function descargarHTML(titulo,cartas,descripcion){
+  if(descripcion===undefined){var de=document.getElementById('desc-'+window._lastPanel);descripcion=de?de.value:''}
   var f=new Date(),fs=f.toLocaleDateString("es-ES",{year:"numeric",month:"long",day:"numeric",hour:"2-digit",minute:"2-digit"});
   var fn=f.getFullYear()+"-"+z(f.getMonth()+1)+"-"+z(f.getDate())+"_"+z(f.getHours())+z(f.getMinutes());
   var esCruz=cartas.length===5;
@@ -222,7 +224,7 @@ function descargarHTML(titulo,cartas){
     var txts=it.texto||txt(c,inv)||"\u2014";
     if(esCruz) cardsHTML+='<div class="card '+(inv?"inv ":"")+clsCruz[i]+'">';
     else cardsHTML+='<div class="card'+(inv?" inv":"")+'">';
-    cardsHTML+='<img src="'+imgAbs(c.img)+'" alt="'+c.nombre+'">';
+    cardsHTML+='<img src="'+BATS_BASE+c.img+'" alt="'+c.nombre+'">';
     cardsHTML+='<div class="cn">'+c.nombre+(inv?' <small>(inv)</small>':'')+'</div>';
     if(pos) cardsHTML+='<div class="cp">'+pos+'</div>';
     cardsHTML+='<div class="ct">'+txts+'</div></div>';
@@ -231,7 +233,7 @@ function descargarHTML(titulo,cartas){
   var qH="";
   if(q){
     qH='<div class="q"><div class="ql">✦ QUINTAESENCIA: '+q.nombre+'</div>';
-    qH+='<img src="'+imgAbs(q.img)+'" alt="'+q.nombre+'">';
+    qH+='<img src="'+BATS_BASE+q.img+'" alt="'+q.nombre+'">';
     qH+='<div class="cn">'+q.nombre+'</div><div class="ct">'+txt(q,false)+'</div></div>';
   }
   var wrap=esCruz?"cross-container":"cards";
@@ -239,6 +241,7 @@ function descargarHTML(titulo,cartas){
   var html='<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>'+titulo+' - BATS</title>';
   html+='<style>body{font-family:sans-serif;background:#0d0a13;color:#e8dcc8;padding:20px;max-width:800px;margin:0 auto}h1{color:#d4a847}.cards{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;margin:16px 0}.card{width:160px;text-align:center;background:#1a1225;border-radius:8px;padding:8px;border:1px solid #2a1a3e}.card.inv img,.card.invertida img{transform:rotate(180deg)}.card img,.q img{width:100%;border-radius:6px}.cn{color:#d4a847;font-weight:600;margin-top:4px;font-size:.9rem}.cp{color:#f0d080;font-size:.75rem;margin-top:2px}.ct{color:#b8a898;font-size:.8rem;margin-top:4px;text-align:left}.q{margin:20px auto;padding:12px;background:#1a1225;border:1px solid #d4a847;border-radius:8px;text-align:center;max-width:320px}.ql{color:#f0d080;font-weight:600;margin-bottom:8px}.q img{width:80px}.foot{color:#666;font-size:.8rem;text-align:center;margin-top:24px}'+extraCSS+'</style></head><body>';
   html+='<h1>'+titulo+'</h1><p style="color:#b8a898"><em>'+fs+'</em></p>';
+  if(descripcion) html+='<p style="font-style:italic;color:#b8a898;margin-bottom:12px">'+descripcion+'</p>';
   html+='<div class="'+wrap+'">'+cardsHTML+'</div>'+qH;
   html+='<p class="foot">Generado por BATS Tarot</p></body></html>';
   var b=new Blob([html],{type:"text/html;charset=utf-8"});
@@ -287,14 +290,20 @@ function verHist(i){
     htm+='</div>';
   }
   htm+=qHTML(cartas);
-  htm+='<div class="btn-group mt-8"><button class="btn btn-outline btn-sm" onclick="descargarMDHist('+i+')">Descargar HTML</button><button class="btn btn-outline btn-sm" onclick="cargarHist()">← Volver</button></div></div>';
+  htm+='<div class="btn-group mt-8"><button class="btn btn-outline btn-sm" onclick="descargarHistMD('+i+')">Descargar MD</button><button class="btn btn-outline btn-sm" onclick="descargarHistHTML('+i+')">Descargar HTML</button><button class="btn btn-outline btn-sm" onclick="cargarHist()">← Volver</button></div></div>';
   document.getElementById("r-historial").innerHTML=htm;
 }
-function descargarMDHist(i){
+function descargarHistHTML(i){
   var h=JSON.parse(localStorage.getItem("bats-hist")||"[]");
   var hr=h[i];if(!hr)return;
   var cartas=hr.cartas.map(function(it){return{carta:it,invertida:it.invertida,texto:it.texto,posicion:it.posicion}});
-  descargarHTML(hr.tipo,cartas);
+  descargarHTML(hr.titulo||hr.tipo,cartas,hr.descripcion);
+}
+function descargarHistMD(i){
+  var h=JSON.parse(localStorage.getItem("bats-hist")||"[]");
+  var hr=h[i];if(!hr)return;
+  var cartas=hr.cartas.map(function(it){return{carta:it,invertida:it.invertida,texto:it.texto,posicion:it.posicion}});
+  descargarMD(hr.titulo||hr.tipo,cartas,hr.descripcion);
 }
 function limpiarHist(){
   if(!confirm("\u00bfEliminar todo el historial?")) return;
