@@ -29,7 +29,7 @@ function barajar(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()
 function crearSub(m){
   if(!m||m==="completo") return BARAJA.slice();
   if(m==="mayores") return BARAJA.filter(function(c){return c.tipo==="arcano"});
-  if(m==="menores") return BARAJA.filter(function(c){return c.tipo!=="arcano"&&c.valor>=2&&c.valor<=10});
+  if(m==="menores") return BARAJA.filter(function(c){return c.tipo!=="arcano"&&c.valor>=1&&c.valor<=10});
   if(m==="corte") return BARAJA.filter(function(c){return c.tipo!=="arcano"&&c.valor>=11&&c.valor<=14});
   return BARAJA.slice();
 }
@@ -133,9 +133,9 @@ function mostrarCruz(cartas,dest,opts){
   document.getElementById(dest).innerHTML=html;
 }
 
-function guardarHist(tipo,cartas){
+function guardarHist(tipo,cartas,descripcion,titulo){
   var h=JSON.parse(localStorage.getItem("bats-hist")||"[]");
-  h.unshift({fecha:new Date().toISOString(),tipo:tipo,cartas:cartas.map(function(it){
+  h.unshift({fecha:new Date().toISOString(),tipo:tipo,descripcion:descripcion||"",titulo:titulo||"",cartas:cartas.map(function(it){
     return {nombre:it.carta.nombre,img:it.carta.img,valor:it.carta.valor,tipo:it.carta.tipo,nucleo:it.carta.nucleo,letras:it.carta.letras,invertida:it.invertida,posicion:it.posicion,texto:it.texto||txt(it.carta,it.invertida)};
   }),resumen:cartas.map(function(it){return it.carta.nombre+(it.invertida?"(inv)":"")}).join(", ")});
   if(h.length>50) h=h.slice(0,50);
@@ -143,8 +143,42 @@ function guardarHist(tipo,cartas){
   toast("\u2713 Guardado en historial");
 }
 
+function exportarHist(){
+  var h=localStorage.getItem("bats-hist");
+  if(!h||h==="[]"){toast("No hay historial para exportar",true);return}
+  var f=new Date(),fn=f.getFullYear()+"-"+z(f.getMonth()+1)+"-"+z(f.getDate());
+  var b=new Blob([h],{type:"application/json;charset=utf-8"});
+  var u=URL.createObjectURL(b);
+  var a=document.createElement("a");a.href=u;a.download="bats-historial-"+fn+".json";
+  document.body.appendChild(a);a.click();
+  document.body.removeChild(a);URL.revokeObjectURL(u);
+  toast("Historial exportado");
+}
+function importarHist(){
+  var inp=document.createElement("input");inp.type="file";inp.accept=".json";
+  inp.onchange=function(e){
+    var file=e.target.files[0];if(!file)return;
+    var reader=new FileReader();
+    reader.onload=function(ev){
+      try{
+        var data=JSON.parse(ev.target.result);
+        if(!Array.isArray(data)){toast("Formato inv\u00e1lido",true);return}
+        if(!confirm("\u00bfImportar "+data.length+" lectura(s)? Se a\u00f1adir\u00e1n al historial actual."))return;
+        var h=JSON.parse(localStorage.getItem("bats-hist")||"[]");
+        data.forEach(function(r){h.unshift(r)});
+        if(h.length>100) h=h.slice(0,100);
+        localStorage.setItem("bats-hist",JSON.stringify(h));
+        cargarHist();
+        toast("\u2713 "+data.length+" lectura(s) importadas");
+      }catch(e){toast("Archivo inv\u00e1lido",true)}
+    };
+    reader.readAsText(file);
+  };
+  inp.click();
+}
+
 function btnGuardar(tipo,cartas){
-  return '<button class="btn btn-outline btn-sm" onclick="guardarHist(\''+tipo.replace(/'/g,"\\'")+'\',window._ult);return false">Guardar en historial</button>';
+  return '<button class="btn btn-outline btn-sm" onclick="guardarHist(\''+tipo.replace(/'/g,"\\'")+'\',window._ult,document.getElementById(\'desc-\'+window._lastPanel)&&document.getElementById(\'desc-\'+window._lastPanel).value||\'\',document.getElementById(\'titulo-\'+window._lastPanel)&&document.getElementById(\'titulo-\'+window._lastPanel).value||\'\');return false">Guardar en historial</button>';
 }
 function btnMD(titulo){
   return '<button class="btn btn-outline btn-sm" onclick="descargarMD(\''+titulo.replace(/'/g,"\\'")+'\',window._ult)">Descargar MD</button>';
@@ -152,20 +186,9 @@ function btnMD(titulo){
 function btnHTML(titulo){
   return '<button class="btn btn-outline btn-sm" onclick="descargarHTML(\''+titulo.replace(/'/g,"\\'")+'\',window._ult)">Descargar HTML</button>';
 }
-function btnShare(titulo,cartas){
-  if(!navigator.share) return '';
-  var resumen = cartas.map(function(it){return it.carta.nombre+(it.invertida?" (inv)":"")}).join(", ");
-  return '<button class="btn btn-outline btn-sm" onclick="compartir(\''+titulo.replace(/'/g,"\\'")+'\',\''+resumen.replace(/'/g,"\\'")+'\')">Compartir</button>';
-}
 function ponerBotones(dest,titulo){
   var cartas = window._ult;
-  document.getElementById(dest).innerHTML+='<div class="btn-group mt-8">'+btnMD(titulo)+btnHTML(titulo)+btnGuardar(titulo)+btnShare(titulo,cartas)+'</div>';
-}
-
-function compartir(titulo,resumen){
-  if(!navigator.share) return;
-  var texto = titulo + "\n\n" + resumen + "\n\nGenerado por BATS Tarot";
-  navigator.share({title:titulo,text:texto,url:window.location.href}).catch(function(){});
+  document.getElementById(dest).innerHTML+='<div class="btn-group mt-8">'+btnMD(titulo)+btnHTML(titulo)+btnGuardar(titulo)+'</div>';
 }
 
 function descargarMD(titulo,cartas){
@@ -235,7 +258,7 @@ function cargarHist(){
     var previewImgs = hr.cartas.slice(0,4).map(function(ca){return '<img src="'+ca.img+'" alt="" loading="lazy">'}).join("");
     htm+='<div class="historial-card" onclick="verHist('+i+')">';
     if(previewImgs) htm+='<div class="hc-preview">'+previewImgs+'</div>';
-    htm+='<div class="h-fecha">'+fs+'</div><div class="h-tipo">'+hr.tipo+'</div><div class="h-cartas">'+hr.resumen+'</div></div>';
+    htm+='<div class="h-fecha">'+fs+'</div><div class="h-tipo">'+(hr.titulo||hr.tipo)+(hr.descripcion?' <span style="font-weight:normal;font-size:.75rem;opacity:.7"> · '+hr.descripcion+'</span>':'')+'</div><div class="h-cartas">'+hr.resumen+'</div></div>';
   });
   htm+='</div>';
   c.innerHTML=htm;
@@ -244,7 +267,8 @@ function verHist(i){
   var h=JSON.parse(localStorage.getItem("bats-hist")||"[]");
   var hr=h[i];if(!hr)return;
   var cartas=hr.cartas.map(function(it){return{carta:it,invertida:it.invertida,texto:it.texto,posicion:it.posicion}});
-  var htm='<div class="result-box"><h3 style="color:var(--gold);margin-bottom:6px">'+hr.tipo+'</h3>';
+  var htm='<div class="result-box"><h3 style="color:var(--gold);margin-bottom:6px">'+(hr.titulo||hr.tipo)+'</h3>';
+  if(hr.descripcion) htm+='<p style="font-style:italic;color:var(--text-muted);margin-bottom:8px;font-size:.9rem">'+(hr.titulo?hr.tipo+": ":"")+hr.descripcion+'</p>';
   if(hr.cartas[0]&&hr.cartas[0].posicion){
     cartas.forEach(function(it){
       var c=it.carta;
@@ -290,20 +314,25 @@ function hacerDiaria(inv){
   c.forEach(function(it){it.texto=txt(it.carta,it.invertida)});
   mostrarCruz(c,"r-diaria",{posiciones:pos});
   window._ult=c;
+  window._lastPanel="diaria";
   ponerBotones("r-diaria","Cruz Diaria");
 }
 
 function tirarRelacion(){
   var p1=document.getElementById("rel-p1").value||"Persona 1",p2=document.getElementById("rel-p2").value||"Persona 2";
+  localStorage.setItem("bats-rel-p1",p1);
+  localStorage.setItem("bats-rel-p2",p2);
+  var inv=document.getElementById("rel-inv").checked;
   var m=barajar(BARAJA.slice());
   if(m.length<4) return;
   var pos=["Energ\u00eda del momento de la relaci\u00f3n","Energ\u00eda de "+p1,"Energ\u00eda de "+p2,"Posible salida o direcci\u00f3n"];
   var c=[];
-  for(var i=0;i<4;i++) c.push({carta:m[i],invertida:Math.random()<.3,posicion:pos[i]});
+  for(var i=0;i<4;i++) c.push({carta:m[i],invertida:inv?Math.random()<.5:false,posicion:pos[i]});
   c.forEach(function(it){it.texto=txt(it.carta,it.invertida)});
   mostrarCompleto(c,"r-relacion",{posiciones:pos});
   window._ult=c;
-  ponerBotones("r-relacion","Tirada Relaci\u00f3n");
+  window._lastPanel="rel";
+  ponerBotones("r-relacion","Tirada de la relaci\u00f3n");
 }
 function tirarLaboral(){hacerLaboral(false)}
 function tirarLaboralInv(){hacerLaboral(true)}
@@ -316,6 +345,7 @@ function hacerLaboral(inv){
   c.forEach(function(it){it.texto=txt(it.carta,it.invertida)});
   mostrarCruz(c,"r-laboral",{posiciones:pos});
   window._ult=c;
+  window._lastPanel="laboral";
   ponerBotones("r-laboral","BATS Laboral");
 }
 
@@ -331,6 +361,7 @@ function tirarPers(){
   var sub=document.querySelector('input[name="pers-subset"]:checked');
   var modo=sub?sub.value:"completo";
   var inv=document.getElementById("pers-inv").checked;
+  var titulo=document.getElementById("pers-titulo").value.trim()||"Tirada Personalizada";
   var mazo=crearSub(modo);
   var c=repartir(n,inv,mazo);
   for(var i=1;i<=n;i++){
@@ -340,7 +371,8 @@ function tirarPers(){
   }
   mostrarCompleto(c,"r-pers");
   window._ult=c;
-  ponerBotones("r-pers","Tirada Personalizada");
+  window._lastPanel="pers";
+  ponerBotones("r-pers",titulo);
 }
 
 function buscarAyuda(){
@@ -407,6 +439,9 @@ function initSW(){
 }
 
 setTimeout(function(){
+  var rp1=document.getElementById("rel-p1"),rp2=document.getElementById("rel-p2");
+  if(rp1){rp1.value=localStorage.getItem("bats-rel-p1")||"Persona 1"}
+  if(rp2){rp2.value=localStorage.getItem("bats-rel-p2")||"Persona 2"}
   if(document.getElementById("r-ayuda")) mostrarTodas();
   if(document.getElementById("r-historial")) cargarHist();
   initSW();

@@ -28,7 +28,7 @@
   <h2>✦ Business Ashram Tarot System</h2>
   <button class="menu-item" onclick="irA('inicio')">Inicio</button>
   <button class="menu-item" onclick="irA('diaria')">Cruz Diaria</button>
-  <button class="menu-item" onclick="irA('relacion')">Tirada Relación</button>
+  <button class="menu-item" onclick="irA('relacion')">Tirada de la relación</button>
   <button class="menu-item" onclick="irA('bats-laboral')">BATS Laboral</button>
   <button class="menu-item" onclick="irA('personalizada')">Tirada Personalizada</button>
   <button class="menu-item" onclick="irA('ayuda')">Ayuda · Significados</button>
@@ -40,7 +40,7 @@
   <p>Tarot como herramienta de introspección, análisis y crecimiento.</p>
   <div class="btn-group mt-16" style="flex-direction:column;align-items:stretch;max-width:400px;margin:16px auto">
     <button class="btn btn-gold" onclick="irA('diaria')" style="text-align:left;display:flex;justify-content:space-between;align-items:center"><span>✦ Cruz Diaria</span><span style="font-size:.7rem;opacity:.7">5 cartas en cruz</span></button>
-    <button class="btn btn-outline" onclick="irA('relacion')" style="text-align:left;display:flex;justify-content:space-between;align-items:center"><span>❤ Tirada Relación</span><span style="font-size:.7rem;opacity:.7">4 cartas</span></button>
+    <button class="btn btn-outline" onclick="irA('relacion')" style="text-align:left;display:flex;justify-content:space-between;align-items:center"><span>❤ Tirada de la relación</span><span style="font-size:.7rem;opacity:.7">4 cartas</span></button>
     <button class="btn btn-outline" onclick="irA('bats-laboral')" style="text-align:left;display:flex;justify-content:space-between;align-items:center"><span>✦ BATS Laboral</span><span style="font-size:.7rem;opacity:.7">5 cartas en cruz</span></button>
     <button class="btn btn-outline" onclick="irA('personalizada')" style="text-align:left;display:flex;justify-content:space-between;align-items:center"><span>✦ Tirada Personalizada</span><span style="font-size:.7rem;opacity:.7">elige cartas y posiciones</span></button>
     <button class="btn btn-outline" onclick="irA('ayuda')" style="text-align:left;display:flex;justify-content:space-between;align-items:center"><span>📖 Ayuda · Significados</span><span style="font-size:.7rem;opacity:.7">busca por carta</span></button>
@@ -52,6 +52,10 @@
   <a class="back-link" onclick="irA('inicio')">← Inicio</a>
   <h2>Cruz Diaria</h2>
   <p>Cruz de 5 cartas: energía del día, qué frenar, qué impulsar, ayuda disponible y posible resultado.</p>
+  <div class="form-group">
+    <label for="desc-diaria">Descripción (opcional)</label>
+    <textarea id="desc-diaria" class="input-desc" maxlength="150" placeholder="¿Qué quieres preguntar hoy?"></textarea>
+  </div>
   <div class="btn-group">
     <button class="btn btn-gold" onclick="tirarDiaria()">✦ Tirar Cruz Diaria</button>
     <button class="btn btn-outline btn-sm" onclick="tirarDiariaInv()">Con Invertidas</button>
@@ -62,13 +66,20 @@
 
 <section id="panel-relacion" class="panel">
   <a class="back-link" onclick="irA('inicio')">← Inicio</a>
-  <h2>Tirada Relación</h2>
+  <h2>Tirada de la relación</h2>
   <p>4 cartas: energía del momento, energía de cada persona y dirección posible.</p>
   <div class="form-group">
     <label for="rel-p1">Persona 1</label>
-    <input type="text" id="rel-p1" value="Persona 1">
+    <input type="text" id="rel-p1" placeholder="Persona 1">
     <label for="rel-p2">Persona 2</label>
-    <input type="text" id="rel-p2" value="Persona 2">
+    <input type="text" id="rel-p2" placeholder="Persona 2">
+  </div>
+  <div class="form-group">
+    <label for="desc-rel">Descripción (opcional)</label>
+    <textarea id="desc-rel" class="input-desc" maxlength="150" placeholder="Describe el contexto de la relación..."></textarea>
+  </div>
+  <div class="form-group">
+    <label><input type="checkbox" id="rel-inv"> Con Invertidas</label>
   </div>
   <div class="btn-group"><button class="btn btn-gold" onclick="tirarRelacion()">✦ Tirar</button></div>
   <div id="r-relacion"></div>
@@ -79,6 +90,10 @@
   <a class="back-link" onclick="irA('inicio')">← Inicio</a>
   <h2>BATS Laboral</h2>
   <p>Cruz de 5 cartas con enfoque laboral: energía del trabajo, qué frenar, qué impulsar, ayuda y resultado.</p>
+  <div class="form-group">
+    <label for="desc-laboral">Descripción (opcional)</label>
+    <textarea id="desc-laboral" class="input-desc" maxlength="150" placeholder="Describe tu situación laboral..."></textarea>
+  </div>
   <div class="btn-group">
     <button class="btn btn-gold" onclick="tirarLaboral()">✦ Tirar BATS Laboral</button>
     <button class="btn btn-outline btn-sm" onclick="tirarLaboralInv()">Con Invertidas</button>
@@ -92,12 +107,17 @@
   <h2>Tirada Personalizada</h2>
   <p>Define tu propia tirada.</p>
   <div class="form-group">
+    <label for="pers-titulo">Título de la tirada</label>
+    <input type="text" id="pers-titulo" placeholder="Ej: Tirada del mes">
+  </div>
+  <div class="form-group">
     <label for="pers-cant">¿Cuántas cartas?</label>
     <select id="pers-cant" onchange="actPos()">
       <option value="1">1</option><option value="2">2</option><option value="3" selected>3</option>
       <option value="4">4</option><option value="5">5</option><option value="6">6</option>
       <option value="7">7</option><option value="8">8</option><option value="9">9</option>
-      <option value="10">10</option>
+      <option value="10">10</option><option value="11">11</option><option value="12">12</option>
+      <option value="13">13</option><option value="14">14</option><option value="15">15</option>
     </select>
   </div>
   <div class="form-group">
@@ -108,7 +128,7 @@
       <input type="radio" name="pers-subset" id="s-mayores" value="mayores">
       <label for="s-mayores">Arcanos Mayores</label>
       <input type="radio" name="pers-subset" id="s-menores" value="menores">
-      <label for="s-menores">Menores 2-10</label>
+      <label for="s-menores">Menores 1-10</label>
       <input type="radio" name="pers-subset" id="s-corte" value="corte">
       <label for="s-corte">Corte</label>
     </div>
@@ -116,6 +136,10 @@
   <div class="form-group" id="campos-posiciones"></div>
   <div class="form-group">
     <label><input type="checkbox" id="pers-inv"> Incluir invertidas</label>
+  </div>
+  <div class="form-group">
+    <label for="desc-pers">Descripción (opcional, máximo 200 caracteres)</label>
+    <textarea id="desc-pers" class="input-desc" maxlength="200" placeholder="Describe el propósito de la tirada..."></textarea>
   </div>
   <div class="btn-group"><button class="btn btn-gold" onclick="tirarPers()">✦ Tirar</button></div>
   <div id="r-pers"></div>
@@ -136,7 +160,11 @@
   <a class="back-link" onclick="irA('inicio')">← Inicio</a>
   <h2>Historial</h2>
   <p>Lecturas guardadas.</p>
-  <div class="btn-group"><button class="btn btn-danger btn-sm" onclick="limpiarHist()">Limpiar Historial</button></div>
+  <div class="btn-group">
+    <button class="btn btn-outline btn-sm" onclick="exportarHist()">Exportar</button>
+    <button class="btn btn-outline btn-sm" onclick="importarHist()">Importar</button>
+    <button class="btn btn-danger btn-sm" onclick="limpiarHist()">Limpiar Historial</button>
+  </div>
   <div id="r-historial"></div>
   <a class="back-link" onclick="irA('inicio')" style="display:block;text-align:center;margin-top:16px">← Inicio</a>
 </section>
