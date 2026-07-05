@@ -3,7 +3,7 @@ var STATIC_CACHE = CACHE + "-static";
 var IMG_CACHE = CACHE + "-img";
 
 var ARCHIVOS = [
-  "/",
+  "./",
   "index.html",
   "style.css",
   "app.js",
