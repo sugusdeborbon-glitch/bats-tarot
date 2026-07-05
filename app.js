@@ -180,22 +180,27 @@ function importarHist(){
 function btnGuardar(tipo,cartas){
   return '<button class="btn btn-outline btn-sm" onclick="guardarHist(\''+tipo.replace(/'/g,"\\'")+'\',window._ult,document.getElementById(\'desc-\'+window._lastPanel)&&document.getElementById(\'desc-\'+window._lastPanel).value||\'\',document.getElementById(\'titulo-\'+window._lastPanel)&&document.getElementById(\'titulo-\'+window._lastPanel).value||\'\');return false">Guardar en historial</button>';
 }
-function btnMD(titulo){
-  return '<button class="btn btn-outline btn-sm" onclick="descargarMD(\''+titulo.replace(/'/g,"\\'")+'\',window._ult)">Descargar MD</button>';
+function slugify(s){
+  return s.toLowerCase().replace(/[^a-z0-9áéíóúüñ\s-]/g,'').replace(/\s+/g,'_').replace(/-+/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'')||"tirada";
 }
-function btnHTML(titulo){
-  return '<button class="btn btn-outline btn-sm" onclick="descargarHTML(\''+titulo.replace(/'/g,"\\'")+'\',window._ult)">Descargar HTML</button>';
+function btnMD(titulo,panelId){
+  var esc=titulo.replace(/'/g,"\\'");
+  return '<button class="btn btn-outline btn-sm" onclick="descargarMD(\''+esc+'\',window._ult,document.getElementById(\'desc-'+panelId+'\')&&document.getElementById(\'desc-'+panelId+'\').value||\'\')">Descargar MD</button>';
 }
-function ponerBotones(dest,titulo){
+function btnHTML(titulo,panelId){
+  var esc=titulo.replace(/'/g,"\\'");
+  return '<button class="btn btn-outline btn-sm" onclick="descargarHTML(\''+esc+'\',window._ult,document.getElementById(\'desc-'+panelId+'\')&&document.getElementById(\'desc-'+panelId+'\').value||\'\')">Descargar HTML</button>';
+}
+function ponerBotones(dest,titulo,panelId){
   var cartas = window._ult;
-  document.getElementById(dest).innerHTML+='<div class="btn-group mt-8">'+btnMD(titulo)+btnHTML(titulo)+btnGuardar(titulo)+'</div>';
+  document.getElementById(dest).innerHTML+='<div class="btn-group mt-8">'+btnMD(titulo,panelId)+btnHTML(titulo,panelId)+btnGuardar(titulo)+'</div>';
 }
 
 var BATS_BASE="https://sugusdeborbon-glitch.github.io/bats-tarot/";
 function descargarMD(titulo,cartas,descripcion){
-  if(descripcion===undefined){var de=document.getElementById('desc-'+window._lastPanel);descripcion=de?de.value:''}
   var f=new Date(),fs=f.toLocaleDateString("es-ES",{year:"numeric",month:"long",day:"numeric",hour:"2-digit",minute:"2-digit"});
   var fn=f.getFullYear()+"-"+z(f.getMonth()+1)+"-"+z(f.getDate())+"_"+z(f.getHours())+z(f.getMinutes());
+  var slug=slugify(titulo);
   var md="# "+titulo+"\n\n_Fecha: "+fs+"_\n\n";
   if(descripcion) md+="*"+descripcion+"*\n\n";
   cartas.forEach(function(it){
@@ -208,14 +213,14 @@ function descargarMD(titulo,cartas,descripcion){
   md+="_Generado por BATS Tarot_";
   var b=new Blob([md],{type:"text/markdown;charset=utf-8"});
   var u=URL.createObjectURL(b);
-  var a=document.createElement("a");a.href=u;a.download="bats-"+fn+".md";
+  var a=document.createElement("a");a.href=u;a.download="bats-"+slug+"-"+fn+".md";
   document.body.appendChild(a);a.click();
   document.body.removeChild(a);URL.revokeObjectURL(u);
 }
 function descargarHTML(titulo,cartas,descripcion){
-  if(descripcion===undefined){var de=document.getElementById('desc-'+window._lastPanel);descripcion=de?de.value:''}
   var f=new Date(),fs=f.toLocaleDateString("es-ES",{year:"numeric",month:"long",day:"numeric",hour:"2-digit",minute:"2-digit"});
   var fn=f.getFullYear()+"-"+z(f.getMonth()+1)+"-"+z(f.getDate())+"_"+z(f.getHours())+z(f.getMinutes());
+  var slug=slugify(titulo);
   var esCruz=cartas.length===5;
   var clsCruz=["cross-center","cross-left","cross-right","cross-top","cross-bottom"];
   var cardsHTML="";
@@ -246,7 +251,7 @@ function descargarHTML(titulo,cartas,descripcion){
   html+='<p class="foot">Generado por BATS Tarot</p></body></html>';
   var b=new Blob([html],{type:"text/html;charset=utf-8"});
   var u=URL.createObjectURL(b);
-  var a=document.createElement("a");a.href=u;a.download="bats-"+fn+".html";
+  var a=document.createElement("a");a.href=u;a.download="bats-"+slug+"-"+fn+".html";
   document.body.appendChild(a);a.click();
   document.body.removeChild(a);URL.revokeObjectURL(u);
 }
@@ -324,7 +329,7 @@ function hacerDiaria(inv){
   mostrarCruz(c,"r-diaria",{posiciones:pos});
   window._ult=c;
   window._lastPanel="diaria";
-  ponerBotones("r-diaria","Cruz Diaria");
+  ponerBotones("r-diaria","Cruz Diaria","diaria");
 }
 
 function tirarRelacion(){
@@ -341,7 +346,7 @@ function tirarRelacion(){
   mostrarCompleto(c,"r-relacion",{posiciones:pos});
   window._ult=c;
   window._lastPanel="rel";
-  ponerBotones("r-relacion","Tirada de la relaci\u00f3n");
+  ponerBotones("r-relacion","Tirada de la relaci\u00f3n","rel");
 }
 function tirarLaboral(){hacerLaboral(false)}
 function tirarLaboralInv(){hacerLaboral(true)}
@@ -355,7 +360,7 @@ function hacerLaboral(inv){
   mostrarCruz(c,"r-laboral",{posiciones:pos});
   window._ult=c;
   window._lastPanel="laboral";
-  ponerBotones("r-laboral","BATS Laboral");
+  ponerBotones("r-laboral","BATS Laboral","laboral");
 }
 
 function actPos(){
@@ -381,7 +386,7 @@ function tirarPers(){
   mostrarCompleto(c,"r-pers");
   window._ult=c;
   window._lastPanel="pers";
-  ponerBotones("r-pers",titulo);
+  ponerBotones("r-pers",titulo,"pers");
 }
 
 function buscarAyuda(){
