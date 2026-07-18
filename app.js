@@ -42,9 +42,10 @@ function batsDe(c){
   if(typeof DATOS_BATS!=="undefined"&&DATOS_BATS[c.nombre]) return DATOS_BATS[c.nombre];
   return null;
 }
-function txt(c,inv){
+function txt(c,inv,sombra){
   var d=batsDe(c);
   if(!d) return "\u2014";
+  if(sombra&&d.sombra) return d.sombra;
   if(inv&&d.invertida) return d.invertida;
   if(d.normal) return d.normal;
   if(d.prof) return d.prof;
@@ -87,14 +88,19 @@ function calcQuinta(cartas){
     while(t>0){s+=t%10;t=Math.floor(t/10)}
     suma=s;
   }
-  if(suma===0||suma===22) return BARAJA[0];
-  if(suma>=1&&suma<=21) return BARAJA[suma];
+  if(suma<1||suma>22) return null;
+  if(suma===22) return BARAJA[0];
+  return BARAJA[suma];
+}
+function textoQuinta(nombre){
+  if(typeof QUINTA_BATS!=="undefined"&&QUINTA_BATS[nombre]) return QUINTA_BATS[nombre];
   return null;
 }
 function qHTML(cartas){
   var q=calcQuinta(cartas);
   if(!q) return '<div class="q-box"><div class="q-label">✦ QUINTAESENCIA</div><div class="q-inner"><div style="color:var(--text2)">No calculada</div></div></div>';
-  return '<div class="q-box"><div class="q-label">✦ QUINTAESENCIA: '+q.nombre+'</div><div class="q-inner">'+imgCard(q)+'<div><div class="q-name">'+q.nombre+'</div><div class="q-text">'+txt(q,false)+'</div></div></div></div>';
+  var tq=textoQuinta(q.nombre)||txt(q,false);
+  return '<div class="q-box"><div class="q-label">✦ QUINTAESENCIA: '+q.nombre+'</div><div class="q-inner">'+imgCard(q)+'<div><div class="q-name">'+q.nombre+'</div><div class="q-text">'+tq+'</div></div></div></div>';
 }
 
 function mostrarCompleto(cartas,dest,opts){
@@ -209,7 +215,7 @@ function descargarMD(titulo,cartas,descripcion){
     md+=(it.texto||txt(c,inv)||"\u2014")+"\n\n";
   });
   var q=calcQuinta(cartas);
-  if(q) md+="### ✦ Quintaesencia\n\n**"+q.nombre+"**\n\n"+txt(q,false)+"\n\n";
+  if(q) md+="### ✦ Quintaesencia\n\n**"+q.nombre+"**\n\n"+(textoQuinta(q.nombre)||txt(q,false))+"\n\n";
   md+="_Generado por BATS Tarot_";
   var b=new Blob([md],{type:"text/markdown;charset=utf-8"});
   var u=URL.createObjectURL(b);
@@ -239,7 +245,7 @@ function descargarHTML(titulo,cartas,descripcion){
   if(q){
     qH='<div class="q"><div class="ql">✦ QUINTAESENCIA: '+q.nombre+'</div>';
     qH+='<img src="'+BATS_BASE+q.img+'" alt="'+q.nombre+'">';
-    qH+='<div class="cn">'+q.nombre+'</div><div class="ct">'+txt(q,false)+'</div></div>';
+    qH+='<div class="cn">'+q.nombre+'</div><div class="ct">'+(textoQuinta(q.nombre)||txt(q,false))+'</div></div>';
   }
   var wrap=esCruz?"cross-container":"cards";
   var extraCSS=esCruz?".cross-container{display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:auto auto auto;gap:12px;max-width:520px;margin:16px auto;justify-items:center;align-items:start}.cross-center{grid-column:2;grid-row:2}.cross-left{grid-column:1;grid-row:2}.cross-right{grid-column:3;grid-row:2}.cross-top{grid-column:2;grid-row:1}.cross-bottom{grid-column:2;grid-row:3}.cross-container .card{width:140px}":"";
@@ -321,14 +327,14 @@ function tirarDiaria(){hacerDiaria(false)}
 function tirarDiariaInv(){hacerDiaria(true)}
 function hacerDiaria(inv){
   var pos=["Centro: energ\u00eda del d\u00eda","Izquierda: qu\u00e9 frenar o minimizar","Derecha: qu\u00e9 impulsar o hacer","Arriba: ayuda disponible","Abajo: posible salida o resultado"];
+  var esSombra=[false,true,false,false,false];
   var m=barajar(BARAJA.slice());
   if(m.length<5) return;
   var c=[];
-  for(var i=0;i<5;i++) c.push({carta:m[i],invertida:inv?Math.random()<.5:false,posicion:pos[i]});
-  c.forEach(function(it){it.texto=txt(it.carta,it.invertida)});
-  mostrarCruz(c,"r-diaria",{posiciones:pos});
+  for(var i=0;i<5;i++) c.push({carta:m[i],invertida:inv?Math.random()<.5:false,posicion:pos[i],texto:txt(m[i],inv?Math.random()<.5:false,esSombra[i])});
   window._ult=c;
   window._lastPanel="diaria";
+  mostrarCruz(c,"r-diaria",{posiciones:pos});
   ponerBotones("r-diaria","Cruz Diaria","diaria");
 }
 
@@ -341,8 +347,7 @@ function tirarRelacion(){
   if(m.length<4) return;
   var pos=["Energ\u00eda del momento de la relaci\u00f3n","Energ\u00eda de "+p1,"Energ\u00eda de "+p2,"Posible salida o direcci\u00f3n"];
   var c=[];
-  for(var i=0;i<4;i++) c.push({carta:m[i],invertida:inv?Math.random()<.5:false,posicion:pos[i]});
-  c.forEach(function(it){it.texto=txt(it.carta,it.invertida)});
+  for(var i=0;i<4;i++) c.push({carta:m[i],invertida:inv?Math.random()<.5:false,posicion:pos[i],texto:txt(m[i],inv?Math.random()<.5:false,false)});
   mostrarCompleto(c,"r-relacion",{posiciones:pos});
   window._ult=c;
   window._lastPanel="rel";
@@ -352,21 +357,22 @@ function tirarLaboral(){hacerLaboral(false)}
 function tirarLaboralInv(){hacerLaboral(true)}
 function hacerLaboral(inv){
   var pos=["Centro: energ\u00eda laboral del momento","Izquierda: qu\u00e9 frenar o minimizar en el trabajo","Derecha: qu\u00e9 impulsar o hacer en el trabajo","Arriba: ayuda disponible en el trabajo","Abajo: posible salida o resultado laboral"];
+  var esSombra=[false,true,false,false,false];
   var m=barajar(BARAJA.slice());
   if(m.length<5) return;
   var c=[];
-  for(var i=0;i<5;i++) c.push({carta:m[i],invertida:inv?Math.random()<.5:false,posicion:pos[i]});
-  c.forEach(function(it){it.texto=txt(it.carta,it.invertida)});
-  mostrarCruz(c,"r-laboral",{posiciones:pos});
+  for(var i=0;i<5;i++) c.push({carta:m[i],invertida:inv?Math.random()<.5:false,posicion:pos[i],texto:txt(m[i],inv?Math.random()<.5:false,esSombra[i])});
   window._ult=c;
   window._lastPanel="laboral";
+  mostrarCruz(c,"r-laboral",{posiciones:pos});
   ponerBotones("r-laboral","BATS Laboral","laboral");
 }
 
 function actPos(){
   var n=parseInt(document.getElementById("pers-cant").value);
-  var cont=document.getElementById("campos-posiciones"),h="";
-  for(var i=1;i<=n;i++) h+='<div class="pos-field"><span class="pos-num">'+(i<10?"0":"")+i+'</span><input type="text" id="pers-pos-'+i+'" value="Posici\u00f3n '+i+'"></div>';
+  var cont=document.getElementById("campos-posiciones"),h="",vals={};
+  for(var i=1;i<=15;i++){var el=document.getElementById("pers-pos-"+i);if(el) vals[i]=el.value}
+  for(var i=1;i<=n;i++) h+='<div class="pos-field"><span class="pos-num">'+(i<10?"0":"")+i+'</span><input type="text" id="pers-pos-'+i+'" value="'+(vals[i]||'Posici\u00f3n '+i)+'"></div>';
   cont.innerHTML=h;
 }
 actPos();
@@ -381,7 +387,7 @@ function tirarPers(){
   for(var i=1;i<=n;i++){
     var el=document.getElementById("pers-pos-"+i);
     c[i-1].posicion=el?el.value:"Posici\u00f3n "+i;
-    c[i-1].texto=txt(c[i-1].carta,c[i-1].invertida);
+    c[i-1].texto=txt(c[i-1].carta,c[i-1].invertida,false);
   }
   mostrarCompleto(c,"r-pers");
   window._ult=c;
