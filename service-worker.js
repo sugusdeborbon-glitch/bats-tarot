@@ -1,4 +1,4 @@
-var CACHE = "bats-v2";
+var CACHE = "bats-v3";
 var STATIC_CACHE = CACHE + "-static";
 var IMG_CACHE = CACHE + "-img";
 
@@ -9,6 +9,7 @@ var ARCHIVOS = [
   "app.js",
   "manifest.json",
   "datos_bats.js",
+  "quintaesencia_bats.js",
   "icono-512.png",
   "offline.html",
   "cartas/00-TheFool.jpg",
