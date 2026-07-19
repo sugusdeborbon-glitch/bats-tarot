@@ -144,7 +144,8 @@ function guardarHist(tipo,cartas,descripcion,titulo){
   var h=JSON.parse(localStorage.getItem("bats-hist")||"[]");
   var sit=document.getElementById('situacion-'+window._lastPanel)?.value||'';
   var acc=document.getElementById('accion-'+window._lastPanel)?.value||'';
-  h.unshift({fecha:new Date().toISOString(),tipo:tipo,descripcion:descripcion||"",titulo:titulo||"",situacion:sit,accion:acc,cartas:cartas.map(function(it){
+  var tipo_rel=document.getElementById('tipo-'+window._lastPanel)?.value||'';
+  h.unshift({fecha:new Date().toISOString(),tipo:tipo,descripcion:descripcion||"",titulo:titulo||"",situacion:sit,accion:acc,tipo_rel:tipo_rel,cartas:cartas.map(function(it){
     return {nombre:it.carta.nombre,img:it.carta.img,valor:it.carta.valor,tipo:it.carta.tipo,nucleo:it.carta.nucleo,letras:it.carta.letras,invertida:it.invertida,posicion:it.posicion,texto:it.texto||txt(it.carta,it.invertida)};
   }),resumen:cartas.map(function(it){return it.carta.nombre+(it.invertida?"(inv)":"")}).join(", ")});
   if(h.length>50) h=h.slice(0,50);
@@ -194,11 +195,11 @@ function slugify(s){
 }
 function btnMD(titulo,panelId){
   var esc=titulo.replace(/'/g,"\\'");
-  return '<button class="btn btn-outline btn-sm" onclick="descargarMD(\''+esc+'\',window._ult,document.getElementById(\'desc-'+panelId+'\')&&document.getElementById(\'desc-'+panelId+'\').value||\'\',document.getElementById(\'situacion-'+panelId+'\')&&document.getElementById(\'situacion-'+panelId+'\').value||\'\',document.getElementById(\'accion-'+panelId+'\')&&document.getElementById(\'accion-'+panelId+'\').value||\'\')">Descargar MD</button>';
+  return '<button class="btn btn-outline btn-sm" onclick="descargarMD(\''+esc+'\',window._ult,document.getElementById(\'desc-'+panelId+'\')&&document.getElementById(\'desc-'+panelId+'\').value||\'\',document.getElementById(\'situacion-'+panelId+'\')&&document.getElementById(\'situacion-'+panelId+'\').value||\'\',document.getElementById(\'accion-'+panelId+'\')&&document.getElementById(\'accion-'+panelId+'\').value||\'\',document.getElementById(\'tipo-'+panelId+'\')&&document.getElementById(\'tipo-'+panelId+'\').value||\'\')">Descargar MD</button>';
 }
 function btnHTML(titulo,panelId){
   var esc=titulo.replace(/'/g,"\\'");
-  return '<button class="btn btn-outline btn-sm" onclick="descargarHTML(\''+esc+'\',window._ult,document.getElementById(\'desc-'+panelId+'\')&&document.getElementById(\'desc-'+panelId+'\').value||\'\',document.getElementById(\'situacion-'+panelId+'\')&&document.getElementById(\'situacion-'+panelId+'\').value||\'\',document.getElementById(\'accion-'+panelId+'\')&&document.getElementById(\'accion-'+panelId+'\').value||\'\')">Descargar HTML</button>';
+  return '<button class="btn btn-outline btn-sm" onclick="descargarHTML(\''+esc+'\',window._ult,document.getElementById(\'desc-'+panelId+'\')&&document.getElementById(\'desc-'+panelId+'\').value||\'\',document.getElementById(\'situacion-'+panelId+'\')&&document.getElementById(\'situacion-'+panelId+'\').value||\'\',document.getElementById(\'accion-'+panelId+'\')&&document.getElementById(\'accion-'+panelId+'\').value||\'\',document.getElementById(\'tipo-'+panelId+'\')&&document.getElementById(\'tipo-'+panelId+'\').value||\'\')">Descargar HTML</button>';
 }
 function btnAI(titulo,panelId){
   var esc=titulo.replace(/'/g,"\\'");
@@ -210,13 +211,14 @@ function ponerBotones(dest,titulo,panelId){
 }
 
 var BATS_BASE="https://sugusdeborbon-glitch.github.io/bats-tarot/";
-function descargarMD(titulo,cartas,descripcion,situacion,accion){
+function descargarMD(titulo,cartas,descripcion,situacion,accion,tipo){
   var f=new Date(),fs=f.toLocaleDateString("es-ES",{year:"numeric",month:"long",day:"numeric",hour:"2-digit",minute:"2-digit"});
   var fn=f.getFullYear()+"-"+z(f.getMonth()+1)+"-"+z(f.getDate())+"_"+z(f.getHours())+z(f.getMinutes());
   var slug=slugify(titulo);
   var md="# "+titulo+"\n\n_Fecha: "+fs+"_\n\n";
   if(descripcion) md+="*"+descripcion+"*\n\n";
   if(situacion) md+="**Situación:** "+situacion+"\n\n";
+  if(tipo) md+="**Tipo de relación:** "+tipo+"\n\n";
   cartas.forEach(function(it){
     var c=it.carta,inv=it.invertida,pos=it.posicion;
     md+="### "+(pos?pos+": ":"")+c.nombre+(inv?" (invertida)":"")+"\n\n";
@@ -232,7 +234,7 @@ function descargarMD(titulo,cartas,descripcion,situacion,accion){
   document.body.appendChild(a);a.click();
   document.body.removeChild(a);URL.revokeObjectURL(u);
 }
-function descargarHTML(titulo,cartas,descripcion,situacion,accion){
+function descargarHTML(titulo,cartas,descripcion,situacion,accion,tipo){
   var f=new Date(),fs=f.toLocaleDateString("es-ES",{year:"numeric",month:"long",day:"numeric",hour:"2-digit",minute:"2-digit"});
   var fn=f.getFullYear()+"-"+z(f.getMonth()+1)+"-"+z(f.getDate())+"_"+z(f.getHours())+z(f.getMinutes());
   var slug=slugify(titulo);
@@ -262,6 +264,7 @@ function descargarHTML(titulo,cartas,descripcion,situacion,accion){
   html+='<style>body{font-family:sans-serif;background:#0d0a13;color:#e8dcc8;padding:20px;max-width:800px;margin:0 auto}h1{color:#d4a847}.cards{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;margin:16px 0}.card{width:160px;text-align:center;background:#1a1225;border-radius:8px;padding:8px;border:1px solid #2a1a3e}.card.inv img,.card.invertida img{transform:rotate(180deg)}.card img,.q img{width:100%;border-radius:6px}.cn{color:#d4a847;font-weight:600;margin-top:4px;font-size:.9rem}.cp{color:#f0d080;font-size:.75rem;margin-top:2px}.ct{color:#b8a898;font-size:.8rem;margin-top:4px;text-align:left}.q{margin:20px auto;padding:12px;background:#1a1225;border:1px solid #d4a847;border-radius:8px;text-align:center;max-width:320px}.ql{color:#f0d080;font-weight:600;margin-bottom:8px}.q img{width:80px}.foot{color:#666;font-size:.8rem;text-align:center;margin-top:24px}'+extraCSS+'</style></head><body>';
   html+='<h1>'+titulo+'</h1><p style="color:#b8a898"><em>'+fs+'</em></p>';
   if(descripcion) html+='<p style="font-style:italic;color:#b8a898;margin-bottom:12px">'+descripcion+'</p>';
+  if(tipo) html+='<p style="font-style:italic;color:#f0d080;margin-bottom:12px"><strong>Tipo de relación:</strong> '+tipo+'</p>';
   if(situacion) html+='<p style="font-style:italic;color:#f0d080;margin-bottom:12px"><strong>Situación:</strong> '+situacion+'</p>';
   html+='<div class="'+wrap+'">'+cardsHTML+'</div>'+qH;
   if(accion) html+='<p style="font-style:italic;color:#b8a898;margin-top:12px"><strong>Acción recomendada:</strong> '+accion+'</p>';
@@ -280,10 +283,12 @@ function descargarAI(titulo,cartas){
   var desc=document.getElementById('desc-'+panelId)?.value||'';
   var sit=document.getElementById('situacion-'+panelId)?.value||'';
   var acc=document.getElementById('accion-'+panelId)?.value||'';
+  var tipo=document.getElementById('tipo-'+panelId)?.value||'';
   var md=PROMPT_AI+"\n\n";
   md+="Tirada: "+titulo+"\nFecha: "+fs+"\n";
   if(desc) md+="Descripción: "+desc+"\n";
   if(sit) md+="Situación: "+sit+"\n";
+  if(tipo) md+="Tipo de relación: "+tipo+"\n";
   md+="\nPosiciones y cartas:\n";
   cartas.forEach(function(it,i){
     md+=(i+1)+". "+(it.posicion||"")+": "+it.carta.nombre+(it.invertida?" (invertida)":"")+"\n";
@@ -319,6 +324,7 @@ function verHist(i){
   var cartas=hr.cartas.map(function(it){return{carta:it,invertida:it.invertida,texto:it.texto,posicion:it.posicion}});
   var htm='<div class="result-box"><h3 style="color:var(--gold);margin-bottom:6px">'+(hr.titulo||hr.tipo)+'</h3>';
   if(hr.descripcion) htm+='<p style="font-style:italic;color:var(--text-muted);margin-bottom:8px;font-size:.9rem">'+(hr.titulo?hr.tipo+": ":"")+hr.descripcion+'</p>';
+  if(hr.tipo_rel) htm+='<p style="font-style:italic;color:var(--text-muted);margin-bottom:8px;font-size:.9rem"><strong>Tipo de relación:</strong> '+hr.tipo_rel+'</p>';
   if(hr.situacion) htm+='<p style="font-style:italic;color:var(--text-muted);margin-bottom:8px;font-size:.9rem"><strong>Situación:</strong> '+hr.situacion+'</p>';
   if(hr.accion) htm+='<p style="font-style:italic;color:var(--text-muted);margin-bottom:8px;font-size:.9rem"><strong>Acción:</strong> '+hr.accion+'</p>';
   if(hr.cartas[0]&&hr.cartas[0].posicion){
@@ -346,13 +352,13 @@ function descargarHistHTML(i){
   var h=JSON.parse(localStorage.getItem("bats-hist")||"[]");
   var hr=h[i];if(!hr)return;
   var cartas=hr.cartas.map(function(it){return{carta:it,invertida:it.invertida,texto:it.texto,posicion:it.posicion}});
-  descargarHTML(hr.titulo||hr.tipo,cartas,hr.descripcion,hr.situacion,hr.accion);
+  descargarHTML(hr.titulo||hr.tipo,cartas,hr.descripcion,hr.situacion,hr.accion,hr.tipo_rel);
 }
 function descargarHistMD(i){
   var h=JSON.parse(localStorage.getItem("bats-hist")||"[]");
   var hr=h[i];if(!hr)return;
   var cartas=hr.cartas.map(function(it){return{carta:it,invertida:it.invertida,texto:it.texto,posicion:it.posicion}});
-  descargarMD(hr.titulo||hr.tipo,cartas,hr.descripcion,hr.situacion,hr.accion);
+  descargarMD(hr.titulo||hr.tipo,cartas,hr.descripcion,hr.situacion,hr.accion,hr.tipo_rel);
 }
 function descargarHistAI(i){
   var h=JSON.parse(localStorage.getItem("bats-hist")||"[]");
