@@ -96,6 +96,7 @@ function textoQuinta(nombre){
   if(typeof QUINTA_BATS!=="undefined"&&QUINTA_BATS[nombre]) return QUINTA_BATS[nombre];
   return null;
 }
+var PROMPT_AI="Eres un intérprete profesional de tarot Rider-Waite-Smith. Recibirás una tirada con posiciones ya definidas y sus cartas asignadas, incluyendo la quintaesencia ya calculada.\nPara cada posición:\n* Describe brevemente la imagen simbólica de la carta (RWS).\n* Interpreta su significado filtrado por el sentido de esa posición específica.\nAl final, interpreta la quintaesencia como síntesis arquetípica de fondo (nunca como mandato de acción ni predicción).\nNo inventes datos biográficos ni asumas circunstancias no proporcionadas. Si falta información necesaria, indícala explícitamente en vez de suponerla.";
 function qHTML(cartas){
   var q=calcQuinta(cartas);
   if(!q) return '<div class="q-box"><div class="q-label">✦ QUINTAESENCIA</div><div class="q-inner"><div style="color:var(--text2)">No calculada</div></div></div>';
@@ -141,7 +142,9 @@ function mostrarCruz(cartas,dest,opts){
 
 function guardarHist(tipo,cartas,descripcion,titulo){
   var h=JSON.parse(localStorage.getItem("bats-hist")||"[]");
-  h.unshift({fecha:new Date().toISOString(),tipo:tipo,descripcion:descripcion||"",titulo:titulo||"",cartas:cartas.map(function(it){
+  var sit=document.getElementById('situacion-'+window._lastPanel)?.value||'';
+  var acc=document.getElementById('accion-'+window._lastPanel)?.value||'';
+  h.unshift({fecha:new Date().toISOString(),tipo:tipo,descripcion:descripcion||"",titulo:titulo||"",situacion:sit,accion:acc,cartas:cartas.map(function(it){
     return {nombre:it.carta.nombre,img:it.carta.img,valor:it.carta.valor,tipo:it.carta.tipo,nucleo:it.carta.nucleo,letras:it.carta.letras,invertida:it.invertida,posicion:it.posicion,texto:it.texto||txt(it.carta,it.invertida)};
   }),resumen:cartas.map(function(it){return it.carta.nombre+(it.invertida?"(inv)":"")}).join(", ")});
   if(h.length>50) h=h.slice(0,50);
@@ -191,24 +194,29 @@ function slugify(s){
 }
 function btnMD(titulo,panelId){
   var esc=titulo.replace(/'/g,"\\'");
-  return '<button class="btn btn-outline btn-sm" onclick="descargarMD(\''+esc+'\',window._ult,document.getElementById(\'desc-'+panelId+'\')&&document.getElementById(\'desc-'+panelId+'\').value||\'\')">Descargar MD</button>';
+  return '<button class="btn btn-outline btn-sm" onclick="descargarMD(\''+esc+'\',window._ult,document.getElementById(\'desc-'+panelId+'\')&&document.getElementById(\'desc-'+panelId+'\').value||\'\',document.getElementById(\'situacion-'+panelId+'\')&&document.getElementById(\'situacion-'+panelId+'\').value||\'\',document.getElementById(\'accion-'+panelId+'\')&&document.getElementById(\'accion-'+panelId+'\').value||\'\')">Descargar MD</button>';
 }
 function btnHTML(titulo,panelId){
   var esc=titulo.replace(/'/g,"\\'");
-  return '<button class="btn btn-outline btn-sm" onclick="descargarHTML(\''+esc+'\',window._ult,document.getElementById(\'desc-'+panelId+'\')&&document.getElementById(\'desc-'+panelId+'\').value||\'\')">Descargar HTML</button>';
+  return '<button class="btn btn-outline btn-sm" onclick="descargarHTML(\''+esc+'\',window._ult,document.getElementById(\'desc-'+panelId+'\')&&document.getElementById(\'desc-'+panelId+'\').value||\'\',document.getElementById(\'situacion-'+panelId+'\')&&document.getElementById(\'situacion-'+panelId+'\').value||\'\',document.getElementById(\'accion-'+panelId+'\')&&document.getElementById(\'accion-'+panelId+'\').value||\'\')">Descargar HTML</button>';
+}
+function btnAI(titulo,panelId){
+  var esc=titulo.replace(/'/g,"\\'");
+  return '<button class="btn btn-outline btn-sm" onclick="descargarAI(\''+esc+'\',window._ult)">Descargar IA</button>';
 }
 function ponerBotones(dest,titulo,panelId){
   var cartas = window._ult;
-  document.getElementById(dest).innerHTML+='<div class="btn-group mt-8">'+btnMD(titulo,panelId)+btnHTML(titulo,panelId)+btnGuardar(titulo)+'</div>';
+  document.getElementById(dest).innerHTML+='<div class="btn-group mt-8">'+btnMD(titulo,panelId)+btnHTML(titulo,panelId)+btnAI(titulo,panelId)+btnGuardar(titulo)+'</div>';
 }
 
 var BATS_BASE="https://sugusdeborbon-glitch.github.io/bats-tarot/";
-function descargarMD(titulo,cartas,descripcion){
+function descargarMD(titulo,cartas,descripcion,situacion,accion){
   var f=new Date(),fs=f.toLocaleDateString("es-ES",{year:"numeric",month:"long",day:"numeric",hour:"2-digit",minute:"2-digit"});
   var fn=f.getFullYear()+"-"+z(f.getMonth()+1)+"-"+z(f.getDate())+"_"+z(f.getHours())+z(f.getMinutes());
   var slug=slugify(titulo);
   var md="# "+titulo+"\n\n_Fecha: "+fs+"_\n\n";
   if(descripcion) md+="*"+descripcion+"*\n\n";
+  if(situacion) md+="**Situación:** "+situacion+"\n\n";
   cartas.forEach(function(it){
     var c=it.carta,inv=it.invertida,pos=it.posicion;
     md+="### "+(pos?pos+": ":"")+c.nombre+(inv?" (invertida)":"")+"\n\n";
@@ -216,6 +224,7 @@ function descargarMD(titulo,cartas,descripcion){
   });
   var q=calcQuinta(cartas);
   if(q) md+="### ✦ Quintaesencia\n\n**"+q.nombre+"**\n\n"+(textoQuinta(q.nombre)||txt(q,false))+"\n\n";
+  if(accion) md+="**Acción recomendada:** "+accion+"\n\n";
   md+="_Generado por BATS Tarot_";
   var b=new Blob([md],{type:"text/markdown;charset=utf-8"});
   var u=URL.createObjectURL(b);
@@ -223,7 +232,7 @@ function descargarMD(titulo,cartas,descripcion){
   document.body.appendChild(a);a.click();
   document.body.removeChild(a);URL.revokeObjectURL(u);
 }
-function descargarHTML(titulo,cartas,descripcion){
+function descargarHTML(titulo,cartas,descripcion,situacion,accion){
   var f=new Date(),fs=f.toLocaleDateString("es-ES",{year:"numeric",month:"long",day:"numeric",hour:"2-digit",minute:"2-digit"});
   var fn=f.getFullYear()+"-"+z(f.getMonth()+1)+"-"+z(f.getDate())+"_"+z(f.getHours())+z(f.getMinutes());
   var slug=slugify(titulo);
@@ -253,11 +262,38 @@ function descargarHTML(titulo,cartas,descripcion){
   html+='<style>body{font-family:sans-serif;background:#0d0a13;color:#e8dcc8;padding:20px;max-width:800px;margin:0 auto}h1{color:#d4a847}.cards{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;margin:16px 0}.card{width:160px;text-align:center;background:#1a1225;border-radius:8px;padding:8px;border:1px solid #2a1a3e}.card.inv img,.card.invertida img{transform:rotate(180deg)}.card img,.q img{width:100%;border-radius:6px}.cn{color:#d4a847;font-weight:600;margin-top:4px;font-size:.9rem}.cp{color:#f0d080;font-size:.75rem;margin-top:2px}.ct{color:#b8a898;font-size:.8rem;margin-top:4px;text-align:left}.q{margin:20px auto;padding:12px;background:#1a1225;border:1px solid #d4a847;border-radius:8px;text-align:center;max-width:320px}.ql{color:#f0d080;font-weight:600;margin-bottom:8px}.q img{width:80px}.foot{color:#666;font-size:.8rem;text-align:center;margin-top:24px}'+extraCSS+'</style></head><body>';
   html+='<h1>'+titulo+'</h1><p style="color:#b8a898"><em>'+fs+'</em></p>';
   if(descripcion) html+='<p style="font-style:italic;color:#b8a898;margin-bottom:12px">'+descripcion+'</p>';
+  if(situacion) html+='<p style="font-style:italic;color:#f0d080;margin-bottom:12px"><strong>Situación:</strong> '+situacion+'</p>';
   html+='<div class="'+wrap+'">'+cardsHTML+'</div>'+qH;
+  if(accion) html+='<p style="font-style:italic;color:#b8a898;margin-top:12px"><strong>Acción recomendada:</strong> '+accion+'</p>';
   html+='<p class="foot">Generado por BATS Tarot</p></body></html>';
   var b=new Blob([html],{type:"text/html;charset=utf-8"});
   var u=URL.createObjectURL(b);
   var a=document.createElement("a");a.href=u;a.download="bats-"+slug+"-"+fn+".html";
+  document.body.appendChild(a);a.click();
+  document.body.removeChild(a);URL.revokeObjectURL(u);
+}
+function descargarAI(titulo,cartas){
+  var f=new Date(),fs=f.toLocaleDateString("es-ES",{year:"numeric",month:"long",day:"numeric",hour:"2-digit",minute:"2-digit"});
+  var fn=f.getFullYear()+"-"+z(f.getMonth()+1)+"-"+z(f.getDate())+"_"+z(f.getHours())+z(f.getMinutes());
+  var slug=slugify(titulo);
+  var panelId=window._lastPanel;
+  var desc=document.getElementById('desc-'+panelId)?.value||'';
+  var sit=document.getElementById('situacion-'+panelId)?.value||'';
+  var acc=document.getElementById('accion-'+panelId)?.value||'';
+  var md=PROMPT_AI+"\n\n";
+  md+="Tirada: "+titulo+"\nFecha: "+fs+"\n";
+  if(desc) md+="Descripción: "+desc+"\n";
+  if(sit) md+="Situación: "+sit+"\n";
+  md+="\nPosiciones y cartas:\n";
+  cartas.forEach(function(it,i){
+    md+=(i+1)+". "+(it.posicion||"")+": "+it.carta.nombre+(it.invertida?" (invertida)":"")+"\n";
+  });
+  var q=calcQuinta(cartas);
+  if(q) md+="\nQuintaesencia: "+q.nombre+"\n";
+  if(acc) md+="\nAcción recomendada: "+acc+"\n";
+  var b=new Blob([md],{type:"text/markdown;charset=utf-8"});
+  var u=URL.createObjectURL(b);
+  var a=document.createElement("a");a.href=u;a.download="ia-"+slug+"-"+fn+".md";
   document.body.appendChild(a);a.click();
   document.body.removeChild(a);URL.revokeObjectURL(u);
 }
@@ -283,6 +319,8 @@ function verHist(i){
   var cartas=hr.cartas.map(function(it){return{carta:it,invertida:it.invertida,texto:it.texto,posicion:it.posicion}});
   var htm='<div class="result-box"><h3 style="color:var(--gold);margin-bottom:6px">'+(hr.titulo||hr.tipo)+'</h3>';
   if(hr.descripcion) htm+='<p style="font-style:italic;color:var(--text-muted);margin-bottom:8px;font-size:.9rem">'+(hr.titulo?hr.tipo+": ":"")+hr.descripcion+'</p>';
+  if(hr.situacion) htm+='<p style="font-style:italic;color:var(--text-muted);margin-bottom:8px;font-size:.9rem"><strong>Situación:</strong> '+hr.situacion+'</p>';
+  if(hr.accion) htm+='<p style="font-style:italic;color:var(--text-muted);margin-bottom:8px;font-size:.9rem"><strong>Acción:</strong> '+hr.accion+'</p>';
   if(hr.cartas[0]&&hr.cartas[0].posicion){
     cartas.forEach(function(it){
       var c=it.carta;
@@ -301,20 +339,26 @@ function verHist(i){
     htm+='</div>';
   }
   htm+=qHTML(cartas);
-  htm+='<div class="btn-group mt-8"><button class="btn btn-outline btn-sm" onclick="descargarHistMD('+i+')">Descargar MD</button><button class="btn btn-outline btn-sm" onclick="descargarHistHTML('+i+')">Descargar HTML</button><button class="btn btn-outline btn-sm" onclick="cargarHist()">← Volver</button></div></div>';
+  htm+='<div class="btn-group mt-8"><button class="btn btn-outline btn-sm" onclick="descargarHistMD('+i+')">Descargar MD</button><button class="btn btn-outline btn-sm" onclick="descargarHistHTML('+i+')">Descargar HTML</button><button class="btn btn-outline btn-sm" onclick="descargarHistAI('+i+')">Descargar IA</button><button class="btn btn-outline btn-sm" onclick="cargarHist()">← Volver</button></div></div>';
   document.getElementById("r-historial").innerHTML=htm;
 }
 function descargarHistHTML(i){
   var h=JSON.parse(localStorage.getItem("bats-hist")||"[]");
   var hr=h[i];if(!hr)return;
   var cartas=hr.cartas.map(function(it){return{carta:it,invertida:it.invertida,texto:it.texto,posicion:it.posicion}});
-  descargarHTML(hr.titulo||hr.tipo,cartas,hr.descripcion);
+  descargarHTML(hr.titulo||hr.tipo,cartas,hr.descripcion,hr.situacion,hr.accion);
 }
 function descargarHistMD(i){
   var h=JSON.parse(localStorage.getItem("bats-hist")||"[]");
   var hr=h[i];if(!hr)return;
   var cartas=hr.cartas.map(function(it){return{carta:it,invertida:it.invertida,texto:it.texto,posicion:it.posicion}});
-  descargarMD(hr.titulo||hr.tipo,cartas,hr.descripcion);
+  descargarMD(hr.titulo||hr.tipo,cartas,hr.descripcion,hr.situacion,hr.accion);
+}
+function descargarHistAI(i){
+  var h=JSON.parse(localStorage.getItem("bats-hist")||"[]");
+  var hr=h[i];if(!hr)return;
+  var cartas=hr.cartas.map(function(it){return{carta:it,invertida:it.invertida,texto:it.texto,posicion:it.posicion}});
+  descargarAI(hr.titulo||hr.tipo,cartas);
 }
 function limpiarHist(){
   if(!confirm("\u00bfEliminar todo el historial?")) return;
@@ -395,6 +439,31 @@ function tirarPers(){
   ponerBotones("r-pers",titulo,"pers");
 }
 
+function tirarAprendizaje(){hacerAprendizaje(document.getElementById("aprendizaje-inv").checked)}
+function hacerAprendizaje(inv){
+  var sub=document.querySelector('input[name="aprendizaje-subset"]:checked');
+  var modo=sub?sub.value:"completo";
+  var mazo=crearSub(modo);
+  var sit=document.getElementById("situacion-aprendizaje").value.trim();
+  if(!sit){toast("Describe la situación que quieres comprender",true);return}
+  var m=barajar(mazo.slice());
+  if(m.length<6) return;
+  var pos=[
+    "El Hecho — ¿Qué ha ocurrido realmente?",
+    "El Maestro — ¿Qué me está mostrando realmente esta experiencia?",
+    "El Punto Ciego — ¿Qué no estoy viendo o qué interpretación me impide aprender?",
+    "La Integración — ¿Qué comprensión quiere integrarse en mí?",
+    "El Don Transformador — ¿Qué capacidad, virtud o cambio nace cuando integro esta verdad?",
+    "El Resultado Posible — ¿Qué transformación ocurrirá en mi experiencia si integro la lección?"
+  ];
+  var c=[];
+  for(var i=0;i<6;i++) c.push({carta:m[i],invertida:inv?Math.random()<.5:false,posicion:pos[i],texto:txt(m[i],inv?Math.random()<.5:false,false)});
+  window._ult=c;
+  window._lastPanel="aprendizaje";
+  mostrarCompleto(c,"r-aprendizaje",{posiciones:pos});
+  document.getElementById("r-aprendizaje").innerHTML+='<div class="form-group mt-8"><label for="accion-aprendizaje">Acción recomendada (24-48h)</label><textarea id="accion-aprendizaje" class="input-desc" maxlength="200" placeholder="¿Qué acción concreta, verificable y realizable en 24/48h demuestra que este aprendizaje comienza a integrarse?"></textarea></div>';
+  ponerBotones("r-aprendizaje","El Aprendizaje","aprendizaje");
+}
 function buscarAyuda(){
   var q=document.getElementById("ayuda-q").value.toLowerCase().trim();
   var cont=document.getElementById("r-ayuda");

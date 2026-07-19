@@ -30,6 +30,7 @@
   <button class="menu-item" onclick="irA('diaria')">Cruz Diaria</button>
   <button class="menu-item" onclick="irA('relacion')">Tirada de la relación</button>
   <button class="menu-item" onclick="irA('bats-laboral')">BATS Laboral</button>
+  <button class="menu-item" onclick="irA('aprendizaje')">El Aprendizaje</button>
   <button class="menu-item" onclick="irA('personalizada')">Tirada Personalizada</button>
   <button class="menu-item" onclick="irA('ayuda')">Ayuda · Significados</button>
   <button class="menu-item" onclick="irA('historial')">Historial</button>
@@ -42,6 +43,7 @@
     <button class="btn btn-gold" onclick="irA('diaria')" style="text-align:left;display:flex;justify-content:space-between;align-items:center"><span>✦ Cruz Diaria</span><span style="font-size:.7rem;opacity:.7">5 cartas en cruz</span></button>
     <button class="btn btn-outline" onclick="irA('relacion')" style="text-align:left;display:flex;justify-content:space-between;align-items:center"><span>❤ Tirada de la relación</span><span style="font-size:.7rem;opacity:.7">4 cartas</span></button>
     <button class="btn btn-outline" onclick="irA('bats-laboral')" style="text-align:left;display:flex;justify-content:space-between;align-items:center"><span>✦ BATS Laboral</span><span style="font-size:.7rem;opacity:.7">5 cartas en cruz</span></button>
+    <button class="btn btn-outline" onclick="irA('aprendizaje')" style="text-align:left;display:flex;justify-content:space-between;align-items:center"><span>✦ El Aprendizaje</span><span style="font-size:.7rem;opacity:.7">6 cartas para integrar</span></button>
     <button class="btn btn-outline" onclick="irA('personalizada')" style="text-align:left;display:flex;justify-content:space-between;align-items:center"><span>✦ Tirada Personalizada</span><span style="font-size:.7rem;opacity:.7">elige cartas y posiciones</span></button>
     <button class="btn btn-outline" onclick="irA('ayuda')" style="text-align:left;display:flex;justify-content:space-between;align-items:center"><span>📖 Ayuda · Significados</span><span style="font-size:.7rem;opacity:.7">busca por carta</span></button>
     <button class="btn btn-outline" onclick="irA('historial')" style="text-align:left;display:flex;justify-content:space-between;align-items:center"><span>📋 Historial</span><span style="font-size:.7rem;opacity:.7">lecturas guardadas</span></button>
@@ -99,6 +101,40 @@
     <button class="btn btn-outline btn-sm" onclick="tirarLaboralInv()">Con Invertidas</button>
   </div>
   <div id="r-laboral"></div>
+  <a class="back-link" onclick="irA('inicio')" style="display:block;text-align:center;margin-top:16px">← Inicio</a>
+</section>
+
+<section id="panel-aprendizaje" class="panel">
+  <a class="back-link" onclick="irA('inicio')">← Inicio</a>
+  <h2>El Aprendizaje</h2>
+  <p>6 cartas para comprender e integrar una experiencia.</p>
+  <div class="form-group">
+    <label>Pregunta marco</label>
+    <p class="subtle" style="text-align:left;margin-bottom:4px">¿Qué necesito comprender e integrar realmente sobre…</p>
+    <textarea id="situacion-aprendizaje" class="input-desc" maxlength="200" placeholder="Describe la situación que quieres comprender..."></textarea>
+  </div>
+  <div class="form-group">
+    <label for="desc-aprendizaje">Descripción (opcional)</label>
+    <textarea id="desc-aprendizaje" class="input-desc" maxlength="150" placeholder="Contexto adicional..."></textarea>
+  </div>
+  <div class="form-group">
+    <label>Subconjunto</label>
+    <div class="radio-group" id="aprendizaje-subset">
+      <input type="radio" name="aprendizaje-subset" id="ap-completo" value="completo" checked>
+      <label for="ap-completo">78 Cartas</label>
+      <input type="radio" name="aprendizaje-subset" id="ap-mayores" value="mayores">
+      <label for="ap-mayores">Arcanos Mayores</label>
+      <input type="radio" name="aprendizaje-subset" id="ap-menores" value="menores">
+      <label for="ap-menores">Menores 1-10</label>
+      <input type="radio" name="aprendizaje-subset" id="ap-corte" value="corte">
+      <label for="ap-corte">Corte</label>
+    </div>
+  </div>
+  <div class="form-group">
+    <label><input type="checkbox" id="aprendizaje-inv"> Con Invertidas</label>
+  </div>
+  <div class="btn-group"><button class="btn btn-gold" onclick="tirarAprendizaje()">✦ Tirar</button></div>
+  <div id="r-aprendizaje"></div>
   <a class="back-link" onclick="irA('inicio')" style="display:block;text-align:center;margin-top:16px">← Inicio</a>
 </section>
 
