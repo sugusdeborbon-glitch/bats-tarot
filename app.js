@@ -186,11 +186,7 @@ function exportarHist(){
   var h=localStorage.getItem("bats-hist");
   if(!h||h==="[]"){toast("No hay historial para exportar",true);return}
   var f=new Date(),fn=f.getFullYear()+"-"+z(f.getMonth()+1)+"-"+z(f.getDate());
-  var b=new Blob([h],{type:"application/json;charset=utf-8"});
-  var u=URL.createObjectURL(b);
-  var a=document.createElement("a");a.href=u;a.download="bats-historial-"+fn+".json";
-  document.body.appendChild(a);a.click();
-  document.body.removeChild(a);URL.revokeObjectURL(u);
+  downloadBlob(h,"bats-historial-"+fn+".json","application/json");
   toast("Historial exportado");
 }
 function importarHist(){
@@ -278,11 +274,7 @@ function descargarMD(titulo,cartas,descripcion,situacion,accion,tipo,anotaciones
   if(anotaciones) md+="**Anotaciones:** "+anotaciones+"\n\n";
   if(observado) md+="**Lo observado:** "+observado+"\n\n";
   md+="_Generado por BATS Tarot_";
-  var b=new Blob([md],{type:"text/markdown;charset=utf-8"});
-  var u=URL.createObjectURL(b);
-  var a=document.createElement("a");a.href=u;a.download="bats-"+slug+"-"+fn+".md";
-  document.body.appendChild(a);a.click();
-  document.body.removeChild(a);URL.revokeObjectURL(u);
+  downloadBlob(md,"bats-"+slug+"-"+fn+".md","text/markdown");
 }
 function descargarHTML(titulo,cartas,descripcion,situacion,accion,tipo,anotaciones,observado){
   var f=new Date(),fs=f.toLocaleDateString("es-ES",{year:"numeric",month:"long",day:"numeric",hour:"2-digit",minute:"2-digit"});
@@ -321,11 +313,7 @@ function descargarHTML(titulo,cartas,descripcion,situacion,accion,tipo,anotacion
   if(anotaciones) html+='<p style="color:#b8a898;margin-top:8px"><strong>Anotaciones:</strong> '+anotaciones+'</p>';
   if(observado) html+='<p style="color:#b8a898;margin-top:8px"><strong>Lo observado:</strong> '+observado+'</p>';
   html+='<p class="foot">Generado por BATS Tarot</p></body></html>';
-  var b=new Blob([html],{type:"text/html;charset=utf-8"});
-  var u=URL.createObjectURL(b);
-  var a=document.createElement("a");a.href=u;a.download="bats-"+slug+"-"+fn+".html";
-  document.body.appendChild(a);a.click();
-  document.body.removeChild(a);URL.revokeObjectURL(u);
+  downloadBlob(html,"bats-"+slug+"-"+fn+".html","text/html");
 }
 function descargarAI(titulo,cartas){
   var f=new Date(),fs=f.toLocaleDateString("es-ES",{year:"numeric",month:"long",day:"numeric",hour:"2-digit",minute:"2-digit"});
@@ -352,11 +340,7 @@ function descargarAI(titulo,cartas){
   if(acc) md+="\nAcción recomendada: "+acc+"\n";
   if(anot) md+="\nAnotaciones: "+anot+"\n";
   if(obs) md+="\nLo observado: "+obs+"\n";
-  var b=new Blob([md],{type:"text/markdown;charset=utf-8"});
-  var u=URL.createObjectURL(b);
-  var a=document.createElement("a");a.href=u;a.download="ia-"+slug+"-"+fn+".md";
-  document.body.appendChild(a);a.click();
-  document.body.removeChild(a);URL.revokeObjectURL(u);
+  downloadBlob(md,"ia-"+slug+"-"+fn+".md","text/markdown");
 }
 
 function cargarHist(){
