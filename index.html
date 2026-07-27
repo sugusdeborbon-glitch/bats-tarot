@@ -61,20 +61,6 @@
     <label for="desc-diaria">Descripción (opcional)</label>
     <textarea id="desc-diaria" class="input-desc" maxlength="150" placeholder="¿Qué quieres preguntar hoy?"></textarea>
   </div>
-  <div class="form-group">
-    <label for="situacion-diaria">Situación</label>
-    <textarea id="situacion-diaria" class="input-desc" maxlength="200" placeholder="Describe tu situación actual..."></textarea>
-  </div>
-  <div class="form-group">
-    <label for="accion-diaria">Acción recomendada (24-48h)</label>
-    <textarea id="accion-diaria" class="input-desc" maxlength="200" placeholder="¿Qué acción concreta puedes realizar?"></textarea>
-  </div>
-  <div class="cuaderno-section">
-    <label for="anotaciones-diaria">Anotaciones</label>
-    <div class="char-counter"><textarea id="anotaciones-diaria" class="input-desc" maxlength="300" placeholder="Escribe lo que consideres sobre esta tirada..." oninput="updateCounter(this,'cnt-diaria')"></textarea><span class="counter-text" id="cnt-diaria">0/300</span></div>
-    <label for="observado-diaria">Lo observado</label>
-    <textarea id="observado-diaria" class="input-desc" maxlength="500" placeholder="Escribe después lo que has visto o vivido respecto a lo que entendiste..."></textarea>
-  </div>
   <div class="btn-group">
     <button class="btn btn-gold" onclick="tirarDiaria()">✦ Tirar Cruz Diaria</button>
     <button class="btn btn-outline btn-sm" onclick="tirarDiariaInv()">Con Invertidas</button>
@@ -102,20 +88,6 @@
     <textarea id="desc-rel" class="input-desc" maxlength="150" placeholder="Describe el contexto de la relación..."></textarea>
   </div>
   <div class="form-group">
-    <label for="situacion-rel">Situación</label>
-    <textarea id="situacion-rel" class="input-desc" maxlength="200" placeholder="Describe tu situación actual..."></textarea>
-  </div>
-  <div class="form-group">
-    <label for="accion-rel">Acción recomendada (24-48h)</label>
-    <textarea id="accion-rel" class="input-desc" maxlength="200" placeholder="¿Qué acción concreta puedes realizar?"></textarea>
-  </div>
-  <div class="cuaderno-section">
-    <label for="anotaciones-rel">Anotaciones</label>
-    <div class="char-counter"><textarea id="anotaciones-rel" class="input-desc" maxlength="300" placeholder="Escribe lo que consideres sobre esta tirada..." oninput="updateCounter(this,'cnt-rel')"></textarea><span class="counter-text" id="cnt-rel">0/300</span></div>
-    <label for="observado-rel">Lo observado</label>
-    <textarea id="observado-rel" class="input-desc" maxlength="500" placeholder="Escribe después lo que has visto o vivido respecto a lo que entendiste..."></textarea>
-  </div>
-  <div class="form-group">
     <label><input type="checkbox" id="rel-inv"> Con Invertidas</label>
   </div>
   <div class="btn-group"><button class="btn btn-gold" onclick="tirarRelacion()">✦ Tirar</button></div>
@@ -130,20 +102,6 @@
   <div class="form-group">
     <label for="desc-laboral">Descripción (opcional)</label>
     <textarea id="desc-laboral" class="input-desc" maxlength="150" placeholder="Describe tu situación laboral..."></textarea>
-  </div>
-  <div class="form-group">
-    <label for="situacion-laboral">Situación</label>
-    <textarea id="situacion-laboral" class="input-desc" maxlength="200" placeholder="Describe tu situación laboral actual..."></textarea>
-  </div>
-  <div class="form-group">
-    <label for="accion-laboral">Acción recomendada (24-48h)</label>
-    <textarea id="accion-laboral" class="input-desc" maxlength="200" placeholder="¿Qué acción concreta puedes realizar en el ámbito laboral?"></textarea>
-  </div>
-  <div class="cuaderno-section">
-    <label for="anotaciones-laboral">Anotaciones</label>
-    <div class="char-counter"><textarea id="anotaciones-laboral" class="input-desc" maxlength="300" placeholder="Escribe lo que consideres sobre esta tirada..." oninput="updateCounter(this,'cnt-laboral')"></textarea><span class="counter-text" id="cnt-laboral">0/300</span></div>
-    <label for="observado-laboral">Lo observado</label>
-    <textarea id="observado-laboral" class="input-desc" maxlength="500" placeholder="Escribe después lo que has visto o vivido respecto a lo que entendiste..."></textarea>
   </div>
   <div class="btn-group">
     <button class="btn btn-gold" onclick="tirarLaboral()">✦ Tirar BATS Laboral</button>
@@ -174,12 +132,6 @@
       <input type="radio" name="aprendizaje-subset" id="ap-corte" value="corte">
       <label for="ap-corte">Corte</label>
     </div>
-  </div>
-  <div class="cuaderno-section">
-    <label for="anotaciones-aprendizaje">Anotaciones</label>
-    <div class="char-counter"><textarea id="anotaciones-aprendizaje" class="input-desc" maxlength="300" placeholder="Escribe lo que consideres sobre esta tirada..." oninput="updateCounter(this,'cnt-aprendizaje')"></textarea><span class="counter-text" id="cnt-aprendizaje">0/300</span></div>
-    <label for="observado-aprendizaje">Lo observado</label>
-    <textarea id="observado-aprendizaje" class="input-desc" maxlength="500" placeholder="Escribe después lo que has visto o vivido respecto a lo que entendiste..."></textarea>
   </div>
   <div class="form-group">
     <label><input type="checkbox" id="aprendizaje-inv"> Con Invertidas</label>
@@ -226,20 +178,6 @@
     <textarea id="desc-pers" class="input-desc" maxlength="200" placeholder="Describe el propósito de la tirada..."></textarea>
   </div>
   <div class="form-group">
-    <label for="situacion-pers">Situación</label>
-    <textarea id="situacion-pers" class="input-desc" maxlength="200" placeholder="Describe tu situación actual..."></textarea>
-  </div>
-  <div class="form-group">
-    <label for="accion-pers">Acción recomendada (24-48h)</label>
-    <textarea id="accion-pers" class="input-desc" maxlength="200" placeholder="¿Qué acción concreta puedes realizar?"></textarea>
-  </div>
-  <div class="cuaderno-section">
-    <label for="anotaciones-pers">Anotaciones</label>
-    <div class="char-counter"><textarea id="anotaciones-pers" class="input-desc" maxlength="300" placeholder="Escribe lo que consideres sobre esta tirada..." oninput="updateCounter(this,'cnt-pers')"></textarea><span class="counter-text" id="cnt-pers">0/300</span></div>
-    <label for="observado-pers">Lo observado</label>
-    <textarea id="observado-pers" class="input-desc" maxlength="500" placeholder="Escribe después lo que has visto o vivido respecto a lo que entendiste..."></textarea>
-  </div>
-  <div class="form-group">
     <label><input type="checkbox" id="pers-inv"> Incluir invertidas</label>
   </div>
   <div class="btn-group"><button class="btn btn-gold" onclick="tirarPers()">✦ Tirar</button></div>
@@ -256,7 +194,7 @@
     <input type="text" id="av-fecha-nac" placeholder="DD/MM/AAAA" maxlength="10">
   </div>
   <div class="form-group">
-    <label for="av-nombre">Nombre completo</label>
+    <label for="av-nombre">Nombre completo según tu partida de nacimiento. Si decides usar también apellidos, está bien, pero escribe siempre lo mismo</label>
     <input type="text" id="av-nombre" placeholder="Tu nombre completo">
   </div>
   <div class="av-disclaimer" id="av-disclaimer">El tarot no predice el futuro. Muestra patrones. La decisión siempre es tuya.</div>
@@ -294,28 +232,31 @@
   <h2>Qué es BATS</h2>
   <div class="que-es-content">
     <div class="qe-block">
-      <h3>✦ Business Ashram Tarot System</h3>
-      <p>BATS es un sistema de lectura de tarot diseñado como herramienta de introspección, análisis y crecimiento personal. No es una herramienta de adivinación: es un espejo simbólico que te ayuda a ver con claridad lo que ya está ocurriendo en tu vida.</p>
+      <h3>1. ¿Qué es BATS?</h3>
+      <p>BATS (Business Ashram Tarot System) es una metodología de lectura del tarot diseñada por Business Ashram Project para convertir una tirada en un proceso de comprensión y toma de decisiones, más que en una predicción. Utiliza el simbolismo de las cartas para ayudarte a entender patrones, descubrir posibilidades y actuar con mayor claridad. Está basada no solo en simbología sino hermética sino que también en arquetípica jungariana, psicología transpersonal y otros sistemas.</p>
     </div>
     <div class="qe-block">
-      <h3>✦ Para quién está pensado</h3>
-      <p>Para personas que buscan comprender su situación actual, tomar decisiones con más conciencia y trabajar sobre sí mismas. No necesitas ser experto en tarot: el sistema guía la lectura y ofrece interpretaciones claras en español.</p>
+      <h3>2. ¿Para quién es?</h3>
+      <p>Está pensado tanto para personas que empiezan como para lectores experimentados que buscan una metodología más estructurada. También resulta útil para coaches, terapeutas, profesionales del desarrollo personal y cualquier persona interesada en el autoconocimiento y la toma de decisiones.</p>
     </div>
     <div class="qe-block">
-      <h3>✦ Diferencias con el tarot tradicional</h3>
-      <p>BATS incorpora interpretaciones propias en español con un enfoque práctico: cada carta tiene un significado normal, uno de sombra (lo que se resiste), uno de ayuda (el apoyo disponible) y uno invertido. No usa significados genéricos copiados de otros sistemas.</p>
+      <h3>3. ¿Qué la hace distinta de las otras apps de tarot?</h3>
+      <p>En primer lugar el diseño de las tiras, basadas en un concepto de "Mapa situacional" en lugar de organización pseudo-adivinatoria. BATS no entrega un único significado por carta. Cada carta se interpreta desde cuatro niveles complementarios —lectura principal, sombra, ayuda y potencial invertido— y toda la tirada se integra mediante una quintaesencia calculada con reducción teosófica.</p>
+      <p>Su verdadero diferencial es que trabaja con una metodología completa: las cartas dialogan entre sí, la pregunta condiciona la lectura y cada interpretación termina proponiendo comprensión y acción, no solo significado.</p>
+      <p><strong>IMPORTANTE: esta versión de la app no incluye este conocimiento ni metodología. Es un servicio totalmente personal. La app sirve únicamente para tu propio diagnóstico.</strong></p>
     </div>
     <div class="qe-block">
-      <h3>✦ Metodología</h3>
-      <p>Las tiradas son aleatorias (barajado real) y cada posición tiene un sentido específico. La quintaesencia calcula la síntesis arquetípica de fondo de cada tirada. El Arcano Visitante usa numerología pitagórica para determinar un arcano del día.</p>
+      <h3>4. ¿Hay una metodología escrita?</h3>
+      <p>Sí. BATS dispone de una metodología documentada que se encuentra en evolución continua e incluye manuales de interpretación, protocolos de lectura, modelos de tiradas propias y documentos de investigación. El objetivo es que cualquier lector pueda comprender no solo qué significa una carta, sino cómo construir una interpretación consistente y reproducible.</p>
     </div>
     <div class="qe-block">
-      <h3>✦ Quién lo creó</h3>
-      <p>BATS fue creado como un proyecto personal para quienes quieren un tarot serio, sin distracciones, sin suscripciones y sin ventas. Todo funciona offline una vez instalado.</p>
+      <h3>5. ¿Quién está detrás de BATS?</h3>
+      <p>BATS ha sido creado por <strong>Gustavo GH</strong> y <strong>Cristina dlSC</strong>, profesionales de la innovación y consultoría empresarial con más de tres décadas de experiencia, investigador del simbolismo del tarot y desarrollador de metodologías de interpretación apoyadas por inteligencia artificial.</p>
+      <p>Su propósito ha sido construir un sistema que combine tradición, rigor metodológico, aplicación real a la vida del consultante y tecnología para hacer el tarot más útil como herramienta de autoconocimiento, reflexión y decisión.</p>
     </div>
     <div class="qe-block">
-      <h3>✦ Contacto</h3>
-      <p>Si tienes dudas, sugerencias o quieres compartir tu experiencia, escríbeme a la dirección de contacto que encontrarás en la página del proyecto en GitHub.</p>
+      <h3>6. Contacto</h3>
+      <p>Correo: businessashram@gmail.com</p>
     </div>
   </div>
   <a class="back-link" onclick="irA('inicio')" style="display:block;text-align:center;margin-top:16px">← Inicio</a>

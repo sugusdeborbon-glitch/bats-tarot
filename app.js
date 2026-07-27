@@ -242,8 +242,14 @@ function btnAI(titulo,panelId){
 function btnCompartir(titulo){
   return '<button class="btn btn-outline btn-sm" onclick="compartirTirada()">Compartir</button>';
 }
+function cuadernoHTML(panelId){
+  var cntId='cnt-'+panelId;
+  return '<div class="cuaderno-section"><h4 style="color:var(--gold);margin:0 0 8px;font-size:.9rem">Cuaderno de reflexiones</h4><div class="form-group"><label for="anotaciones-'+panelId+'">Anotaciones</label><div class="char-counter"><textarea id="anotaciones-'+panelId+'" class="input-desc" maxlength="300" placeholder="Escribe lo que consideres sobre esta tirada..." oninput="updateCounter(this,\''+cntId+'\')"></textarea><span class="counter-text" id="'+cntId+'">0/300</span></div></div><div class="form-group"><label for="observado-'+panelId+'">Lo observado</label><textarea id="observado-'+panelId+'" class="input-desc" maxlength="500" placeholder="Escribe después lo que has visto o vivido respecto a lo que entendiste..."></textarea></div></div>';
+}
 function ponerBotones(dest,titulo,panelId){
-  document.getElementById(dest).innerHTML+='<div class="btn-group mt-8">'+btnMD(titulo,panelId)+btnHTML(titulo,panelId)+btnAI(titulo,panelId)+btnCompartir(titulo)+btnGuardar(titulo)+'</div>';
+  var el=document.getElementById(dest);
+  el.innerHTML+=cuadernoHTML(panelId);
+  el.innerHTML+='<div class="btn-group mt-8">'+btnMD(titulo,panelId)+btnHTML(titulo,panelId)+btnAI(titulo,panelId)+btnCompartir(titulo)+btnGuardar(titulo)+'</div>';
 }
 
 var BATS_BASE="https://sugusdeborbon-glitch.github.io/bats-tarot/";
@@ -622,7 +628,6 @@ function hacerAprendizaje(inv){
   window._lastPanel="aprendizaje";
   window._lastPanelTitle="El Aprendizaje";
   mostrarCompleto(c,"r-aprendizaje",{posiciones:pos});
-  document.getElementById("r-aprendizaje").innerHTML+='<div class="form-group mt-8"><label for="accion-aprendizaje">Acción recomendada (24-48h)</label><textarea id="accion-aprendizaje" class="input-desc" maxlength="200" placeholder="¿Qué acción concreta, verificable y realizable en 24/48h demuestra que este aprendizaje comienza a integrarse?"></textarea></div>';
   ponerBotones("r-aprendizaje","El Aprendizaje","aprendizaje");
 }
 
