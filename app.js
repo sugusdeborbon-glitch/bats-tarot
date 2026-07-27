@@ -248,8 +248,7 @@ function cuadernoHTML(panelId){
 }
 function ponerBotones(dest,titulo,panelId){
   var el=document.getElementById(dest);
-  el.innerHTML+=cuadernoHTML(panelId);
-  el.innerHTML+='<div class="btn-group mt-8">'+btnMD(titulo,panelId)+btnHTML(titulo,panelId)+btnAI(titulo,panelId)+btnCompartir(titulo)+btnGuardar(titulo)+'</div>';
+  el.innerHTML+=cuadernoHTML(panelId)+'<div class="btn-group mt-8">'+btnMD(titulo,panelId)+btnHTML(titulo,panelId)+btnAI(titulo,panelId)+btnCompartir(titulo)+btnGuardar(titulo)+'</div>';
 }
 
 var BATS_BASE="https://sugusdeborbon-glitch.github.io/bats-tarot/";
