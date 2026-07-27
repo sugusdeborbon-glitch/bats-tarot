@@ -90,6 +90,8 @@ function irA(id){
   document.querySelectorAll(".panel").forEach(function(p){p.classList.remove("active")});
   var el=document.getElementById("panel-"+id);
   if(el) el.classList.add("active");
+  if(id==="historial") cargarHist();
+  if(id==="ayuda") mostrarTodas();
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
@@ -214,12 +216,17 @@ function importarHist(){
   inp.click();
 }
 
+function isCap(){return !!(window.Capacitor&&Capacitor.Plugins)}
 function downloadBlob(content,filename,type){
-  var b=new Blob([content],{type:type+";charset=utf-8"});
-  var u=URL.createObjectURL(b);
-  var a=document.createElement("a");a.href=u;a.download=filename;
-  document.body.appendChild(a);a.click();
-  document.body.removeChild(a);URL.revokeObjectURL(u);
+  if(isCap()&&Capacitor.Plugins.Share){
+    Capacitor.Plugins.Share.share({title:filename,text:content}).catch(function(){toast("No se pudo compartir",true)});
+  }else{
+    var b=new Blob([content],{type:type+";charset=utf-8"});
+    var u=URL.createObjectURL(b);
+    var a=document.createElement("a");a.href=u;a.download=filename;
+    document.body.appendChild(a);a.click();
+    document.body.removeChild(a);URL.revokeObjectURL(u);
+  }
 }
 function slugify(s){
   return s.toLowerCase().replace(/[^a-z0-9áéíóúüñ\s-]/g,'').replace(/\s+/g,'_').replace(/-+/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'')||"tirada";
@@ -462,7 +469,9 @@ function compartirHist(i){
   if(hr.anotaciones)md+="**Anotaciones:** "+hr.anotaciones+"\n\n";
   if(hr.observado)md+="**Lo observado:** "+hr.observado+"\n\n";
   md+="_Generado por BATS Tarot_";
-  if(navigator.share){
+  if(isCap()&&Capacitor.Plugins.Share){
+    Capacitor.Plugins.Share.share({title:hr.titulo||hr.tipo,text:md}).catch(function(){});
+  }else if(navigator.share){
     navigator.share({title:hr.titulo||hr.tipo,text:md}).catch(function(){
       downloadBlob(md,"bats-"+slugify(hr.titulo||hr.tipo)+".md","text/markdown");
     });
@@ -495,7 +504,9 @@ function compartirTirada(){
   if(anot)md+="**Anotaciones:** "+anot+"\n\n";
   if(obs)md+="**Lo observado:** "+obs+"\n\n";
   md+="_Generado por BATS Tarot_";
-  if(navigator.share){
+  if(isCap()&&Capacitor.Plugins.Share){
+    Capacitor.Plugins.Share.share({title:tit,text:md}).catch(function(){});
+  }else if(navigator.share){
     navigator.share({title:tit,text:md}).catch(function(){
       downloadBlob(md,"bats-"+slugify(tit)+".md","text/markdown");
     });
@@ -737,7 +748,8 @@ function compartirAV(){
   if(anot)md+="**Anotaciones:** "+anot+"\n\n";
   if(obs)md+="**Lo observado:** "+obs+"\n\n";
   md+="_Generado por BATS Tarot_";
-  if(navigator.share){navigator.share({title:"El Arcano Visitante",text:md}).catch(function(){downloadBlob(md,"bats-arcano-visitante.md","text/markdown")})}
+  if(isCap()&&Capacitor.Plugins.Share){Capacitor.Plugins.Share.share({title:"El Arcano Visitante",text:md}).catch(function(){})}
+  else if(navigator.share){navigator.share({title:"El Arcano Visitante",text:md}).catch(function(){downloadBlob(md,"bats-arcano-visitante.md","text/markdown")})}
   else{downloadBlob(md,"bats-arcano-visitante.md","text/markdown")}
 }
 
