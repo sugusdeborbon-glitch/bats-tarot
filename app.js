@@ -214,8 +214,14 @@ function importarHist(){
 
 function isCap(){return !!(window.Capacitor&&Capacitor.Plugins)}
 function downloadBlob(content,filename,type){
-  if(isCap()&&Capacitor.Plugins.Share){
-    Capacitor.Plugins.Share.share({title:filename,text:content}).catch(function(){toast("No se pudo compartir",true)});
+  if(isCap()&&Capacitor.Plugins.Filesystem&&Capacitor.Plugins.Share){
+    var fs=Capacitor.Plugins.Filesystem;
+    var sh=Capacitor.Plugins.Share;
+    fs.writeFile({path:filename,data:content,directory:"CACHE",encoding:"utf8"}).then(function(r){
+      return fs.getUri({path:filename,directory:"CACHE"});
+    }).then(function(r){
+      sh.share({title:filename,text:content,files:[r.uri]}).catch(function(){toast("Guardado en caché: "+filename)});
+    }).catch(function(){toast("No se pudo guardar",true)});
   }else{
     var b=new Blob([content],{type:type+";charset=utf-8"});
     var u=URL.createObjectURL(b);
