@@ -1,3 +1,5 @@
+var BATS_VERSION="1.4.0";
+
 var PALOS=[["bastos","Wands"],["copas","Cups"],["espadas","Swords"],["oros","Pentacles"]];
 var NOMPALO={bastos:"Bastos",copas:"Copas",espadas:"Espadas",oros:"Oros"};
 var BARAJA=[];
@@ -22,8 +24,31 @@ PALOS.forEach(function(p){
     BARAJA.push({nombre:nom,valor:v,tipo:pa,img:"cartas/"+pi+z(v)+".jpg",nucleo:np,letras:ini(nom)});
   }
 });
+
+var TABLA_78=[];
+(function(){
+  for(var i=1;i<=21;i++)TABLA_78.push(BARAJA[i]);
+  TABLA_78.push(BARAJA[0]);
+  for(var i=22;i<=77;i++)TABLA_78.push(BARAJA[i]);
+})();
+
 function z(n){return n<10?"0"+n:""+n}
 function ini(s){return s.replace(/^(La|Los|El|Las|As|Sota|Caballo|Reina|Rey)\s+(de\s+)?/i,"").substring(0,2).toUpperCase()}
+
+var PITO={A:1,B:2,C:3,D:4,E:5,F:6,G:7,H:8,I:9,J:1,K:2,L:3,M:4,N:5,O:6,P:7,Q:8,R:9,S:1,T:2,U:3,V:4,W:5,X:6,Y:7,Z:8};
+function normalizarNombre(s){return s.toUpperCase().replace(/[ÁÉÍÓÚÜ]/g,function(m){return{"Á":"A","É":"E","Í":"I","Ó":"O","Ú":"U","Ü":"U"}[m]}).replace(/[^A-Z\s]/g,"")}
+function sumaDigitos(n){var s=0;for(var i=0;i<n.length;i++)s+=parseInt(n[i])||0;return s}
+function sumaNombre(s){var n=normalizarNombre(s),sum=0;for(var i=0;i<n.length;i++)if(PITO[n[i]])sum+=PITO[n[i]];return sum}
+function calcArcanoNum(fechaNac,fechaDia,nombre){
+  var dn=fechaNac.replace(/\//g,""),dd=fechaDia.replace(/\//g,"");
+  if(dn.length!==8||dd.length!==8)return null;
+  var sn=sumaDigitos(dn),sd=sumaDigitos(dd),snn=sumaNombre(nombre);
+  var total=sn+sd+snn;
+  if(total===0)return null;
+  if(total>=1&&total<=78)return total;
+  while(total>78){var s=0,t=total;while(t>0){s+=t%10;t=Math.floor(t/10)}total=s}
+  return total>0&&total<=78?total:null;
+}
 
 function barajar(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a}
 function crearSub(m){
@@ -145,7 +170,9 @@ function guardarHist(tipo,cartas,descripcion,titulo){
   var sit=document.getElementById('situacion-'+window._lastPanel)?.value||'';
   var acc=document.getElementById('accion-'+window._lastPanel)?.value||'';
   var tipo_rel=document.getElementById('tipo-'+window._lastPanel)?.value||'';
-  h.unshift({fecha:new Date().toISOString(),tipo:tipo,descripcion:descripcion||"",titulo:titulo||"",situacion:sit,accion:acc,tipo_rel:tipo_rel,cartas:cartas.map(function(it){
+  var anot=document.getElementById('anotaciones-'+window._lastPanel)?.value||'';
+  var obs=document.getElementById('observado-'+window._lastPanel)?.value||'';
+  h.unshift({fecha:new Date().toISOString(),tipo:tipo,descripcion:descripcion||"",titulo:titulo||"",situacion:sit,accion:acc,tipo_rel:tipo_rel,anotaciones:anot,observado:obs,cartas:cartas.map(function(it){
     return {nombre:it.carta.nombre,img:it.carta.img,valor:it.carta.valor,tipo:it.carta.tipo,nucleo:it.carta.nucleo,letras:it.carta.letras,invertida:it.invertida,posicion:it.posicion,texto:it.texto||txt(it.carta,it.invertida)};
   }),resumen:cartas.map(function(it){return it.carta.nombre+(it.invertida?"(inv)":"")}).join(", ")});
   if(h.length>50) h=h.slice(0,50);
@@ -187,31 +214,40 @@ function importarHist(){
   inp.click();
 }
 
-function btnGuardar(tipo,cartas){
-  return '<button class="btn btn-outline btn-sm" onclick="guardarHist(\''+tipo.replace(/'/g,"\\'")+'\',window._ult,document.getElementById(\'desc-\'+window._lastPanel)&&document.getElementById(\'desc-\'+window._lastPanel).value||\'\',document.getElementById(\'titulo-\'+window._lastPanel)&&document.getElementById(\'titulo-\'+window._lastPanel).value||\'\');return false">Guardar en historial</button>';
+function downloadBlob(content,filename,type){
+  var b=new Blob([content],{type:type+";charset=utf-8"});
+  var u=URL.createObjectURL(b);
+  var a=document.createElement("a");a.href=u;a.download=filename;
+  document.body.appendChild(a);a.click();
+  document.body.removeChild(a);URL.revokeObjectURL(u);
 }
 function slugify(s){
   return s.toLowerCase().replace(/[^a-z0-9áéíóúüñ\s-]/g,'').replace(/\s+/g,'_').replace(/-+/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'')||"tirada";
 }
+function btnGuardar(tipo,cartas){
+  return '<button class="btn btn-outline btn-sm" onclick="guardarHist(\''+tipo.replace(/'/g,"\\'")+'\',window._ult,document.getElementById(\'desc-\'+window._lastPanel)&&document.getElementById(\'desc-\'+window._lastPanel).value||\'\',document.getElementById(\'titulo-\'+window._lastPanel)&&document.getElementById(\'titulo-\'+window._lastPanel).value||\'\');return false">Guardar en historial</button>';
+}
 function btnMD(titulo,panelId){
   var esc=titulo.replace(/'/g,"\\'");
-  return '<button class="btn btn-outline btn-sm" onclick="descargarMD(\''+esc+'\',window._ult,document.getElementById(\'desc-'+panelId+'\')&&document.getElementById(\'desc-'+panelId+'\').value||\'\',document.getElementById(\'situacion-'+panelId+'\')&&document.getElementById(\'situacion-'+panelId+'\').value||\'\',document.getElementById(\'accion-'+panelId+'\')&&document.getElementById(\'accion-'+panelId+'\').value||\'\',document.getElementById(\'tipo-'+panelId+'\')&&document.getElementById(\'tipo-'+panelId+'\').value||\'\')">Descargar MD</button>';
+  return '<button class="btn btn-outline btn-sm" onclick="descargarMD(\''+esc+'\',window._ult,document.getElementById(\'desc-'+panelId+'\')&&document.getElementById(\'desc-'+panelId+'\').value||\'\',document.getElementById(\'situacion-'+panelId+'\')&&document.getElementById(\'situacion-'+panelId+'\').value||\'\',document.getElementById(\'accion-'+panelId+'\')&&document.getElementById(\'accion-'+panelId+'\').value||\'\',document.getElementById(\'tipo-'+panelId+'\')&&document.getElementById(\'tipo-'+panelId+'\').value||\'\',document.getElementById(\'anotaciones-'+panelId+'\')&&document.getElementById(\'anotaciones-'+panelId+'\').value||\'\',document.getElementById(\'observado-'+panelId+'\')&&document.getElementById(\'observado-'+panelId+'\').value||\'\')">Descargar MD</button>';
 }
 function btnHTML(titulo,panelId){
   var esc=titulo.replace(/'/g,"\\'");
-  return '<button class="btn btn-outline btn-sm" onclick="descargarHTML(\''+esc+'\',window._ult,document.getElementById(\'desc-'+panelId+'\')&&document.getElementById(\'desc-'+panelId+'\').value||\'\',document.getElementById(\'situacion-'+panelId+'\')&&document.getElementById(\'situacion-'+panelId+'\').value||\'\',document.getElementById(\'accion-'+panelId+'\')&&document.getElementById(\'accion-'+panelId+'\').value||\'\',document.getElementById(\'tipo-'+panelId+'\')&&document.getElementById(\'tipo-'+panelId+'\').value||\'\')">Descargar HTML</button>';
+  return '<button class="btn btn-outline btn-sm" onclick="descargarHTML(\''+esc+'\',window._ult,document.getElementById(\'desc-'+panelId+'\')&&document.getElementById(\'desc-'+panelId+'\').value||\'\',document.getElementById(\'situacion-'+panelId+'\')&&document.getElementById(\'situacion-'+panelId+'\').value||\'\',document.getElementById(\'accion-'+panelId+'\')&&document.getElementById(\'accion-'+panelId+'\').value||\'\',document.getElementById(\'tipo-'+panelId+'\')&&document.getElementById(\'tipo-'+panelId+'\').value||\'\',document.getElementById(\'anotaciones-'+panelId+'\')&&document.getElementById(\'anotaciones-'+panelId+'\').value||\'\',document.getElementById(\'observado-'+panelId+'\')&&document.getElementById(\'observado-'+panelId+'\').value||\'\')">Descargar HTML</button>';
 }
 function btnAI(titulo,panelId){
   var esc=titulo.replace(/'/g,"\\'");
   return '<button class="btn btn-outline btn-sm" onclick="descargarAI(\''+esc+'\',window._ult)">Descargar IA</button>';
 }
+function btnCompartir(titulo){
+  return '<button class="btn btn-outline btn-sm" onclick="compartirTirada()">Compartir</button>';
+}
 function ponerBotones(dest,titulo,panelId){
-  var cartas = window._ult;
-  document.getElementById(dest).innerHTML+='<div class="btn-group mt-8">'+btnMD(titulo,panelId)+btnHTML(titulo,panelId)+btnAI(titulo,panelId)+btnGuardar(titulo)+'</div>';
+  document.getElementById(dest).innerHTML+='<div class="btn-group mt-8">'+btnMD(titulo,panelId)+btnHTML(titulo,panelId)+btnAI(titulo,panelId)+btnCompartir(titulo)+btnGuardar(titulo)+'</div>';
 }
 
 var BATS_BASE="https://sugusdeborbon-glitch.github.io/bats-tarot/";
-function descargarMD(titulo,cartas,descripcion,situacion,accion,tipo){
+function descargarMD(titulo,cartas,descripcion,situacion,accion,tipo,anotaciones,observado){
   var f=new Date(),fs=f.toLocaleDateString("es-ES",{year:"numeric",month:"long",day:"numeric",hour:"2-digit",minute:"2-digit"});
   var fn=f.getFullYear()+"-"+z(f.getMonth()+1)+"-"+z(f.getDate())+"_"+z(f.getHours())+z(f.getMinutes());
   var slug=slugify(titulo);
@@ -227,6 +263,8 @@ function descargarMD(titulo,cartas,descripcion,situacion,accion,tipo){
   var q=calcQuinta(cartas);
   if(q) md+="### ✦ Quintaesencia\n\n**"+q.nombre+"**\n\n"+(textoQuinta(q.nombre)||txt(q,false))+"\n\n";
   if(accion) md+="**Acción recomendada:** "+accion+"\n\n";
+  if(anotaciones) md+="**Anotaciones:** "+anotaciones+"\n\n";
+  if(observado) md+="**Lo observado:** "+observado+"\n\n";
   md+="_Generado por BATS Tarot_";
   var b=new Blob([md],{type:"text/markdown;charset=utf-8"});
   var u=URL.createObjectURL(b);
@@ -234,7 +272,7 @@ function descargarMD(titulo,cartas,descripcion,situacion,accion,tipo){
   document.body.appendChild(a);a.click();
   document.body.removeChild(a);URL.revokeObjectURL(u);
 }
-function descargarHTML(titulo,cartas,descripcion,situacion,accion,tipo){
+function descargarHTML(titulo,cartas,descripcion,situacion,accion,tipo,anotaciones,observado){
   var f=new Date(),fs=f.toLocaleDateString("es-ES",{year:"numeric",month:"long",day:"numeric",hour:"2-digit",minute:"2-digit"});
   var fn=f.getFullYear()+"-"+z(f.getMonth()+1)+"-"+z(f.getDate())+"_"+z(f.getHours())+z(f.getMinutes());
   var slug=slugify(titulo);
@@ -268,6 +306,8 @@ function descargarHTML(titulo,cartas,descripcion,situacion,accion,tipo){
   if(situacion) html+='<p style="font-style:italic;color:#f0d080;margin-bottom:12px"><strong>Situación:</strong> '+situacion+'</p>';
   html+='<div class="'+wrap+'">'+cardsHTML+'</div>'+qH;
   if(accion) html+='<p style="font-style:italic;color:#b8a898;margin-top:12px"><strong>Acción recomendada:</strong> '+accion+'</p>';
+  if(anotaciones) html+='<p style="color:#b8a898;margin-top:8px"><strong>Anotaciones:</strong> '+anotaciones+'</p>';
+  if(observado) html+='<p style="color:#b8a898;margin-top:8px"><strong>Lo observado:</strong> '+observado+'</p>';
   html+='<p class="foot">Generado por BATS Tarot</p></body></html>';
   var b=new Blob([html],{type:"text/html;charset=utf-8"});
   var u=URL.createObjectURL(b);
@@ -284,6 +324,8 @@ function descargarAI(titulo,cartas){
   var sit=document.getElementById('situacion-'+panelId)?.value||'';
   var acc=document.getElementById('accion-'+panelId)?.value||'';
   var tipo=document.getElementById('tipo-'+panelId)?.value||'';
+  var anot=document.getElementById('anotaciones-'+panelId)?.value||'';
+  var obs=document.getElementById('observado-'+panelId)?.value||'';
   var md=PROMPT_AI+"\n\n";
   md+="Tirada: "+titulo+"\nFecha: "+fs+"\n";
   if(desc) md+="Descripción: "+desc+"\n";
@@ -296,6 +338,8 @@ function descargarAI(titulo,cartas){
   var q=calcQuinta(cartas);
   if(q) md+="\nQuintaesencia: "+q.nombre+"\n";
   if(acc) md+="\nAcción recomendada: "+acc+"\n";
+  if(anot) md+="\nAnotaciones: "+anot+"\n";
+  if(obs) md+="\nLo observado: "+obs+"\n";
   var b=new Blob([md],{type:"text/markdown;charset=utf-8"});
   var u=URL.createObjectURL(b);
   var a=document.createElement("a");a.href=u;a.download="ia-"+slug+"-"+fn+".md";
@@ -306,12 +350,38 @@ function descargarAI(titulo,cartas){
 function cargarHist(){
   var h=JSON.parse(localStorage.getItem("bats-hist")||"[]");
   var c=document.getElementById("r-historial");
-  if(!h.length){c.innerHTML='<p class="subtle">No hay lecturas guardadas.</p>';return}
-  var htm='<div class="historial-grid">';
+  var htm='<div class="priv-notice">Las lecturas se guardan solo en este navegador y no se sincronizan. Para conservarlas o trasladarlas a otro dispositivo, usa Exportar.</div>';
+  htm+='<div class="form-group"><input type="text" id="hist-search" placeholder="Buscar por fecha, carta, palabra..." oninput="buscarHist()"></div>';
+  if(!h.length){htm+='<p class="subtle">No hay lecturas guardadas.</p>';c.innerHTML=htm;return}
+  htm+='<div class="historial-grid">';
   h.forEach(function(hr,i){
     var d=new Date(hr.fecha),fs=d.toLocaleDateString("es-ES",{year:"numeric",month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"});
-    var previewImgs = hr.cartas.slice(0,4).map(function(ca){return '<img src="'+ca.img+'" alt="" loading="lazy">'}).join("");
+    var previewImgs=hr.cartas.slice(0,4).map(function(ca){return '<img src="'+ca.img+'" alt="" loading="lazy">'}).join("");
     htm+='<div class="historial-card" onclick="verHist('+i+')">';
+    if(previewImgs) htm+='<div class="hc-preview">'+previewImgs+'</div>';
+    htm+='<div class="h-fecha">'+fs+'</div><div class="h-tipo">'+(hr.titulo||hr.tipo)+(hr.descripcion?' <span style="font-weight:normal;font-size:.75rem;opacity:.7"> · '+hr.descripcion+'</span>':'')+'</div><div class="h-cartas">'+hr.resumen+'</div></div>';
+  });
+  htm+='</div>';
+  c.innerHTML=htm;
+}
+function buscarHist(){
+  var q=document.getElementById('hist-search')?.value?.toLowerCase().trim()||'';
+  var h=JSON.parse(localStorage.getItem("bats-hist")||"[]");
+  var c=document.getElementById("r-historial");
+  if(!h.length){c.innerHTML='<p class="subtle">No hay lecturas guardadas.</p>';return}
+  var filtered=h;
+  if(q) filtered=h.filter(function(hr){
+    var text=(hr.titulo||hr.tipo+" "+hr.descripcion+" "+hr.resumen+" "+(hr.situacion||"")+" "+(hr.accion||"")+" "+(hr.tipo_rel||"")+" "+(hr.anotaciones||"")+" "+(hr.observado||"")).toLowerCase();
+    var d=new Date(hr.fecha),fs=d.toLocaleDateString("es-ES",{year:"numeric",month:"short",day:"numeric"});
+    return text.indexOf(q)>=0||fs.indexOf(q)>=0;
+  });
+  if(!filtered.length){c.innerHTML='<p class="subtle">No se encontraron lecturas con "'+q+'".</p><div class="btn-group mt-8"><button class="btn btn-outline btn-sm" onclick="document.getElementById(\'hist-search\').value=\'\';buscarHist()">Limpiar búsqueda</button></div>';return}
+  var htm='<div class="historial-grid">';
+  filtered.forEach(function(hr){
+    var origIdx=h.indexOf(hr);
+    var d=new Date(hr.fecha),fs=d.toLocaleDateString("es-ES",{year:"numeric",month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"});
+    var previewImgs=hr.cartas.slice(0,4).map(function(ca){return '<img src="'+ca.img+'" alt="" loading="lazy">'}).join("");
+    htm+='<div class="historial-card" onclick="verHist('+origIdx+')">';
     if(previewImgs) htm+='<div class="hc-preview">'+previewImgs+'</div>';
     htm+='<div class="h-fecha">'+fs+'</div><div class="h-tipo">'+(hr.titulo||hr.tipo)+(hr.descripcion?' <span style="font-weight:normal;font-size:.75rem;opacity:.7"> · '+hr.descripcion+'</span>':'')+'</div><div class="h-cartas">'+hr.resumen+'</div></div>';
   });
@@ -323,6 +393,8 @@ function verHist(i){
   var hr=h[i];if(!hr)return;
   var cartas=hr.cartas.map(function(it){return{carta:it,invertida:it.invertida,texto:it.texto,posicion:it.posicion}});
   var htm='<div class="result-box"><h3 style="color:var(--gold);margin-bottom:6px">'+(hr.titulo||hr.tipo)+'</h3>';
+  var fs=new Date(hr.fecha).toLocaleDateString("es-ES",{year:"numeric",month:"long",day:"numeric",hour:"2-digit",minute:"2-digit"});
+  htm+='<p style="color:var(--text-muted);margin-bottom:8px;font-size:.85rem">'+fs+'</p>';
   if(hr.descripcion) htm+='<p style="font-style:italic;color:var(--text-muted);margin-bottom:8px;font-size:.9rem">'+(hr.titulo?hr.tipo+": ":"")+hr.descripcion+'</p>';
   if(hr.tipo_rel) htm+='<p style="font-style:italic;color:var(--text-muted);margin-bottom:8px;font-size:.9rem"><strong>Tipo de relación:</strong> '+hr.tipo_rel+'</p>';
   if(hr.situacion) htm+='<p style="font-style:italic;color:var(--text-muted);margin-bottom:8px;font-size:.9rem"><strong>Situación:</strong> '+hr.situacion+'</p>';
@@ -345,20 +417,98 @@ function verHist(i){
     htm+='</div>';
   }
   htm+=qHTML(cartas);
-  htm+='<div class="btn-group mt-8"><button class="btn btn-outline btn-sm" onclick="descargarHistMD('+i+')">Descargar MD</button><button class="btn btn-outline btn-sm" onclick="descargarHistHTML('+i+')">Descargar HTML</button><button class="btn btn-outline btn-sm" onclick="descargarHistAI('+i+')">Descargar IA</button><button class="btn btn-outline btn-sm" onclick="cargarHist()">← Volver</button></div></div>';
+  htm+='<div class="cuaderno-section"><h4 style="color:var(--gold);margin:12px 0 6px;font-size:.9rem">Cuaderno de reflexiones</h4>';
+  htm+='<div class="form-group"><label for="c-anot-'+i+'">Anotaciones</label><div class="char-counter"><textarea id="c-anot-'+i+'" class="input-desc" maxlength="300" oninput="var c=document.getElementById(\'cnt-'+i+'\');if(c)c.textContent=this.length+\'/300\'" placeholder="Escribe lo que consideres sobre esta tirada...">'+(hr.anotaciones||"")+'</textarea><span class="counter-text" id="cnt-'+i+'">'+(hr.anotaciones||"").length+'/300</span></div></div>';
+  htm+='<div class="form-group"><label for="c-obs-'+i+'">Lo observado</label><textarea id="c-obs-'+i+'" class="input-desc" maxlength="500" placeholder="Escribe después lo que has visto o vivido respecto a lo que entendiste...">'+(hr.observado||"")+'</textarea></div>';
+  htm+='<div class="btn-group"><button class="btn btn-outline btn-sm" onclick="guardarCuaderno('+i+')">Guardar cambios</button></div></div>';
+  htm+='<div class="btn-group mt-8"><button class="btn btn-outline btn-sm" onclick="compartirHist('+i+')">Compartir</button><button class="btn btn-outline btn-sm" onclick="descargarHistMD('+i+')">MD</button><button class="btn btn-outline btn-sm" onclick="descargarHistHTML('+i+')">HTML</button><button class="btn btn-outline btn-sm" onclick="descargarHistAI('+i+')">IA</button><button class="btn btn-outline btn-sm" onclick="cargarHist()">← Volver</button></div></div>';
   document.getElementById("r-historial").innerHTML=htm;
+}
+function guardarCuaderno(i){
+  var h=JSON.parse(localStorage.getItem("bats-hist")||"[]");
+  if(!h[i])return;
+  var anot=document.getElementById('c-anot-'+i)?.value||'';
+  var obs=document.getElementById('c-obs-'+i)?.value||'';
+  h[i].anotaciones=anot;
+  h[i].observado=obs;
+  localStorage.setItem("bats-hist",JSON.stringify(h));
+  toast("Cuaderno actualizado");
+}
+function updateCounter(el,id){
+  var cnt=document.getElementById(id);
+  if(cnt)cnt.textContent=el.value.length+'/300';
+}
+function compartirHist(i){
+  var h=JSON.parse(localStorage.getItem("bats-hist")||"[]");
+  var hr=h[i];if(!hr)return;
+  var cartas=hr.cartas;
+  var fs=new Date(hr.fecha).toLocaleDateString("es-ES",{year:"numeric",month:"long",day:"numeric",hour:"2-digit",minute:"2-digit"});
+  var md="# "+(hr.titulo||hr.tipo)+"\n\n_Fecha: "+fs+"_";
+  if(hr.descripcion)md+="\n\n*"+hr.descripcion+"*";
+  if(hr.tipo_rel)md+="\n\n**Tipo de relación:** "+hr.tipo_rel;
+  if(hr.situacion)md+="\n\n**Situación:** "+hr.situacion;
+  md+="\n\n";
+  cartas.forEach(function(it,idx){
+    md+="### "+(it.posicion?it.posicion+": ":"")+it.nombre+(it.invertida?" (invertida)":"")+"\n\n"+(it.texto||"—")+"\n\n";
+  });
+  var q=calcQuinta(cartas);
+  if(q)md+="### ✦ Quintaesencia\n\n**"+q.nombre+"**\n\n"+(textoQuinta(q.nombre)||txt(q,false))+"\n\n";
+  if(hr.accion)md+="**Acción recomendada:** "+hr.accion+"\n\n";
+  if(hr.anotaciones)md+="**Anotaciones:** "+hr.anotaciones+"\n\n";
+  if(hr.observado)md+="**Lo observado:** "+hr.observado+"\n\n";
+  md+="_Generado por BATS Tarot_";
+  if(navigator.share){
+    navigator.share({title:hr.titulo||hr.tipo,text:md}).catch(function(){
+      downloadBlob(md,"bats-"+slugify(hr.titulo||hr.tipo)+".md","text/markdown");
+    });
+  }else{
+    downloadBlob(md,"bats-"+slugify(hr.titulo||hr.tipo)+".md","text/markdown");
+  }
+}
+function compartirTirada(){
+  if(!window._ult)return;
+  var tit=window._lastPanelTitle||"Tirada BATS";
+  var f=new Date(),fs=f.toLocaleDateString("es-ES",{year:"numeric",month:"long",day:"numeric",hour:"2-digit",minute:"2-digit"});
+  var md="# "+tit+"\n\n_Fecha: "+fs+"_";
+  var panelId=window._lastPanel;
+  var desc=document.getElementById('desc-'+panelId)?.value||'';
+  var sit=document.getElementById('situacion-'+panelId)?.value||'';
+  var acc=document.getElementById('accion-'+panelId)?.value||'';
+  var tipo=document.getElementById('tipo-'+panelId)?.value||'';
+  if(desc)md+="\n\n*"+desc+"*";
+  if(tipo)md+="\n\n**Tipo de relación:** "+tipo;
+  if(sit)md+="\n\n**Situación:** "+sit;
+  md+="\n\n";
+  window._ult.forEach(function(it,i){
+    md+="### "+(it.posicion?it.posicion+": ":"")+it.carta.nombre+(it.invertida?" (invertida)":"")+"\n\n"+(it.texto||txt(it.carta,it.invertida)||"—")+"\n\n";
+  });
+  var q=calcQuinta(window._ult);
+  if(q)md+="### ✦ Quintaesencia\n\n**"+q.nombre+"**\n\n"+(textoQuinta(q.nombre)||txt(q,false))+"\n\n";
+  if(acc)md+="**Acción recomendada:** "+acc+"\n\n";
+  var anot=document.getElementById('anotaciones-'+panelId)?.value||'';
+  var obs=document.getElementById('observado-'+panelId)?.value||'';
+  if(anot)md+="**Anotaciones:** "+anot+"\n\n";
+  if(obs)md+="**Lo observado:** "+obs+"\n\n";
+  md+="_Generado por BATS Tarot_";
+  if(navigator.share){
+    navigator.share({title:tit,text:md}).catch(function(){
+      downloadBlob(md,"bats-"+slugify(tit)+".md","text/markdown");
+    });
+  }else{
+    downloadBlob(md,"bats-"+slugify(tit)+".md","text/markdown");
+  }
 }
 function descargarHistHTML(i){
   var h=JSON.parse(localStorage.getItem("bats-hist")||"[]");
   var hr=h[i];if(!hr)return;
   var cartas=hr.cartas.map(function(it){return{carta:it,invertida:it.invertida,texto:it.texto,posicion:it.posicion}});
-  descargarHTML(hr.titulo||hr.tipo,cartas,hr.descripcion,hr.situacion,hr.accion,hr.tipo_rel);
+  descargarHTML(hr.titulo||hr.tipo,cartas,hr.descripcion,hr.situacion,hr.accion,hr.tipo_rel,hr.anotaciones,hr.observado);
 }
 function descargarHistMD(i){
   var h=JSON.parse(localStorage.getItem("bats-hist")||"[]");
   var hr=h[i];if(!hr)return;
   var cartas=hr.cartas.map(function(it){return{carta:it,invertida:it.invertida,texto:it.texto,posicion:it.posicion}});
-  descargarMD(hr.titulo||hr.tipo,cartas,hr.descripcion,hr.situacion,hr.accion,hr.tipo_rel);
+  descargarMD(hr.titulo||hr.tipo,cartas,hr.descripcion,hr.situacion,hr.accion,hr.tipo_rel,hr.anotaciones,hr.observado);
 }
 function descargarHistAI(i){
   var h=JSON.parse(localStorage.getItem("bats-hist")||"[]");
@@ -384,6 +534,7 @@ function hacerDiaria(inv){
   for(var i=0;i<5;i++) c.push({carta:m[i],invertida:inv?Math.random()<.5:false,posicion:pos[i],texto:txt(m[i],inv?Math.random()<.5:false,esSombra[i])});
   window._ult=c;
   window._lastPanel="diaria";
+  window._lastPanelTitle="Cruz Diaria";
   mostrarCruz(c,"r-diaria",{posiciones:pos});
   ponerBotones("r-diaria","Cruz Diaria","diaria");
 }
@@ -401,6 +552,7 @@ function tirarRelacion(){
   mostrarCompleto(c,"r-relacion",{posiciones:pos});
   window._ult=c;
   window._lastPanel="rel";
+  window._lastPanelTitle="Tirada de la relación";
   ponerBotones("r-relacion","Tirada de la relaci\u00f3n","rel");
 }
 function tirarLaboral(){hacerLaboral(false)}
@@ -414,6 +566,7 @@ function hacerLaboral(inv){
   for(var i=0;i<5;i++) c.push({carta:m[i],invertida:inv?Math.random()<.5:false,posicion:pos[i],texto:txt(m[i],inv?Math.random()<.5:false,esSombra[i])});
   window._ult=c;
   window._lastPanel="laboral";
+  window._lastPanelTitle="BATS Laboral";
   mostrarCruz(c,"r-laboral",{posiciones:pos});
   ponerBotones("r-laboral","BATS Laboral","laboral");
 }
@@ -442,6 +595,7 @@ function tirarPers(){
   mostrarCompleto(c,"r-pers");
   window._ult=c;
   window._lastPanel="pers";
+  window._lastPanelTitle=titulo;
   ponerBotones("r-pers",titulo,"pers");
 }
 
@@ -466,10 +620,123 @@ function hacerAprendizaje(inv){
   for(var i=0;i<6;i++) c.push({carta:m[i],invertida:inv?Math.random()<.5:false,posicion:pos[i],texto:txt(m[i],inv?Math.random()<.5:false,false)});
   window._ult=c;
   window._lastPanel="aprendizaje";
+  window._lastPanelTitle="El Aprendizaje";
   mostrarCompleto(c,"r-aprendizaje",{posiciones:pos});
   document.getElementById("r-aprendizaje").innerHTML+='<div class="form-group mt-8"><label for="accion-aprendizaje">Acción recomendada (24-48h)</label><textarea id="accion-aprendizaje" class="input-desc" maxlength="200" placeholder="¿Qué acción concreta, verificable y realizable en 24/48h demuestra que este aprendizaje comienza a integrarse?"></textarea></div>';
   ponerBotones("r-aprendizaje","El Aprendizaje","aprendizaje");
 }
+
+function tirarVisitante(){
+  var fnac=document.getElementById("av-fecha-nac").value.trim();
+  var nombre=document.getElementById("av-nombre").value.trim();
+  if(!fnac){toast("Introduce tu fecha de nacimiento (DD/MM/AAAA)",true);return}
+  if(!nombre){toast("Introduce tu nombre completo",true);return}
+  var fnacParts=fnac.split("/");
+  if(fnacParts.length!==3||fnacParts[0].length!==2||fnacParts[1].length!==2||fnacParts[2].length!==4){
+    toast("Formato de fecha: DD/MM/AAAA",true);return;
+  }
+  var testDate=new Date(fnacParts[2],fnacParts[1]-1,fnacParts[0]);
+  if(isNaN(testDate.getTime())||testDate.getDate()!=fnacParts[0]||testDate.getMonth()!=fnacParts[1]-1){
+    toast("Fecha de nacimiento no válida",true);return;
+  }
+  localStorage.setItem("av-nacimiento",fnac);
+  localStorage.setItem("av-nombre",nombre);
+  var hoy=new Date();
+  var dd=z(hoy.getDate())+"/"+z(hoy.getMonth()+1)+"/"+hoy.getFullYear();
+  var num=calcArcanoNum(fnac,dd,nombre);
+  if(!num){toast("No se pudo calcular el arcano",true);return}
+  var carta=TABLA_78[num-1];
+  if(!carta){toast("Error en la tabla de arcanos",true);return}
+  var d=batsDe(carta);
+  var pos="El Arcano Visitante del día";
+  var c=[{carta:carta,invertida:false,posicion:pos,texto:txt(carta,false)}];
+  window._ult=c;
+  window._lastPanel="arcano-visitante";
+  window._lastPanelTitle="El Arcano Visitante";
+  var res=document.getElementById("r-arcano-visitante");
+  var html='<div class="result-box">';
+  html+='<div class="q-box"><div class="q-label">✦ TU ARCANO DEL DÍA</div><div class="q-inner">'+imgCard(carta)+'<div><div class="q-name">'+(num<=21?"XIIII".substring(0,num).replace(/^(X*)(I{0,3})(IV|V|VI{0,3})$/,"$1$2$3"):num===22?"0/XXII":num)+" — "+carta.nombre+'</div></div></div></div>';
+  html+='<div class="av-calc"><strong>Cálculo:</strong> '+fnac.replace(/\//g,"+").replace(/\+/g," + ")+" + "+dd.replace(/\//g,"+").replace(/\+/g," + ")+" + "+normalizarNombre(nombre)+" = <strong>"+num+"</strong></div>";
+  html+='<div class="av-questions">';
+  html+='<div class="card-result"><div class="pos-name">¿Qué vienes a mostrarme hoy?</div><div class="card-msg">'+(d?d.normal:"—")+'</div></div>';
+  html+='<div class="card-result"><div class="pos-name">¿Qué patrón conocido me estás ayudando a no repetir hoy?</div><div class="card-msg">'+(d?d.sombra||d.normal:"—")+'</div></div>';
+  html+='<div class="card-result"><div class="pos-name">¿Qué acción consciente me ayuda a escucharte?</div><div class="card-msg">'+(d?d.ayuda||d.normal:"—")+'</div></div>';
+  html+='</div>';
+  html+='<div class="cuaderno-section"><h4 style="color:var(--gold);margin:12px 0 6px;font-size:.9rem">Cuaderno de reflexiones</h4>';
+  html+='<div class="form-group"><label for="anotaciones-arcano-visitante">Anotaciones</label><div class="char-counter"><textarea id="anotaciones-arcano-visitante" class="input-desc" maxlength="300" placeholder="Escribe lo que consideres..." oninput="var c=document.getElementById(\'cnt-av\');if(c)c.textContent=this.length+\'/300\'"></textarea><span class="counter-text" id="cnt-av">0/300</span></div></div>';
+  html+='<div class="form-group"><label for="observado-arcano-visitante">Lo observado</label><textarea id="observado-arcano-visitante" class="input-desc" maxlength="500" placeholder="Escribe después lo que has visto o vivido..."></textarea></div>';
+  html+='</div>';
+  html+='<div class="av-disclaimer">El tarot no predice el futuro. Muestra patrones. La decisión siempre es tuya.</div>';
+  html+='</div>';
+  res.innerHTML=html;
+  var btns='<div class="btn-group mt-8">';
+  btns+='<button class="btn btn-outline btn-sm" onclick="descargarAV(\'md\')">Descargar MD</button>';
+  btns+='<button class="btn btn-outline btn-sm" onclick="descargarAV(\'html\')">Descargar HTML</button>';
+  btns+='<button class="btn btn-outline btn-sm" onclick="compartirAV()">Compartir</button>';
+  btns+='<button class="btn btn-outline btn-sm" onclick="guardarHist(\'El Arcano Visitante\',window._ult,\'\',\'El Arcano Visitante\')">Guardar</button>';
+  btns+='</div>';
+  res.innerHTML+=btns;
+}
+function descargarAV(fmt){
+  var anot=document.getElementById('anotaciones-arcano-visitante')?.value||'';
+  var obs=document.getElementById('observado-arcano-visitante')?.value||'';
+  if(!window._ult||!window._ult[0])return;
+  var c=window._ult[0].carta;
+  var num=null;
+  for(var i=0;i<TABLA_78.length;i++){if(TABLA_78[i]===c){num=i+1;break}}
+  var d=batsDe(c);
+  var f=new Date(),fs=f.toLocaleDateString("es-ES",{year:"numeric",month:"long",day:"numeric",hour:"2-digit",minute:"2-digit"});
+  var fnac=document.getElementById("av-fecha-nac")?.value||localStorage.getItem("av-nacimiento")||"";
+  var nombre=document.getElementById("av-nombre")?.value||localStorage.getItem("av-nombre")||"";
+  if(fmt==="md"){
+    var md="# El Arcano Visitante\n\n_Fecha: "+fs+"_";
+    md+="\n\n**Arcano:** "+num+" — "+c.nombre;
+    md+="\n\n**Fecha de nacimiento:** "+fnac;
+    md+="\n\n**Nombre:** "+nombre;
+    md+="\n\n---\n\n";
+    md+="### ¿Qué vienes a mostrarme hoy?\n\n"+(d?d.normal:"—")+"\n\n";
+    md+="### ¿Qué patrón conocido me estás ayudando a no repetir hoy?\n\n"+(d?d.sombra||d.normal:"—")+"\n\n";
+    md+="### ¿Qué acción consciente me ayuda a escucharte?\n\n"+(d?d.ayuda||d.normal:"—")+"\n\n";
+    if(anot)md+="**Anotaciones:** "+anot+"\n\n";
+    if(obs)md+="**Lo observado:** "+obs+"\n\n";
+    md+="_Generado por BATS Tarot_";
+    downloadBlob(md,"bats-arcano-visitante.md","text/markdown");
+  }else{
+    var html='<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>El Arcano Visitante - BATS</title>';
+    html+='<style>body{font-family:sans-serif;background:#0d0a13;color:#e8dcc8;padding:20px;max-width:800px;margin:0 auto}h1{color:#d4a847}h3{color:#d4a847;margin-top:16px}.ct{color:#b8a898;font-size:.9rem;line-height:1.5;margin:4px 0 12px}.foot{color:#666;font-size:.8rem;text-align:center;margin-top:24px}img{width:120px;border-radius:8px;border:2px solid #2a1a3e}</style></head><body>';
+    html+='<h1>El Arcano Visitante</h1><p style="color:#b8a898"><em>'+fs+'</em></p>';
+    html+='<p><strong>'+num+" — "+c.nombre+'</strong></p><p style="color:#b8a898">Nacimiento: '+fnac+' · Nombre: '+nombre+'</p>';
+    html+='<img src="'+BATS_BASE+c.img+'" alt="'+c.nombre+'">';
+    html+='<h3>¿Qué vienes a mostrarme hoy?</h3><div class="ct">'+(d?d.normal:"—")+'</div>';
+    html+='<h3>¿Qué patrón conocido me estás ayudando a no repetir hoy?</h3><div class="ct">'+(d?d.sombra||d.normal:"—")+'</div>';
+    html+='<h3>¿Qué acción consciente me ayuda a escucharte?</h3><div class="ct">'+(d?d.ayuda||d.normal:"—")+'</div>';
+    if(anot)html+='<h3>Anotaciones</h3><div class="ct">'+anot+'</div>';
+    if(obs)html+='<h3>Lo observado</h3><div class="ct">'+obs+'</div>';
+    html+='<p class="foot">Generado por BATS Tarot</p></body></html>';
+    downloadBlob(html,"bats-arcano-visitante.html","text/html");
+  }
+}
+function compartirAV(){
+  var anot=document.getElementById('anotaciones-arcano-visitante')?.value||'';
+  var obs=document.getElementById('observado-arcano-visitante')?.value||'';
+  if(!window._ult||!window._ult[0])return;
+  var c=window._ult[0].carta;
+  var num=null;
+  for(var i=0;i<TABLA_78.length;i++){if(TABLA_78[i]===c){num=i+1;break}}
+  var d=batsDe(c);
+  var f=new Date(),fs=f.toLocaleDateString("es-ES",{year:"numeric",month:"long",day:"numeric",hour:"2-digit",minute:"2-digit"});
+  var md="# El Arcano Visitante\n\n_Fecha: "+fs+"_";
+  md+="\n\n**Arcano:** "+num+" — "+c.nombre;
+  md+="\n\n### ¿Qué vienes a mostrarme hoy?\n\n"+(d?d.normal:"—")+"\n\n";
+  md+="### ¿Qué patrón conocido me estás ayudando a no repetir hoy?\n\n"+(d?d.sombra||d.normal:"—")+"\n\n";
+  md+="### ¿Qué acción consciente me ayuda a escucharte?\n\n"+(d?d.ayuda||d.normal:"—")+"\n\n";
+  if(anot)md+="**Anotaciones:** "+anot+"\n\n";
+  if(obs)md+="**Lo observado:** "+obs+"\n\n";
+  md+="_Generado por BATS Tarot_";
+  if(navigator.share){navigator.share({title:"El Arcano Visitante",text:md}).catch(function(){downloadBlob(md,"bats-arcano-visitante.md","text/markdown")})}
+  else{downloadBlob(md,"bats-arcano-visitante.md","text/markdown")}
+}
+
 function buscarAyuda(){
   var q=document.getElementById("ayuda-q").value.toLowerCase().trim();
   var cont=document.getElementById("r-ayuda");
@@ -515,7 +782,20 @@ function mostrarTodas(){
   cont.innerHTML=htm;
 }
 
+function checkNovedades(){
+  fetch('novedades.json?t='+Date.now()).then(function(r){return r.json()}).then(function(d){
+    var last=localStorage.getItem('bats-novedades-vista');
+    if(last!==d.version){
+      var m=document.createElement('div');
+      m.className='novedades-modal';
+      m.innerHTML='<div class="novedades-box"><h3>'+d.titulo+'</h3><div class="novedades-texto">'+d.texto+'</div><button class="btn btn-gold" onclick="this.closest(\'.novedades-modal\').remove();localStorage.setItem(\'bats-novedades-vista\',\''+d.version+'\')">Entendido</button></div>';
+      document.body.appendChild(m);
+    }
+  }).catch(function(){});
+}
+
 function initSW(){
+  checkNovedades();
   if('serviceWorker' in navigator){
     navigator.serviceWorker.register('service-worker.js').then(function(reg){
       reg.addEventListener('updatefound', function(){
@@ -537,6 +817,9 @@ setTimeout(function(){
   var rp1=document.getElementById("rel-p1"),rp2=document.getElementById("rel-p2");
   if(rp1){rp1.value=localStorage.getItem("bats-rel-p1")||"Persona 1"}
   if(rp2){rp2.value=localStorage.getItem("bats-rel-p2")||"Persona 2"}
+  var avFNac=document.getElementById("av-fecha-nac"),avNom=document.getElementById("av-nombre");
+  if(avFNac){avFNac.value=localStorage.getItem("av-nacimiento")||""}
+  if(avNom){avNom.value=localStorage.getItem("av-nombre")||""}
   if(document.getElementById("r-ayuda")) mostrarTodas();
   if(document.getElementById("r-historial")) cargarHist();
   initSW();

@@ -32,8 +32,10 @@
   <button class="menu-item" onclick="irA('bats-laboral')">BATS Laboral</button>
   <button class="menu-item" onclick="irA('aprendizaje')">El Aprendizaje</button>
   <button class="menu-item" onclick="irA('personalizada')">Tirada Personalizada</button>
+  <button class="menu-item" onclick="irA('arcano-visitante')">El Arcano Visitante</button>
   <button class="menu-item" onclick="irA('ayuda')">Ayuda · Significados</button>
   <button class="menu-item" onclick="irA('historial')">Historial</button>
+  <button class="menu-item" onclick="irA('que-es-bats')">Qué es BATS</button>
 </nav>
 
 <section id="panel-inicio" class="panel active">
@@ -45,6 +47,7 @@
     <button class="btn btn-outline" onclick="irA('bats-laboral')" style="text-align:left;display:flex;justify-content:space-between;align-items:center"><span>✦ BATS Laboral</span><span style="font-size:.7rem;opacity:.7">5 cartas en cruz</span></button>
     <button class="btn btn-outline" onclick="irA('aprendizaje')" style="text-align:left;display:flex;justify-content:space-between;align-items:center"><span>✦ El Aprendizaje</span><span style="font-size:.7rem;opacity:.7">6 cartas para integrar</span></button>
     <button class="btn btn-outline" onclick="irA('personalizada')" style="text-align:left;display:flex;justify-content:space-between;align-items:center"><span>✦ Tirada Personalizada</span><span style="font-size:.7rem;opacity:.7">elige cartas y posiciones</span></button>
+    <button class="btn btn-outline" onclick="irA('arcano-visitante')" style="text-align:left;display:flex;justify-content:space-between;align-items:center"><span>🔮 El Arcano Visitante</span><span style="font-size:.7rem;opacity:.7">numerología del día</span></button>
     <button class="btn btn-outline" onclick="irA('ayuda')" style="text-align:left;display:flex;justify-content:space-between;align-items:center"><span>📖 Ayuda · Significados</span><span style="font-size:.7rem;opacity:.7">busca por carta</span></button>
     <button class="btn btn-outline" onclick="irA('historial')" style="text-align:left;display:flex;justify-content:space-between;align-items:center"><span>📋 Historial</span><span style="font-size:.7rem;opacity:.7">lecturas guardadas</span></button>
   </div>
@@ -57,6 +60,20 @@
   <div class="form-group">
     <label for="desc-diaria">Descripción (opcional)</label>
     <textarea id="desc-diaria" class="input-desc" maxlength="150" placeholder="¿Qué quieres preguntar hoy?"></textarea>
+  </div>
+  <div class="form-group">
+    <label for="situacion-diaria">Situación</label>
+    <textarea id="situacion-diaria" class="input-desc" maxlength="200" placeholder="Describe tu situación actual..."></textarea>
+  </div>
+  <div class="form-group">
+    <label for="accion-diaria">Acción recomendada (24-48h)</label>
+    <textarea id="accion-diaria" class="input-desc" maxlength="200" placeholder="¿Qué acción concreta puedes realizar?"></textarea>
+  </div>
+  <div class="cuaderno-section">
+    <label for="anotaciones-diaria">Anotaciones</label>
+    <div class="char-counter"><textarea id="anotaciones-diaria" class="input-desc" maxlength="300" placeholder="Escribe lo que consideres sobre esta tirada..." oninput="updateCounter(this,'cnt-diaria')"></textarea><span class="counter-text" id="cnt-diaria">0/300</span></div>
+    <label for="observado-diaria">Lo observado</label>
+    <textarea id="observado-diaria" class="input-desc" maxlength="500" placeholder="Escribe después lo que has visto o vivido respecto a lo que entendiste..."></textarea>
   </div>
   <div class="btn-group">
     <button class="btn btn-gold" onclick="tirarDiaria()">✦ Tirar Cruz Diaria</button>
@@ -85,6 +102,20 @@
     <textarea id="desc-rel" class="input-desc" maxlength="150" placeholder="Describe el contexto de la relación..."></textarea>
   </div>
   <div class="form-group">
+    <label for="situacion-rel">Situación</label>
+    <textarea id="situacion-rel" class="input-desc" maxlength="200" placeholder="Describe tu situación actual..."></textarea>
+  </div>
+  <div class="form-group">
+    <label for="accion-rel">Acción recomendada (24-48h)</label>
+    <textarea id="accion-rel" class="input-desc" maxlength="200" placeholder="¿Qué acción concreta puedes realizar?"></textarea>
+  </div>
+  <div class="cuaderno-section">
+    <label for="anotaciones-rel">Anotaciones</label>
+    <div class="char-counter"><textarea id="anotaciones-rel" class="input-desc" maxlength="300" placeholder="Escribe lo que consideres sobre esta tirada..." oninput="updateCounter(this,'cnt-rel')"></textarea><span class="counter-text" id="cnt-rel">0/300</span></div>
+    <label for="observado-rel">Lo observado</label>
+    <textarea id="observado-rel" class="input-desc" maxlength="500" placeholder="Escribe después lo que has visto o vivido respecto a lo que entendiste..."></textarea>
+  </div>
+  <div class="form-group">
     <label><input type="checkbox" id="rel-inv"> Con Invertidas</label>
   </div>
   <div class="btn-group"><button class="btn btn-gold" onclick="tirarRelacion()">✦ Tirar</button></div>
@@ -99,6 +130,20 @@
   <div class="form-group">
     <label for="desc-laboral">Descripción (opcional)</label>
     <textarea id="desc-laboral" class="input-desc" maxlength="150" placeholder="Describe tu situación laboral..."></textarea>
+  </div>
+  <div class="form-group">
+    <label for="situacion-laboral">Situación</label>
+    <textarea id="situacion-laboral" class="input-desc" maxlength="200" placeholder="Describe tu situación laboral actual..."></textarea>
+  </div>
+  <div class="form-group">
+    <label for="accion-laboral">Acción recomendada (24-48h)</label>
+    <textarea id="accion-laboral" class="input-desc" maxlength="200" placeholder="¿Qué acción concreta puedes realizar en el ámbito laboral?"></textarea>
+  </div>
+  <div class="cuaderno-section">
+    <label for="anotaciones-laboral">Anotaciones</label>
+    <div class="char-counter"><textarea id="anotaciones-laboral" class="input-desc" maxlength="300" placeholder="Escribe lo que consideres sobre esta tirada..." oninput="updateCounter(this,'cnt-laboral')"></textarea><span class="counter-text" id="cnt-laboral">0/300</span></div>
+    <label for="observado-laboral">Lo observado</label>
+    <textarea id="observado-laboral" class="input-desc" maxlength="500" placeholder="Escribe después lo que has visto o vivido respecto a lo que entendiste..."></textarea>
   </div>
   <div class="btn-group">
     <button class="btn btn-gold" onclick="tirarLaboral()">✦ Tirar BATS Laboral</button>
@@ -129,6 +174,12 @@
       <input type="radio" name="aprendizaje-subset" id="ap-corte" value="corte">
       <label for="ap-corte">Corte</label>
     </div>
+  </div>
+  <div class="cuaderno-section">
+    <label for="anotaciones-aprendizaje">Anotaciones</label>
+    <div class="char-counter"><textarea id="anotaciones-aprendizaje" class="input-desc" maxlength="300" placeholder="Escribe lo que consideres sobre esta tirada..." oninput="updateCounter(this,'cnt-aprendizaje')"></textarea><span class="counter-text" id="cnt-aprendizaje">0/300</span></div>
+    <label for="observado-aprendizaje">Lo observado</label>
+    <textarea id="observado-aprendizaje" class="input-desc" maxlength="500" placeholder="Escribe después lo que has visto o vivido respecto a lo que entendiste..."></textarea>
   </div>
   <div class="form-group">
     <label><input type="checkbox" id="aprendizaje-inv"> Con Invertidas</label>
@@ -171,14 +222,46 @@
   </div>
   <div class="form-group" id="campos-posiciones"></div>
   <div class="form-group">
-    <label><input type="checkbox" id="pers-inv"> Incluir invertidas</label>
-  </div>
-  <div class="form-group">
     <label for="desc-pers">Descripción (opcional, máximo 200 caracteres)</label>
     <textarea id="desc-pers" class="input-desc" maxlength="200" placeholder="Describe el propósito de la tirada..."></textarea>
   </div>
+  <div class="form-group">
+    <label for="situacion-pers">Situación</label>
+    <textarea id="situacion-pers" class="input-desc" maxlength="200" placeholder="Describe tu situación actual..."></textarea>
+  </div>
+  <div class="form-group">
+    <label for="accion-pers">Acción recomendada (24-48h)</label>
+    <textarea id="accion-pers" class="input-desc" maxlength="200" placeholder="¿Qué acción concreta puedes realizar?"></textarea>
+  </div>
+  <div class="cuaderno-section">
+    <label for="anotaciones-pers">Anotaciones</label>
+    <div class="char-counter"><textarea id="anotaciones-pers" class="input-desc" maxlength="300" placeholder="Escribe lo que consideres sobre esta tirada..." oninput="updateCounter(this,'cnt-pers')"></textarea><span class="counter-text" id="cnt-pers">0/300</span></div>
+    <label for="observado-pers">Lo observado</label>
+    <textarea id="observado-pers" class="input-desc" maxlength="500" placeholder="Escribe después lo que has visto o vivido respecto a lo que entendiste..."></textarea>
+  </div>
+  <div class="form-group">
+    <label><input type="checkbox" id="pers-inv"> Incluir invertidas</label>
+  </div>
   <div class="btn-group"><button class="btn btn-gold" onclick="tirarPers()">✦ Tirar</button></div>
   <div id="r-pers"></div>
+  <a class="back-link" onclick="irA('inicio')" style="display:block;text-align:center;margin-top:16px">← Inicio</a>
+</section>
+
+<section id="panel-arcano-visitante" class="panel">
+  <a class="back-link" onclick="irA('inicio')">← Inicio</a>
+  <h2>El Arcano Visitante</h2>
+  <p>Un arcano determinista basado en numerología: suma de tu fecha de nacimiento, el día de hoy y tu nombre.</p>
+  <div class="form-group">
+    <label for="av-fecha-nac">Fecha de nacimiento (DD/MM/AAAA)</label>
+    <input type="text" id="av-fecha-nac" placeholder="DD/MM/AAAA" maxlength="10">
+  </div>
+  <div class="form-group">
+    <label for="av-nombre">Nombre completo</label>
+    <input type="text" id="av-nombre" placeholder="Tu nombre completo">
+  </div>
+  <div class="av-disclaimer" id="av-disclaimer">El tarot no predice el futuro. Muestra patrones. La decisión siempre es tuya.</div>
+  <div class="btn-group"><button class="btn btn-gold" onclick="tirarVisitante()">✦ Consultar Arcano del Día</button></div>
+  <div id="r-arcano-visitante"></div>
   <a class="back-link" onclick="irA('inicio')" style="display:block;text-align:center;margin-top:16px">← Inicio</a>
 </section>
 
@@ -196,12 +279,45 @@
   <a class="back-link" onclick="irA('inicio')">← Inicio</a>
   <h2>Historial</h2>
   <p>Lecturas guardadas.</p>
+  <div class="priv-notice">Las lecturas se guardan solo en este navegador y no se sincronizan. Para conservarlas o trasladarlas a otro dispositivo, usa Exportar.</div>
   <div class="btn-group">
     <button class="btn btn-outline btn-sm" onclick="exportarHist()">Exportar</button>
     <button class="btn btn-outline btn-sm" onclick="importarHist()">Importar</button>
     <button class="btn btn-danger btn-sm" onclick="limpiarHist()">Limpiar Historial</button>
   </div>
   <div id="r-historial"></div>
+  <a class="back-link" onclick="irA('inicio')" style="display:block;text-align:center;margin-top:16px">← Inicio</a>
+</section>
+
+<section id="panel-que-es-bats" class="panel">
+  <a class="back-link" onclick="irA('inicio')">← Inicio</a>
+  <h2>Qué es BATS</h2>
+  <div class="que-es-content">
+    <div class="qe-block">
+      <h3>✦ Business Ashram Tarot System</h3>
+      <p>BATS es un sistema de lectura de tarot diseñado como herramienta de introspección, análisis y crecimiento personal. No es una herramienta de adivinación: es un espejo simbólico que te ayuda a ver con claridad lo que ya está ocurriendo en tu vida.</p>
+    </div>
+    <div class="qe-block">
+      <h3>✦ Para quién está pensado</h3>
+      <p>Para personas que buscan comprender su situación actual, tomar decisiones con más conciencia y trabajar sobre sí mismas. No necesitas ser experto en tarot: el sistema guía la lectura y ofrece interpretaciones claras en español.</p>
+    </div>
+    <div class="qe-block">
+      <h3>✦ Diferencias con el tarot tradicional</h3>
+      <p>BATS incorpora interpretaciones propias en español con un enfoque práctico: cada carta tiene un significado normal, uno de sombra (lo que se resiste), uno de ayuda (el apoyo disponible) y uno invertido. No usa significados genéricos copiados de otros sistemas.</p>
+    </div>
+    <div class="qe-block">
+      <h3>✦ Metodología</h3>
+      <p>Las tiradas son aleatorias (barajado real) y cada posición tiene un sentido específico. La quintaesencia calcula la síntesis arquetípica de fondo de cada tirada. El Arcano Visitante usa numerología pitagórica para determinar un arcano del día.</p>
+    </div>
+    <div class="qe-block">
+      <h3>✦ Quién lo creó</h3>
+      <p>BATS fue creado como un proyecto personal para quienes quieren un tarot serio, sin distracciones, sin suscripciones y sin ventas. Todo funciona offline una vez instalado.</p>
+    </div>
+    <div class="qe-block">
+      <h3>✦ Contacto</h3>
+      <p>Si tienes dudas, sugerencias o quieres compartir tu experiencia, escríbeme a la dirección de contacto que encontrarás en la página del proyecto en GitHub.</p>
+    </div>
+  </div>
   <a class="back-link" onclick="irA('inicio')" style="display:block;text-align:center;margin-top:16px">← Inicio</a>
 </section>
 
