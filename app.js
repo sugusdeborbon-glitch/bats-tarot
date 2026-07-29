@@ -104,7 +104,13 @@ function toast(msg,isError){
 }
 
 function imgCard(c){
-  return '<img src="'+c.img+'" alt="'+c.nombre+'" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"><div class="card-placeholder" style="display:none"><div class="cp-name">'+c.letras+'</div><div class="cp-suit">'+(c.tipo==="arcano"?"AM":c.nucleo)+'</div></div>';
+  return '<img src="'+c.img+'" alt="'+c.nombre+'" loading="lazy" onclick="abrirLightbox(this.src,this.alt)" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"><div class="card-placeholder" style="display:none"><div class="cp-name">'+c.letras+'</div><div class="cp-suit">'+(c.tipo==="arcano"?"AM":c.nucleo)+'</div></div>';
+}
+function abrirLightbox(src,alt){
+  var o=document.createElement('div');
+  o.className='lightbox';
+  o.innerHTML='<div class="lightbox-bg" onclick="this.parentElement.remove()"></div><div class="lightbox-content" onclick="this.parentElement.remove()"><img src="'+src+'" alt="'+alt+'"><div class="lightbox-nombre">'+alt+'</div></div>';
+  document.body.appendChild(o);
 }
 
 function calcQuinta(cartas){
@@ -353,34 +359,19 @@ function cargarHist(){
   var h=JSON.parse(localStorage.getItem("bats-hist")||"[]");
   var c=document.getElementById("r-historial");
   var htm='<div class="priv-notice">Las lecturas se guardan solo en este navegador y no se sincronizan. Para conservarlas o trasladarlas a otro dispositivo, usa Exportar.</div>';
-  htm+='<div class="form-group"><input type="text" id="hist-search" placeholder="Buscar por fecha, carta, palabra..." oninput="buscarHist()"></div>';
-  if(!h.length){htm+='<p class="subtle">No hay lecturas guardadas.</p>';c.innerHTML=htm;return}
-  htm+='<div class="historial-grid">';
-  h.forEach(function(hr,i){
-    var d=new Date(hr.fecha),fs=d.toLocaleDateString("es-ES",{year:"numeric",month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"});
-    var previewImgs=hr.cartas.slice(0,4).map(function(ca){return '<img src="'+ca.img+'" alt="" loading="lazy">'}).join("");
-    htm+='<div class="historial-card" onclick="verHist('+i+')">';
-    if(previewImgs) htm+='<div class="hc-preview">'+previewImgs+'</div>';
-    htm+='<div class="h-fecha">'+fs+'</div><div class="h-tipo">'+(hr.titulo||hr.tipo)+(hr.descripcion?' <span style="font-weight:normal;font-size:.75rem;opacity:.7"> · '+hr.descripcion+'</span>':'')+'</div><div class="h-cartas">'+hr.resumen+'</div></div>';
-  });
-  htm+='</div>';
+  htm+='<div class="hist-controls"><div class="hist-search-row"><input type="text" id="hist-search" placeholder="Palabra clave..." onkeydown="if(event.key===\'Enter\')buscarHist()"><button class="btn btn-outline btn-sm" onclick="buscarHist()">Buscar</button><button class="btn btn-outline btn-sm" onclick="limpiarFiltros()">Limpiar</button></div><div class="hist-filters-row"><select id="hist-tipo"><option value="">Todos los tipos</option><option value="Cruz Diaria">Cruz Diaria</option><option value="Tirada de la relación">Relación</option><option value="BATS Laboral">BATS Laboral</option><option value="El Aprendizaje">Aprendizaje</option><option value="Tirada Personalizada">Personalizada</option><option value="El Arcano Visitante">Arcano Visitante</option></select><label>Desde: <input type="date" id="hist-desde"></label><label>Hasta: <input type="date" id="hist-hasta"></label></div></div>';
+  htm+='<div id="hist-listado"></div>';
   c.innerHTML=htm;
+  renderHistCards(h);
 }
-function buscarHist(){
-  var q=document.getElementById('hist-search')?.value?.toLowerCase().trim()||'';
-  var h=JSON.parse(localStorage.getItem("bats-hist")||"[]");
-  var c=document.getElementById("r-historial");
-  if(!h.length){c.innerHTML='<p class="subtle">No hay lecturas guardadas.</p>';return}
-  var filtered=h;
-  if(q) filtered=h.filter(function(hr){
-    var text=(hr.titulo||hr.tipo+" "+hr.descripcion+" "+hr.resumen+" "+(hr.situacion||"")+" "+(hr.accion||"")+" "+(hr.tipo_rel||"")+" "+(hr.anotaciones||"")+" "+(hr.observado||"")).toLowerCase();
-    var d=new Date(hr.fecha),fs=d.toLocaleDateString("es-ES",{year:"numeric",month:"short",day:"numeric"});
-    return text.indexOf(q)>=0||fs.indexOf(q)>=0;
-  });
-  if(!filtered.length){c.innerHTML='<p class="subtle">No se encontraron lecturas con "'+q+'".</p><div class="btn-group mt-8"><button class="btn btn-outline btn-sm" onclick="document.getElementById(\'hist-search\').value=\'\';buscarHist()">Limpiar búsqueda</button></div>';return}
+function renderHistCards(arr,fullArr){
+  fullArr=fullArr||arr;
+  var c=document.getElementById("hist-listado");
+  if(!c) return;
+  if(!arr.length){c.innerHTML='<p class="subtle">No hay lecturas guardadas.</p>';return}
   var htm='<div class="historial-grid">';
-  filtered.forEach(function(hr){
-    var origIdx=h.indexOf(hr);
+  arr.forEach(function(hr){
+    var origIdx=fullArr.indexOf(hr);
     var d=new Date(hr.fecha),fs=d.toLocaleDateString("es-ES",{year:"numeric",month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"});
     var previewImgs=hr.cartas.slice(0,4).map(function(ca){return '<img src="'+ca.img+'" alt="" loading="lazy">'}).join("");
     htm+='<div class="historial-card" onclick="verHist('+origIdx+')">';
@@ -389,6 +380,36 @@ function buscarHist(){
   });
   htm+='</div>';
   c.innerHTML=htm;
+}
+function buscarHist(){
+  var q=document.getElementById('hist-search')?.value?.toLowerCase().trim()||'';
+  var tipo=document.getElementById('hist-tipo')?.value||'';
+  var desde=document.getElementById('hist-desde')?.value||'';
+  var hasta=document.getElementById('hist-hasta')?.value||'';
+  var h=JSON.parse(localStorage.getItem("bats-hist")||"[]");
+  if(!h.length){renderHistCards([]);return}
+  var filtered=h.filter(function(hr){
+    if(tipo && (hr.titulo||hr.tipo)!==tipo) return false;
+    if(desde||hasta){
+      var d=new Date(hr.fecha);
+      if(desde && d<new Date(desde+'T00:00:00')) return false;
+      if(hasta && d>new Date(hasta+'T23:59:59')) return false;
+    }
+    if(q){
+      var text=(hr.titulo||hr.tipo+" "+hr.descripcion+" "+hr.resumen+" "+(hr.situacion||"")+" "+(hr.accion||"")+" "+(hr.tipo_rel||"")+" "+(hr.anotaciones||"")+" "+(hr.observado||"")).toLowerCase();
+      var d2=new Date(hr.fecha),fs=d2.toLocaleDateString("es-ES",{year:"numeric",month:"short",day:"numeric"});
+      return text.indexOf(q)>=0||fs.indexOf(q)>=0;
+    }
+    return true;
+  });
+  renderHistCards(filtered,h);
+}
+function limpiarFiltros(){
+  ['hist-search','hist-tipo','hist-desde','hist-hasta'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) el.value='';
+  });
+  buscarHist();
 }
 function verHist(i){
   var h=JSON.parse(localStorage.getItem("bats-hist")||"[]");
@@ -537,7 +558,7 @@ function hacerDiaria(inv){
   var m=barajar(BARAJA.slice());
   if(m.length<5) return;
   var c=[];
-  for(var i=0;i<5;i++) c.push({carta:m[i],invertida:inv?Math.random()<.5:false,posicion:pos[i],texto:txt(m[i],inv?Math.random()<.5:false,esSombra[i])});
+  for(var i=0;i<5;i++){var invC=inv?Math.random()<.5:false;c.push({carta:m[i],invertida:invC,posicion:pos[i],texto:txt(m[i],invC,esSombra[i])});}
   window._ult=c;
   window._lastPanel="diaria";
   window._lastPanelTitle="Cruz Diaria";
@@ -554,7 +575,7 @@ function tirarRelacion(){
   if(m.length<4) return;
   var pos=["Energ\u00eda del momento de la relaci\u00f3n","Energ\u00eda de "+p1,"Energ\u00eda de "+p2,"Posible salida o direcci\u00f3n"];
   var c=[];
-  for(var i=0;i<4;i++) c.push({carta:m[i],invertida:inv?Math.random()<.5:false,posicion:pos[i],texto:txt(m[i],inv?Math.random()<.5:false,false)});
+  for(var i=0;i<4;i++){var invC=inv?Math.random()<.5:false;c.push({carta:m[i],invertida:invC,posicion:pos[i],texto:txt(m[i],invC,false)});}
   mostrarCompleto(c,"r-relacion",{posiciones:pos});
   window._ult=c;
   window._lastPanel="rel";
@@ -569,7 +590,7 @@ function hacerLaboral(inv){
   var m=barajar(BARAJA.slice());
   if(m.length<5) return;
   var c=[];
-  for(var i=0;i<5;i++) c.push({carta:m[i],invertida:inv?Math.random()<.5:false,posicion:pos[i],texto:txt(m[i],inv?Math.random()<.5:false,esSombra[i])});
+  for(var i=0;i<5;i++){var invC=inv?Math.random()<.5:false;c.push({carta:m[i],invertida:invC,posicion:pos[i],texto:txt(m[i],invC,esSombra[i])});}
   window._ult=c;
   window._lastPanel="laboral";
   window._lastPanelTitle="BATS Laboral";
@@ -622,8 +643,9 @@ function hacerAprendizaje(inv){
     "El Don Transformador — ¿Qué capacidad, virtud o cambio nace cuando integro esta verdad?",
     "El Resultado Posible — ¿Qué transformación ocurrirá en mi experiencia si integro la lección?"
   ];
+  var esSom=[false,false,true,false,false,false];
   var c=[];
-  for(var i=0;i<6;i++) c.push({carta:m[i],invertida:inv?Math.random()<.5:false,posicion:pos[i],texto:txt(m[i],inv?Math.random()<.5:false,false)});
+  for(var i=0;i<6;i++){var invC=inv?Math.random()<.5:false;c.push({carta:m[i],invertida:invC,posicion:pos[i],texto:txt(m[i],invC,esSom[i])});}
   window._ult=c;
   window._lastPanel="aprendizaje";
   window._lastPanelTitle="El Aprendizaje";

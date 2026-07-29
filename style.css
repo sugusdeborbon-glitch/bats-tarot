@@ -36,8 +36,8 @@ header h1{font-size:1.15rem;color:var(--gold);letter-spacing:1px}
 .card-view:nth-child(8){animation-delay:.7s}
 .card-view:nth-child(9){animation-delay:.8s}
 .card-view:nth-child(10){animation-delay:.9s}
-.card-view img{width:100%;border-radius:8px;box-shadow:var(--shadow);border:2px solid var(--bg3);background:var(--bg2);display:block;transition:transform .3s ease}
-.card-view img:hover{transform:scale(1.05)}
+.card-view img{width:100%;border-radius:8px;box-shadow:var(--shadow);border:2px solid var(--bg3);background:var(--bg2);display:block;cursor:pointer;transition:transform .3s ease}
+.card-view img:hover{transform:scale(1.03)}
 .card-placeholder{width:100%;aspect-ratio:5/7;border-radius:8px;background:var(--bg2);border:2px solid var(--bg3);display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:var(--shadow)}
 .card-placeholder .cp-name{color:var(--gold);font-weight:600;font-size:.95rem;text-align:center;padding:4px}
 .card-placeholder .cp-suit{color:var(--text2);font-size:.75rem}
@@ -176,6 +176,21 @@ label{display:block;font-size:.82rem;color:var(--gold);margin-bottom:3px;margin-
   .cross-container{max-width:340px;gap:6px}
   .cross-container .card-view{width:95px}
 }
+
+.lightbox{position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;display:flex;align-items:center;justify-content:center;animation:fadeIn .2s ease}
+.lightbox-bg{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.88);cursor:pointer}
+.lightbox-content{position:relative;max-width:92vw;max-height:92vh;text-align:center;cursor:pointer}
+.lightbox-content img{max-width:92vw;max-height:82vh;border-radius:12px;border:3px solid var(--gold);box-shadow:0 8px 40px rgba(0,0,0,.8)}
+.lightbox-nombre{color:var(--gold);font-size:1.1rem;margin-top:10px;font-weight:600}
+
+.hist-controls{margin:10px 0;background:var(--bg2);border-radius:var(--radius);padding:10px;border:1px solid var(--bg3)}
+.hist-search-row{display:flex;gap:6px;margin-bottom:8px}
+.hist-search-row input{flex:1;margin:0}
+.hist-search-row .btn{margin:0}
+.hist-filters-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.hist-filters-row select{flex:1;min-width:120px;margin:0}
+.hist-filters-row label{display:flex;align-items:center;gap:4px;font-size:.78rem;color:var(--gold);margin:0;white-space:nowrap}
+.hist-filters-row input[type=date]{margin:0;padding:6px 8px;font-size:.78rem;min-width:130px}
 
 @media(min-width:720px){
   .card-view{width:150px}
