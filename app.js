@@ -570,6 +570,8 @@ function tirarRelacion(){
   var p1=document.getElementById("rel-p1").value||"Persona 1",p2=document.getElementById("rel-p2").value||"Persona 2";
   localStorage.setItem("bats-rel-p1",p1);
   localStorage.setItem("bats-rel-p2",p2);
+  var tipoRel=document.getElementById("tipo-rel").value||"";
+  localStorage.setItem("bats-rel-tipo",tipoRel);
   var inv=document.getElementById("rel-inv").checked;
   var m=barajar(BARAJA.slice());
   if(m.length<4) return;
@@ -845,6 +847,8 @@ setTimeout(function(){
   var rp1=document.getElementById("rel-p1"),rp2=document.getElementById("rel-p2");
   if(rp1){rp1.value=localStorage.getItem("bats-rel-p1")||"Persona 1"}
   if(rp2){rp2.value=localStorage.getItem("bats-rel-p2")||"Persona 2"}
+  var rtipo=document.getElementById("tipo-rel");
+  if(rtipo){rtipo.value=localStorage.getItem("bats-rel-tipo")||""}
   var avFNac=document.getElementById("av-fecha-nac"),avNom=document.getElementById("av-nombre");
   if(avFNac){avFNac.value=localStorage.getItem("av-nacimiento")||""}
   if(avNom){avNom.value=localStorage.getItem("av-nombre")||""}

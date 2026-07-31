@@ -1,0 +1,28 @@
+{
+  "name": "BATS Tarot",
+  "description": "Business Ashram Tarot System - PWA + Android APK",
+  "commands": {
+    "Build APK": {
+      "command": "cd android && ./gradlew assembleDebug",
+      "description": "Compila el APK para Android"
+    },
+    "Version": {
+      "command": "git tag -a v$(date +%Y%m%d)-$RANDOM -m 'nueva version' && git push origin --tags",
+      "description": "Crear un nuevo tag de versión"
+    }
+  },
+  "customModes": [
+    {
+      "slug": "bats-dev",
+      "name": "BATS Developer",
+      "roleDefinition": "Eres un desarrollador de BATS Tarot...",
+      "groups": ["read", "edit", "browser", "command", "mcp"]
+    }
+  ],
+  "rules": [
+    "Antes de editar, lee el archivo completo si no lo has visto antes",
+    "Usa node --check para validar sintaxis JS",
+    "Ejecuta npm audit después de cambiar package.json",
+    "Usa git add -A && git commit -m 'mensaje' && git push para desplegar"
+  ]
+}
