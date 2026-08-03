@@ -107,19 +107,20 @@ function llamarIA(messages){
   var mode=getAIMode();
   if(mode==="estandar"){
     var url=getWorkerURL();
-    if(!url) return Promise.reject(new Error("No hay URL del Worker configurada"));
+    if(!url||!/^https:\/\//i.test(url)) return Promise.reject(new Error("URL del Worker de IA inv\u00e1lida o vac\u00eda. Rev\u00edsala en Configuraci\u00f3n."));
     return fetchConTimeout(url,messages,{});
   }
   if(mode==="propia"){
     var cfg=getAIPropia();
     if(!cfg.key) return Promise.reject(new Error("No hay clave configurada"));
+    if(!/^https:\/\//i.test(cfg.base||"")) return Promise.reject(new Error("Endpoint de IA inv\u00e1lido. Rev\u00edsalo en Configuraci\u00f3n."));
     return fetchConTimeout(cfg.base+"/chat/completions",messages,{model:cfg.modelo,key:cfg.key});
   }
   return Promise.reject(new Error("Modo IA desactivado"));
 }
 function fetchConTimeout(url,messages,extra){
   var ctrl=("AbortController" in window)?new AbortController():null;
-  var timer=ctrl?setTimeout(function(){ctrl.abort()},90000):null;
+  var timer=ctrl?setTimeout(function(){ctrl.abort()},45000):null;
   function limpiar(){if(timer) clearTimeout(timer)}
   var opts={
     method:"POST",
@@ -129,7 +130,10 @@ function fetchConTimeout(url,messages,extra){
   if(extra&&extra.key) opts.headers["Authorization"]="Bearer "+extra.key;
   if(extra&&extra.model) opts.body=JSON.stringify({model:extra.model,messages:messages,temperature:0.7,max_tokens:4096});
   if(ctrl) opts.signal=ctrl.signal;
-  return fetch(url,opts).then(parseAIRespuesta).then(function(v){limpiar();return v},function(e){
+  var p;
+  try{ p=fetch(url,opts); }
+  catch(e){ limpiar(); return Promise.reject(new Error("URL del servidor de IA inv\u00e1lida. Rev\u00edsala en Configuraci\u00f3n.")); }
+  return p.then(parseAIRespuesta).then(function(v){limpiar();return v},function(e){
     limpiar();
     if(e&&e.name==="AbortError") throw new Error("La IA tard\u00f3 demasiado. Reintenta.");
     throw e;

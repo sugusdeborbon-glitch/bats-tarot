@@ -1,3 +1,5 @@
+const GOOGLE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+const GOOGLE_MODEL = "gemini-2.5-flash";
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GROQ_MODEL = "llama-3.3-70b-versatile";
 const NVIDIA_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
@@ -57,6 +59,7 @@ export default {
       return json({ error: "Método no permitido" }, 405, req);
     }
     const providers = [];
+    if (env.GOOGLE_API_KEY) providers.push({ name: "Google", url: GOOGLE_URL, key: env.GOOGLE_API_KEY, model: GOOGLE_MODEL });
     if (env.GROQ_API_KEY) providers.push({ name: "Groq", url: GROQ_URL, key: env.GROQ_API_KEY, model: GROQ_MODEL });
     if (env.NVIDIA_API_KEY) providers.push({ name: "NVIDIA", url: NVIDIA_URL, key: env.NVIDIA_API_KEY, model: NVIDIA_MODEL });
     if (!providers.length) {

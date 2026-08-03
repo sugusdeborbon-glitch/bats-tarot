@@ -1,4 +1,4 @@
-var BATS_VERSION="1.5.2";
+var BATS_VERSION="1.5.3";
 
 var PALOS=[["bastos","Wands"],["copas","Cups"],["espadas","Swords"],["oros","Pentacles"]];
 var NOMPALO={bastos:"Bastos",copas:"Copas",espadas:"Espadas",oros:"Oros"};
@@ -593,13 +593,18 @@ function renderInterpLarga(dest,cartas,ctx){
   cont.style.display="";
   cont.innerHTML='<h4 class="ai-interp-title">\u2726 Interpretaci\u00f3n</h4><div class="ai-interp-body"><div class="ai-cargando"><span class="ai-spinner"></span>Generando interpretaci\u00f3n\u2026</div></div>';
   var body=cont.querySelector(".ai-interp-body");
-  generarInterpretacionLarga(cartas,ctx).then(function(t){
-    cartas._interp=t;
-    body.innerHTML='<div class="ai-interp-texto">'+interpParaHTML(t)+'</div>';
-  }).catch(function(e){
+  try{
+    generarInterpretacionLarga(cartas,ctx).then(function(t){
+      cartas._interp=t;
+      body.innerHTML='<div class="ai-interp-texto">'+interpParaHTML(t)+'</div>';
+    }).catch(function(e){
+      console.error("Error interpretacion larga:",e);
+      body.innerHTML='<p class="subtle">No se pudo generar la interpretaci\u00f3n'+(e&&e.message?": "+e.message:"")+'</p><div class="ai-interp-btns"><button class="btn btn-outline btn-sm" onclick="reintentarInterp(\''+dest+'\')">Reintentar</button></div>';
+    });
+  }catch(e){
     console.error("Error interpretacion larga:",e);
     body.innerHTML='<p class="subtle">No se pudo generar la interpretaci\u00f3n'+(e&&e.message?": "+e.message:"")+'</p><div class="ai-interp-btns"><button class="btn btn-outline btn-sm" onclick="reintentarInterp(\''+dest+'\')">Reintentar</button></div>';
-  });
+  }
 }
 function interpParaHTML(t){
   return (t||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/\n{3,}/g,"\n\n").replace(/\n/g,"<br>");
@@ -922,6 +927,7 @@ function checkNovedades(){
       var claves=Object.keys(d.historial).sort(function(a,b){return compVersiones(b,a)});
       var contado=0;
       claves.forEach(function(v){
+        if(contado>=2) return;
         if(visto===''||compVersiones(v,visto)>0){
           var h=d.historial[v];
           if(contado>0) texto+='<div class="nov-sep"></div>';

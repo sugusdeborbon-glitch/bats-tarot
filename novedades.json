@@ -1,23 +1,31 @@
 {
-  "ultima": "1.5.1",
-  "titulo": "Novedades v1.5.1",
-  "texto": "<p><strong>Interpretación larga</strong> — Cuando la IA está activa, debajo de cada tirada aparece una interpretación larga de toda la jugada, además de los textos por carta. Puedes elegir la extensión (corta, media o larga) y añadir un enfoque desde Configuración.</p>",
+  "ultima": "1.5.3",
+  "titulo": "Novedades v1.5.3",
+  "texto": "<p><strong>IA m\u00e1s fiable</strong> \u2014 La interpretaci\u00f3n larga ya no se queda bloqueada en \u00abGenerando\u2026\u00bb: si falla, muestra el error y un bot\u00f3n para reintentar.</p><p><strong>Informe de cambios</strong> \u2014 El aviso de novedades ahora solo muestra las \u00faltimas versiones y se desplaza si es largo.</p>",
   "historial": {
+    "1.5.3": {
+      "titulo": "Novedades v1.5.3",
+      "texto": "<p><strong>IA m\u00e1s fiable</strong> \u2014 La interpretaci\u00f3n larga ya no se queda bloqueada en \u00abGenerando\u2026\u00bb: si falla, muestra el error y un bot\u00f3n para reintentar.</p><p><strong>Informe de cambios</strong> \u2014 El aviso de novedades ahora solo muestra las \u00faltimas versiones y se desplaza si es largo.</p>"
+    },
+    "1.5.2": {
+      "titulo": "Novedades v1.5.2",
+      "texto": "<p><strong>Interpretaci\u00f3n larga m\u00e1s estable</strong> \u2014 A\u00f1adido un servidor de respaldo para la IA y l\u00edmites de espera para que nunca se quede colgada.</p>"
+    },
     "1.5.1": {
       "titulo": "Novedades v1.5.1",
-      "texto": "<p><strong>Interpretación larga</strong> — Cuando la IA está activa, debajo de cada tirada aparece una interpretación larga de toda la jugada, además de los textos por carta. Puedes elegir la extensión (corta, media o larga) y añadir un enfoque desde Configuración.</p>"
+      "texto": "<p><strong>Interpretaci\u00f3n larga</strong> \u2014 Cuando la IA est\u00e1 activa, debajo de cada tirada aparece una interpretaci\u00f3n larga de toda la jugada, adem\u00e1s de los textos por carta. Puedes elegir la extensi\u00f3n (corta, media o larga) y a\u00f1adir un enfoque desde Configuraci\u00f3n.</p>"
     },
     "1.5.0": {
       "titulo": "Novedades v1.5.0",
-      "texto": "<p><strong>Inteligencia Artificial</strong> — Elige cómo se interpretan tus tiradas desde Inicio o Configuración:</p><ul><li><strong>Sin IA</strong> — los textos fijos del sistema BATS.</li><li><strong>IA BATS</strong> — interpretaciones generadas con IA en el momento.</li><li><strong>Mi IA</strong> — conecta tu propia clave (OpenAI, Groq, OpenRouter, Mistral, Ollama...).</li></ul><p><strong>Avisos de actualización</strong> — Las novedades ahora llegan a todos los usuarios, también con la app instalada.</p>"
+      "texto": "<p><strong>Inteligencia Artificial</strong> \u2014 Elige c\u00f3mo se interpretan tus tiradas desde Inicio o Configuraci\u00f3n:</p><ul><li><strong>Sin IA</strong> \u2014 los textos fijos del sistema BATS.</li><li><strong>IA BATS</strong> \u2014 interpretaciones generadas con IA en el momento.</li><li><strong>Mi IA</strong> \u2014 conecta tu propia clave (OpenAI, Groq, OpenRouter, Mistral, Ollama...).</li></ul><p><strong>Avisos de actualizaci\u00f3n</strong> \u2014 Las novedades ahora llegan a todos los usuarios, tambi\u00e9n con la app instalada.</p>"
     },
     "1.4.2": {
       "titulo": "Novedades v1.4.2",
-      "texto": "<p><strong>Mejoras</strong> — Buscador de historial con botón y filtros, lightbox al pulsar una carta, texto sombra en El Aprendizaje, invertidas consistentes y correcciones de textos en «Qué es BATS».</p>"
+      "texto": "<p><strong>Mejoras</strong> \u2014 Buscador de historial con bot\u00f3n y filtros, lightbox al pulsar una carta, texto sombra en El Aprendizaje, invertidas consistentes y correcciones de textos en \u00abQu\u00e9 es BATS\u00bb.</p>"
     },
     "1.4.0": {
       "titulo": "Novedades v1.4.0",
-      "texto": "<p><strong>El Arcano Visitante</strong> — Tirada numerológica determinista. Ingresa tu fecha de nacimiento y nombre para calcular tu arcano del día.</p><p><strong>Cuaderno de reflexiones</strong> — Ahora puedes agregar anotaciones y observaciones a cada tirada.</p><p><strong>Qué es BATS</strong> — Nueva sección informativa sobre el sistema.</p><p><strong>Compartir tirada</strong> — Comparte tus lecturas con Web Share o descarga como archivo.</p><p><strong>Mejoras generales</strong> — Búsqueda en historial, avisos de actualización, diseño optimizado.</p>"
+      "texto": "<p><strong>El Arcano Visitante</strong> \u2014 Tirada numerol\u00f3gica determinista. Ingresa tu fecha de nacimiento y nombre para calcular tu arcano del d\u00eda.</p><p><strong>Cuaderno de reflexiones</strong> \u2014 Ahora puedes agregar anotaciones y observaciones a cada tirada.</p><p><strong>Qu\u00e9 es BATS</strong> \u2014 Nueva secci\u00f3n informativa sobre el sistema.</p><p><strong>Compartir tirada</strong> \u2014 Comparte tus lecturas con Web Share o descarga como archivo.</p><p><strong>Mejoras generales</strong> \u2014 B\u00fasqueda en historial, avisos de actualizaci\u00f3n, dise\u00f1o optimizado.</p>"
     }
   }
 }
