@@ -1,14 +1,14 @@
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GROQ_MODEL = "llama-3.3-70b-versatile";
 const NVIDIA_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
-const NVIDIA_MODEL = "meta/llama-3.3-70b-instruct";
+const NVIDIA_MODEL = "meta/llama-3.1-8b-instruct";
 const ALLOWED_ORIGINS = [
   "https://sugusdeborbon-glitch.github.io",
   "null"
 ];
 const RATE_LIMIT_MAX = 10;
 const RATE_LIMIT_WINDOW_MS = 60000;
-const MAX_TOKENS = 2048;
+const MAX_TOKENS = 1024;
 
 const hits = new Map();
 
@@ -102,7 +102,7 @@ export default {
 
 async function llamarProveedor(provider, messages, payload) {
   const ctrl = new AbortController();
-  const timer = setTimeout(function(){ ctrl.abort(); }, 25000);
+  const timer = setTimeout(function(){ ctrl.abort(); }, 60000);
   try {
     const upstream = await fetch(provider.url, {
       method: "POST",
