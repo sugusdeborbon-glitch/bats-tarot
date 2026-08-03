@@ -1,8 +1,12 @@
 {
-  "ultima": "1.5.0",
-  "titulo": "Novedades v1.5.0",
-  "texto": "<p><strong>Inteligencia Artificial</strong> — Elige cómo se interpretan tus tiradas desde Inicio o Configuración:</p><ul><li><strong>Sin IA</strong> — los textos fijos del sistema BATS.</li><li><strong>IA BATS</strong> — interpretaciones generadas con IA en el momento.</li><li><strong>Mi IA</strong> — conecta tu propia clave (OpenAI, Groq, OpenRouter, Mistral, Ollama...).</li></ul><p><strong>Avisos de actualización</strong> — Las novedades ahora llegan a todos los usuarios, también con la app instalada.</p>",
+  "ultima": "1.5.1",
+  "titulo": "Novedades v1.5.1",
+  "texto": "<p><strong>Interpretación larga</strong> — Cuando la IA está activa, debajo de cada tirada aparece una interpretación larga de toda la jugada, además de los textos por carta. Puedes elegir la extensión (corta, media o larga) y añadir un enfoque desde Configuración.</p>",
   "historial": {
+    "1.5.1": {
+      "titulo": "Novedades v1.5.1",
+      "texto": "<p><strong>Interpretación larga</strong> — Cuando la IA está activa, debajo de cada tirada aparece una interpretación larga de toda la jugada, además de los textos por carta. Puedes elegir la extensión (corta, media o larga) y añadir un enfoque desde Configuración.</p>"
+    },
     "1.5.0": {
       "titulo": "Novedades v1.5.0",
       "texto": "<p><strong>Inteligencia Artificial</strong> — Elige cómo se interpretan tus tiradas desde Inicio o Configuración:</p><ul><li><strong>Sin IA</strong> — los textos fijos del sistema BATS.</li><li><strong>IA BATS</strong> — interpretaciones generadas con IA en el momento.</li><li><strong>Mi IA</strong> — conecta tu propia clave (OpenAI, Groq, OpenRouter, Mistral, Ollama...).</li></ul><p><strong>Avisos de actualización</strong> — Las novedades ahora llegan a todos los usuarios, también con la app instalada.</p>"

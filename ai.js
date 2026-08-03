@@ -1,3 +1,8 @@
+var STORE_PFX=(function(){return location.pathname.indexOf("/bats-tarot-dev/")!==-1?"dev_":""})();
+function lsGet(k){try{return localStorage.getItem(STORE_PFX+k)}catch(e){return null}}
+function lsSet(k,v){try{localStorage.setItem(STORE_PFX+k,v)}catch(e){}}
+function lsDel(k){try{localStorage.removeItem(STORE_PFX+k)}catch(e){}}
+
 var AI_MODE_KEY="bats-ai-mode";
 var AI_CFG_KEY="bats-ai-cfg";
 var AI_WORKER_URL_KEY="bats-ai-worker";
@@ -17,8 +22,8 @@ var AI_SISTEMA="Eres un int\u00e9rprete profesional de tarot Rider-Waite-Smith d
 
 var AI_SISTEMA_AV="Eres un int\u00e9rprete profesional de tarot del sistema BATS (Business Ashram Tarot System).\nRecibir\u00e1s el Arcano Visitante del d\u00eda (una carta calculada por numerolog\u00eda) y tres preguntas fijas.\nResponde \u00daNICAMENTE con JSON v\u00e1lido de esta forma exacta:\n{\"q1\":\"...\",\"q2\":\"...\",\"q3\":\"...\"}\nReglas:\n- q1: \u00bfQu\u00e9 vienes a mostrarme hoy? M\u00e1ximo 300 caracteres.\n- q2: \u00bfQu\u00e9 patr\u00f3n conocido me est\u00e1s ayudando a no repetir hoy? M\u00e1ximo 300 caracteres.\n- q3: \u00bfQu\u00e9 acci\u00f3n consciente me ayuda a escucharte? M\u00e1ximo 300 caracteres.\n- Idioma: espa\u00f1ol. No predigas el futuro; muestra patrones y posibilidades.\n- No escribas nada fuera del JSON.";
 
-function getAIMode(){return localStorage.getItem(AI_MODE_KEY)||"off"}
-function setAIMode(m){localStorage.setItem(AI_MODE_KEY,m)}
+function getAIMode(){return lsGet(AI_MODE_KEY)||"off"}
+function setAIMode(m){lsSet(AI_MODE_KEY,m)}
 function modoDesc(m){
   if(m==="estandar") return "Interpretaci\u00f3n con IA BATS \u2014 textos generados al momento.";
   if(m==="propia") return "Interpretaci\u00f3n con tu propia clave de IA (proveedor compatible con OpenAI).";
@@ -33,11 +38,11 @@ function aiXor(s){
 function aiEncr(s){return btoa(aiXor(s))}
 function aiDecr(s){try{return aiXor(atob(s))}catch(e){return ""}}
 
-function getAICfg(){try{return JSON.parse(localStorage.getItem(AI_CFG_KEY))||{}}catch(e){return {}}}
-function saveAICfg(o){localStorage.setItem(AI_CFG_KEY,JSON.stringify(o))}
+function getAICfg(){try{return JSON.parse(lsGet(AI_CFG_KEY))||{}}catch(e){return {}}}
+function saveAICfg(o){lsSet(AI_CFG_KEY,JSON.stringify(o))}
 
-function getWorkerURL(){return localStorage.getItem(AI_WORKER_URL_KEY)||AI_WORKER_DEFAULT}
-function setWorkerURL(u){localStorage.setItem(AI_WORKER_URL_KEY,u)}
+function getWorkerURL(){return lsGet(AI_WORKER_URL_KEY)||AI_WORKER_DEFAULT}
+function setWorkerURL(u){lsSet(AI_WORKER_URL_KEY,u)}
 
 function getProvider(id){
   for(var i=0;i<AI_PROVIDERS.length;i++) if(AI_PROVIDERS[i].id===id) return AI_PROVIDERS[i];
@@ -92,9 +97,10 @@ function cargarPanelConfig(){
   var elM=document.getElementById("cfg-modelo");
   if(elM) elM.value=cfg.modelo||p.modelo;
   var elW=document.getElementById("cfg-worker");
-  if(elW) elW.value=localStorage.getItem(AI_WORKER_URL_KEY)||AI_WORKER_DEFAULT;
+  if(elW) elW.value=lsGet(AI_WORKER_URL_KEY)||AI_WORKER_DEFAULT;
   var st=document.getElementById("cfg-key-status");
   if(st) st.innerHTML=cfg.key?'<span style="color:var(--gold)">\u2713 Clave guardada</span>':'<span class="subtle">Sin clave guardada</span>';
+  cargarAIInterpretacion();
 }
 
 function llamarIA(messages){
@@ -212,4 +218,78 @@ function actualizarUI_AI(){
   if(eb) eb.style.display=(mode==="estandar")?"block":"none";
   var pb=document.getElementById("cfg-propia-box");
   if(pb) pb.style.display=(mode==="propia")?"block":"none";
+}
+
+var AI_LONG_KEY="bats-ai-long";
+
+var AI_SISTEMA_LARGA="Eres un int\u00e9rprete profesional de tarot Rider-Waite-Smith del sistema BATS (Business Ashram Tarot System).\nRecibir\u00e1s una tirada completa: cada posici\u00f3n con su carta, su texto BATS de referencia y la quintaesencia ya calculada.\nDebes escribir una interpretaci\u00f3n larga en prosa, en espa\u00f1ol, que lea la tirada como un TODO: c\u00f3mo se conectan las posiciones entre s\u00ed, qu\u00e9 patr\u00f3n o arquetipo recorre la jugada y qu\u00e9 mensaje pr\u00e1ctico ofrece.\nEstilo BATS: claro, cercano, reflexivo, orientado a la toma de conciencia y al crecimiento, sin fatalismos.\nReglas:\n- No predigas el futuro como certeza; muestra patrones, posibilidades y caminos.\n- No inventes datos biogr\u00e1ficos ni asumas circunstancias no proporcionadas.\n- Escribe p\u00e1rrafos continuos (no listas con asteriscos ni encabezados).\n- Responde SOLO con el texto de la interpretaci\u00f3n, sin introducciones ni citas de c\u00f3digo.";
+
+var AI_GUIONES={
+  diaria:"Gu\u00eda para esta tirada: lee la Cruz Diaria como un d\u00eda completo: la energ\u00eda central, qu\u00e9 conviene frenar o minimizar, qu\u00e9 conviene impulsar, la ayuda disponible y el posible resultado, y c\u00f3mo encajar\u00edan juntos.",
+  rel:"Gu\u00eda para esta tirada: lee la tirada de relaci\u00f3n con tacto: el momento de la relaci\u00f3n, la energ\u00eda de cada persona, sus puntos de encuentro o fricci\u00f3n y la posible direcci\u00f3n, sin juzgar a ninguna de las dos.",
+  laboral:"Gu\u00eda para esta tirada: lee la BATS Laboral: la energ\u00eda laboral del momento, qu\u00e9 frenar o minimizar en el trabajo, qu\u00e9 impulsar, las ayudas disponibles y el posible resultado profesional, y la actitud m\u00e1s sabia ante ello.",
+  pers:"Gu\u00eda para esta tirada: lee la tirada personalizada respetando el nombre que el consultante dio a cada posici\u00f3n, y explica c\u00f3mo esas posiciones se relacionan entre s\u00ed y qu\u00e9 hilo conductor dejan ver.",
+  aprendizaje:"Gu\u00eda para esta tirada: lee El Aprendizaje como una secuencia de crecimiento: El Hecho, El Maestro, El Punto Ciego, La Integraci\u00f3n, El Don Transformador y El Resultado Posible, mostrando la lecci\u00f3n completa que propone la situaci\u00f3n.",
+  arcano:"Gu\u00eda para esta lectura: lee El Arcano Visitante del d\u00eda (una carta calculada por numerolog\u00eda) como la energ\u00eda de fondo de la jornada: qu\u00e9 te propone, qu\u00e9 patr\u00f3n conviene no repetir y c\u00f3mo trabajar con ella de forma consciente."
+};
+
+function getAILong(){try{return JSON.parse(lsGet(AI_LONG_KEY))||{}}catch(e){return {}}}
+function saveAILong(o){lsSet(AI_LONG_KEY,JSON.stringify(o))}
+function guardarAILong(){
+  var elLen=document.getElementById("cfg-interp-len");
+  var len=elLen?elLen.value:"media";
+  var enfoque=(document.getElementById("cfg-interp-enfoque")||{}).value;
+  enfoque=(enfoque||"").trim();
+  var o=getAILong();
+  o.len=len;
+  if(enfoque) o.enfoque=enfoque; else delete o.enfoque;
+  saveAILong(o);
+  cargarPanelConfig();
+  toast("\u2713 Interpretaci\u00f3n larga guardada");
+}
+function cargarAIInterpretacion(){
+  var o=getAILong();
+  var elLen=document.getElementById("cfg-interp-len");
+  if(elLen) elLen.value=o.len||"media";
+  var elEnf=document.getElementById("cfg-interp-enfoque");
+  if(elEnf) elEnf.value=o.enfoque||"";
+}
+function interpLenInstruccion(){
+  var o=getAILong();
+  if(o.len==="corta") return "Extensi\u00f3n: breve, alrededor de 500 caracteres (1 p\u00e1rrafo).";
+  if(o.len==="larga") return "Extensi\u00f3n: extensa, alrededor de 3000 caracteres (5-7 p\u00e1rrafos).";
+  return "Extensi\u00f3n: media, alrededor de 1500 caracteres (3-4 p\u00e1rrafos).";
+}
+function construirUserContentLargo(cartas,ctx){
+  var lines=[];
+  if(ctx.titulo) lines.push("Tirada: "+ctx.titulo);
+  if(ctx.fecha) lines.push("Fecha: "+ctx.fecha);
+  if(ctx.descripcion) lines.push("Descripci\u00f3n: "+ctx.descripcion);
+  if(ctx.situacion) lines.push("Situaci\u00f3n: "+ctx.situacion);
+  if(ctx.p1) lines.push("Persona 1: "+ctx.p1);
+  if(ctx.p2) lines.push("Persona 2: "+ctx.p2);
+  if(ctx.tipoRel) lines.push("Tipo de relaci\u00f3n: "+ctx.tipoRel);
+  if(ctx.numero) lines.push("Arcano n\u00famero: "+ctx.numero);
+  lines.push("");
+  lines.push("Posiciones y cartas:");
+  cartas.forEach(function(it,i){
+    var c=it.carta,inv=it.invertida;
+    lines.push((i+1)+". "+(it.posicion||"Posici\u00f3n "+(i+1))+": "+c.nombre+(inv?" (INVERTIDA)":""));
+    var ref=(it.texto||txt(c,inv,false)||"").replace(/\s+/g," ").trim();
+    if(ref) lines.push("   Referencia BATS: "+ref);
+  });
+  var q=cartas._q;
+  if(q){lines.push("");lines.push("Quintaesencia calculada: "+q.nombre);}
+  var o=getAILong();
+  if(o.enfoque){lines.push("");lines.push("Enfoque solicitado por el consultante: "+o.enfoque);}
+  lines.push("");
+  lines.push(AI_GUIONES[ctx.guion]||"Lee la tirada en su conjunto y ofrece una interpretaci\u00f3n profunda.");
+  lines.push(interpLenInstruccion());
+  return lines.join("\n");
+}
+function generarInterpretacionLarga(cartas,ctx){
+  return llamarIA([
+    {role:"system",content:AI_SISTEMA_LARGA},
+    {role:"user",content:construirUserContentLargo(cartas,ctx)}
+  ]).then(function(t){return (t||"").trim()});
 }

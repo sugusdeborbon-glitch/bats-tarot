@@ -285,6 +285,25 @@
       <label for="cfg-propia">Mi propia IA</label>
     </div>
   </div>
+  <div class="ai-cfg-box">
+    <h4>Interpretación larga (con IA)</h4>
+    <p class="subtle" style="text-align:left">Debajo de cada tirada aparece una interpretación larga de toda la jugada, además de los textos por carta.</p>
+    <div class="form-group">
+      <label for="cfg-interp-len">Extensión</label>
+      <select id="cfg-interp-len">
+        <option value="corta">Corta (~500 caracteres)</option>
+        <option value="media">Media (~1.500 caracteres)</option>
+        <option value="larga">Larga (~3.000 caracteres)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="cfg-interp-enfoque">Enfoque adicional (opcional)</label>
+      <textarea id="cfg-interp-enfoque" class="input-desc" maxlength="200" placeholder="Ej.: céntrate en el ámbito laboral, o en qué debería soltar..."></textarea>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-outline btn-sm" onclick="guardarAILong()">Guardar interpretación</button>
+    </div>
+  </div>
   <div id="cfg-estandar-box" class="ai-cfg-box" style="display:none">
     <h4>IA BATS estándar</h4>
     <p class="subtle" style="text-align:left">La clave de IA está oculta en el servidor (Cloudflare Worker). Solo necesitas la URL del Worker.</p>

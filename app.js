@@ -1,4 +1,4 @@
-var BATS_VERSION="1.5.0";
+var BATS_VERSION="1.5.1";
 
 var PALOS=[["bastos","Wands"],["copas","Cups"],["espadas","Swords"],["oros","Pentacles"]];
 var NOMPALO={bastos:"Bastos",copas:"Copas",espadas:"Espadas",oros:"Oros"};
@@ -174,7 +174,7 @@ function mostrarCruz(cartas,dest,opts){
 }
 
 function guardarHist(tipo,cartas,descripcion,titulo){
-  var h=JSON.parse(localStorage.getItem("bats-hist")||"[]");
+  var h=JSON.parse(lsGet("bats-hist")||"[]");
   var sit=document.getElementById('situacion-'+window._lastPanel)?.value||'';
   var acc=document.getElementById('accion-'+window._lastPanel)?.value||'';
   var tipo_rel=document.getElementById('tipo-'+window._lastPanel)?.value||'';
@@ -184,12 +184,12 @@ function guardarHist(tipo,cartas,descripcion,titulo){
     return {nombre:it.carta.nombre,img:it.carta.img,valor:it.carta.valor,tipo:it.carta.tipo,nucleo:it.carta.nucleo,letras:it.carta.letras,invertida:it.invertida,posicion:it.posicion,texto:it.texto||txt(it.carta,it.invertida)};
   }),resumen:cartas.map(function(it){return it.carta.nombre+(it.invertida?"(inv)":"")}).join(", ")});
   if(h.length>50) h=h.slice(0,50);
-  localStorage.setItem("bats-hist",JSON.stringify(h));
+  lsSet("bats-hist",JSON.stringify(h));
   toast("\u2713 Guardado en historial");
 }
 
 function exportarHist(){
-  var h=localStorage.getItem("bats-hist");
+  var h=lsGet("bats-hist");
   if(!h||h==="[]"){toast("No hay historial para exportar",true);return}
   var f=new Date(),fn=f.getFullYear()+"-"+z(f.getMonth()+1)+"-"+z(f.getDate());
   downloadBlob(h,"bats-historial-"+fn+".json","application/json");
@@ -205,10 +205,10 @@ function importarHist(){
         var data=JSON.parse(ev.target.result);
         if(!Array.isArray(data)){toast("Formato inv\u00e1lido",true);return}
         if(!confirm("\u00bfImportar "+data.length+" lectura(s)? Se a\u00f1adir\u00e1n al historial actual."))return;
-        var h=JSON.parse(localStorage.getItem("bats-hist")||"[]");
+        var h=JSON.parse(lsGet("bats-hist")||"[]");
         data.forEach(function(r){h.unshift(r)});
         if(h.length>100) h=h.slice(0,100);
-        localStorage.setItem("bats-hist",JSON.stringify(h));
+        lsSet("bats-hist",JSON.stringify(h));
         cargarHist();
         toast("\u2713 "+data.length+" lectura(s) importadas");
       }catch(e){toast("Archivo inv\u00e1lido",true)}
@@ -356,7 +356,7 @@ function descargarAI(titulo,cartas){
 }
 
 function cargarHist(){
-  var h=JSON.parse(localStorage.getItem("bats-hist")||"[]");
+  var h=JSON.parse(lsGet("bats-hist")||"[]");
   var c=document.getElementById("r-historial");
   var htm='<div class="priv-notice">Las lecturas se guardan solo en este navegador y no se sincronizan. Para conservarlas o trasladarlas a otro dispositivo, usa Exportar.</div>';
   htm+='<div class="hist-controls"><div class="hist-search-row"><input type="text" id="hist-search" placeholder="Palabra clave..." onkeydown="if(event.key===\'Enter\')buscarHist()"><button class="btn btn-outline btn-sm" onclick="buscarHist()">Buscar</button><button class="btn btn-outline btn-sm" onclick="limpiarFiltros()">Limpiar</button></div><div class="hist-filters-row"><select id="hist-tipo"><option value="">Todos los tipos</option><option value="Cruz Diaria">Cruz Diaria</option><option value="Tirada de la relación">Relación</option><option value="BATS Laboral">BATS Laboral</option><option value="El Aprendizaje">Aprendizaje</option><option value="Tirada Personalizada">Personalizada</option><option value="El Arcano Visitante">Arcano Visitante</option></select><label>Desde: <input type="date" id="hist-desde"></label><label>Hasta: <input type="date" id="hist-hasta"></label></div></div>';
@@ -386,7 +386,7 @@ function buscarHist(){
   var tipo=document.getElementById('hist-tipo')?.value||'';
   var desde=document.getElementById('hist-desde')?.value||'';
   var hasta=document.getElementById('hist-hasta')?.value||'';
-  var h=JSON.parse(localStorage.getItem("bats-hist")||"[]");
+  var h=JSON.parse(lsGet("bats-hist")||"[]");
   if(!h.length){renderHistCards([]);return}
   var filtered=h.filter(function(hr){
     if(tipo && (hr.titulo||hr.tipo)!==tipo) return false;
@@ -412,7 +412,7 @@ function limpiarFiltros(){
   buscarHist();
 }
 function verHist(i){
-  var h=JSON.parse(localStorage.getItem("bats-hist")||"[]");
+  var h=JSON.parse(lsGet("bats-hist")||"[]");
   var hr=h[i];if(!hr)return;
   var cartas=hr.cartas.map(function(it){return{carta:it,invertida:it.invertida,texto:it.texto,posicion:it.posicion}});
   var htm='<div class="result-box"><h3 style="color:var(--gold);margin-bottom:6px">'+(hr.titulo||hr.tipo)+'</h3>';
@@ -448,13 +448,13 @@ function verHist(i){
   document.getElementById("r-historial").innerHTML=htm;
 }
 function guardarCuaderno(i){
-  var h=JSON.parse(localStorage.getItem("bats-hist")||"[]");
+  var h=JSON.parse(lsGet("bats-hist")||"[]");
   if(!h[i])return;
   var anot=document.getElementById('c-anot-'+i)?.value||'';
   var obs=document.getElementById('c-obs-'+i)?.value||'';
   h[i].anotaciones=anot;
   h[i].observado=obs;
-  localStorage.setItem("bats-hist",JSON.stringify(h));
+  lsSet("bats-hist",JSON.stringify(h));
   toast("Cuaderno actualizado");
 }
 function updateCounter(el,id){
@@ -462,7 +462,7 @@ function updateCounter(el,id){
   if(cnt)cnt.textContent=el.value.length+'/300';
 }
 function compartirHist(i){
-  var h=JSON.parse(localStorage.getItem("bats-hist")||"[]");
+  var h=JSON.parse(lsGet("bats-hist")||"[]");
   var hr=h[i];if(!hr)return;
   var cartas=hr.cartas;
   var fs=new Date(hr.fecha).toLocaleDateString("es-ES",{year:"numeric",month:"long",day:"numeric",hour:"2-digit",minute:"2-digit"});
@@ -526,26 +526,26 @@ function compartirTirada(){
   }
 }
 function descargarHistHTML(i){
-  var h=JSON.parse(localStorage.getItem("bats-hist")||"[]");
+  var h=JSON.parse(lsGet("bats-hist")||"[]");
   var hr=h[i];if(!hr)return;
   var cartas=hr.cartas.map(function(it){return{carta:it,invertida:it.invertida,texto:it.texto,posicion:it.posicion}});
   descargarHTML(hr.titulo||hr.tipo,cartas,hr.descripcion,hr.situacion,hr.accion,hr.tipo_rel,hr.anotaciones,hr.observado);
 }
 function descargarHistMD(i){
-  var h=JSON.parse(localStorage.getItem("bats-hist")||"[]");
+  var h=JSON.parse(lsGet("bats-hist")||"[]");
   var hr=h[i];if(!hr)return;
   var cartas=hr.cartas.map(function(it){return{carta:it,invertida:it.invertida,texto:it.texto,posicion:it.posicion}});
   descargarMD(hr.titulo||hr.tipo,cartas,hr.descripcion,hr.situacion,hr.accion,hr.tipo_rel,hr.anotaciones,hr.observado);
 }
 function descargarHistAI(i){
-  var h=JSON.parse(localStorage.getItem("bats-hist")||"[]");
+  var h=JSON.parse(lsGet("bats-hist")||"[]");
   var hr=h[i];if(!hr)return;
   var cartas=hr.cartas.map(function(it){return{carta:it,invertida:it.invertida,texto:it.texto,posicion:it.posicion}});
   descargarAI(hr.titulo||hr.tipo,cartas);
 }
 function limpiarHist(){
   if(!confirm("\u00bfEliminar todo el historial?")) return;
-  localStorage.removeItem("bats-hist");
+  lsDel("bats-hist");
   cargarHist();
   toast("Historial eliminado");
 }
@@ -553,15 +553,41 @@ function limpiarHist(){
 function renderConIA(cartas,dest,renderFn,ctx){
   ctx=ctx||{};
   ctx.fecha=ctx.fecha||new Date().toLocaleDateString("es-ES",{year:"numeric",month:"long",day:"numeric"});
+  window._lastCtx=ctx;
   if(typeof getAIMode==="undefined"||getAIMode()==="off"){renderFn();return}
   var el=document.getElementById(dest);
   if(el) el.innerHTML='<div class="ai-cargando"><span class="ai-spinner"></span>Interpretando con IA\u2026</div>';
   generarTextosIA(cartas,ctx).then(function(){
     renderFn();
+    renderInterpLarga(dest,cartas,ctx);
   }).catch(function(e){
     toast((e&&e.message||"Error de IA")+". Se muestran los textos BATS.",true);
     renderFn();
+    renderInterpLarga(dest,cartas,ctx);
   });
+}
+function renderInterpLarga(dest,cartas,ctx){
+  ctx=ctx||{};
+  var el=document.getElementById(dest);
+  if(!el) return;
+  var cont=document.createElement("div");
+  cont.className="ai-interp";
+  cont.id="ai-interp-"+dest;
+  cont.innerHTML='<h4 class="ai-interp-title">\u2726 Interpretaci\u00f3n</h4><div class="ai-interp-body"><div class="ai-cargando"><span class="ai-spinner"></span>Generando interpretaci\u00f3n\u2026</div></div>';
+  el.appendChild(cont);
+  var body=cont.querySelector(".ai-interp-body");
+  generarInterpretacionLarga(cartas,ctx).then(function(t){
+    cartas._interp=t;
+    var seg=t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/\n{3,}/g,"\n\n");
+    body.innerHTML='<div class="ai-interp-texto">'+seg.replace(/\n/g,"<br>")+'</div><div class="ai-interp-btns"><button class="btn btn-outline btn-sm" onclick="regenerarInterp(\''+dest+'\')">Regenerar</button></div>';
+  }).catch(function(e){
+    body.innerHTML='<p class="subtle">No se pudo generar la interpretaci\u00f3n'+(e&&e.message?": "+e.message:"")+'</p><div class="ai-interp-btns"><button class="btn btn-outline btn-sm" onclick="regenerarInterp(\''+dest+'\')">Reintentar</button></div>';
+  });
+}
+function regenerarInterp(dest){
+  var cont=document.getElementById("ai-interp-"+dest);
+  if(cont) cont.remove();
+  if(window._ult) renderInterpLarga(dest,window._ult,window._lastCtx||{});
 }
 function valPanel(id){
   var el=document.getElementById(id);
@@ -583,15 +609,15 @@ function hacerDiaria(inv){
   renderConIA(c,"r-diaria",function(){
     mostrarCruz(c,"r-diaria",{posiciones:pos});
     ponerBotones("r-diaria","Cruz Diaria","diaria");
-  },{titulo:"Cruz Diaria",descripcion:valPanel("desc-diaria")});
+  },{titulo:"Cruz Diaria",descripcion:valPanel("desc-diaria"),guion:"diaria"});
 }
 
 function tirarRelacion(){
   var p1=document.getElementById("rel-p1").value||"Persona 1",p2=document.getElementById("rel-p2").value||"Persona 2";
-  localStorage.setItem("bats-rel-p1",p1);
-  localStorage.setItem("bats-rel-p2",p2);
+  lsSet("bats-rel-p1",p1);
+  lsSet("bats-rel-p2",p2);
   var tipoRel=document.getElementById("tipo-rel").value||"";
-  localStorage.setItem("bats-rel-tipo",tipoRel);
+  lsSet("bats-rel-tipo",tipoRel);
   var inv=document.getElementById("rel-inv").checked;
   var m=barajar(BARAJA.slice());
   if(m.length<4) return;
@@ -604,7 +630,7 @@ function tirarRelacion(){
   renderConIA(c,"r-relacion",function(){
     mostrarCompleto(c,"r-relacion",{posiciones:pos});
     ponerBotones("r-relacion","Tirada de la relaci\u00f3n","rel");
-  },{titulo:"Tirada de la relaci\u00f3n",descripcion:valPanel("desc-rel"),p1:p1,p2:p2,tipoRel:tipoRel});
+  },{titulo:"Tirada de la relaci\u00f3n",descripcion:valPanel("desc-rel"),p1:p1,p2:p2,tipoRel:tipoRel,guion:"rel"});
 }
 function tirarLaboral(){hacerLaboral(false)}
 function tirarLaboralInv(){hacerLaboral(true)}
@@ -621,7 +647,7 @@ function hacerLaboral(inv){
   renderConIA(c,"r-laboral",function(){
     mostrarCruz(c,"r-laboral",{posiciones:pos});
     ponerBotones("r-laboral","BATS Laboral","laboral");
-  },{titulo:"BATS Laboral",descripcion:valPanel("desc-laboral")});
+  },{titulo:"BATS Laboral",descripcion:valPanel("desc-laboral"),guion:"laboral"});
 }
 
 function actPos(){
@@ -651,7 +677,7 @@ function tirarPers(){
   renderConIA(c,"r-pers",function(){
     mostrarCompleto(c,"r-pers");
     ponerBotones("r-pers",titulo,"pers");
-  },{titulo:titulo,descripcion:valPanel("desc-pers")});
+  },{titulo:titulo,descripcion:valPanel("desc-pers"),guion:"pers"});
 }
 
 function tirarAprendizaje(){hacerAprendizaje(document.getElementById("aprendizaje-inv").checked)}
@@ -680,7 +706,7 @@ function hacerAprendizaje(inv){
   renderConIA(c,"r-aprendizaje",function(){
     mostrarCompleto(c,"r-aprendizaje",{posiciones:pos});
     ponerBotones("r-aprendizaje","El Aprendizaje","aprendizaje");
-  },{titulo:"El Aprendizaje",situacion:sit});
+  },{titulo:"El Aprendizaje",situacion:sit,guion:"aprendizaje"});
 }
 
 function tirarVisitante(){
@@ -696,8 +722,8 @@ function tirarVisitante(){
   if(isNaN(testDate.getTime())||testDate.getDate()!=fnacParts[0]||testDate.getMonth()!=fnacParts[1]-1){
     toast("Fecha de nacimiento no válida",true);return;
   }
-  localStorage.setItem("av-nacimiento",fnac);
-  localStorage.setItem("av-nombre",nombre);
+  lsSet("av-nacimiento",fnac);
+  lsSet("av-nombre",nombre);
   var hoy=new Date();
   var dd=z(hoy.getDate())+"/"+z(hoy.getMonth()+1)+"/"+hoy.getFullYear();
   var num=calcArcanoNum(fnac,dd,nombre);
@@ -710,15 +736,18 @@ function tirarVisitante(){
   window._ult=c;
   window._lastPanel="arcano-visitante";
   window._lastPanelTitle="El Arcano Visitante";
+  window._lastCtx={guion:"arcano",titulo:"El Arcano Visitante",fecha:new Date().toLocaleDateString("es-ES",{year:"numeric",month:"long",day:"numeric"}),numero:num};
   if(typeof getAIMode!=="undefined"&&getAIMode()!=="off"){
     var rres=document.getElementById("r-arcano-visitante");
     rres.innerHTML='<div class="ai-cargando"><span class="ai-spinner"></span>Interpretando con IA\u2026</div>';
     generarIAVisitante(carta).then(function(t){
       c._avtexts=t;
       renderAV(carta,num,d,fnac,nombre,dd,t);
+      renderInterpLarga("r-arcano-visitante",c,window._lastCtx);
     }).catch(function(e){
       toast((e&&e.message||"Error de IA")+". Se muestran los textos BATS.",true);
       renderAV(carta,num,d,fnac,nombre,dd,null);
+      renderInterpLarga("r-arcano-visitante",c,window._lastCtx);
     });
   }else{
     renderAV(carta,num,d,fnac,nombre,dd,null);
@@ -759,8 +788,8 @@ function descargarAV(fmt){
   for(var i=0;i<TABLA_78.length;i++){if(TABLA_78[i]===c){num=i+1;break}}
   var d=batsDe(c);
   var f=new Date(),fs=f.toLocaleDateString("es-ES",{year:"numeric",month:"long",day:"numeric",hour:"2-digit",minute:"2-digit"});
-  var fnac=document.getElementById("av-fecha-nac")?.value||localStorage.getItem("av-nacimiento")||"";
-  var nombre=document.getElementById("av-nombre")?.value||localStorage.getItem("av-nombre")||"";
+  var fnac=document.getElementById("av-fecha-nac")?.value||lsGet("av-nacimiento")||"";
+  var nombre=document.getElementById("av-nombre")?.value||lsGet("av-nombre")||"";
   if(fmt==="md"){
     var md="# El Arcano Visitante\n\n_Fecha: "+fs+"_";
     md+="\n\n**Arcano:** "+num+" — "+c.nombre;
@@ -868,7 +897,7 @@ function compVersiones(a,b){
 }
 function checkNovedades(){
   fetch('novedades.json?t='+Date.now()).then(function(r){return r.json()}).then(function(d){
-    var visto=localStorage.getItem('bats-novedades-vista')||'';
+    var visto=lsGet('bats-novedades-vista')||'';
     if(!d.ultima||d.ultima===visto) return;
     var texto='';
     if(d.historial){
@@ -886,10 +915,12 @@ function checkNovedades(){
     if(!texto) texto=d.texto||'';
     var m=document.createElement('div');
     m.className='novedades-modal';
-    m.innerHTML='<div class="novedades-box"><h3>'+(d.titulo||'Novedades')+'</h3><div class="novedades-texto">'+texto+'</div><button class="btn btn-gold" onclick="this.closest(\'.novedades-modal\').remove();localStorage.setItem(\'bats-novedades-vista\',\''+d.ultima+'\')">Entendido</button></div>';
+    m.innerHTML='<div class="novedades-box"><h3>'+(d.titulo||'Novedades')+'</h3><div class="novedades-texto">'+texto+'</div><button class="btn btn-gold" onclick="this.closest(\'.novedades-modal\').remove();marcarNovedadesVista(\''+d.ultima+'\')">Entendido</button></div>';
     document.body.appendChild(m);
   }).catch(function(){});
 }
+
+function marcarNovedadesVista(v){lsSet("bats-novedades-vista",v)}
 
 function initSW(){
   checkNovedades();
@@ -912,13 +943,13 @@ function initSW(){
 
 setTimeout(function(){
   var rp1=document.getElementById("rel-p1"),rp2=document.getElementById("rel-p2");
-  if(rp1){rp1.value=localStorage.getItem("bats-rel-p1")||"Persona 1"}
-  if(rp2){rp2.value=localStorage.getItem("bats-rel-p2")||"Persona 2"}
+  if(rp1){rp1.value=lsGet("bats-rel-p1")||"Persona 1"}
+  if(rp2){rp2.value=lsGet("bats-rel-p2")||"Persona 2"}
   var rtipo=document.getElementById("tipo-rel");
-  if(rtipo){rtipo.value=localStorage.getItem("bats-rel-tipo")||""}
+  if(rtipo){rtipo.value=lsGet("bats-rel-tipo")||""}
   var avFNac=document.getElementById("av-fecha-nac"),avNom=document.getElementById("av-nombre");
-  if(avFNac){avFNac.value=localStorage.getItem("av-nacimiento")||""}
-  if(avNom){avNom.value=localStorage.getItem("av-nombre")||""}
+  if(avFNac){avFNac.value=lsGet("av-nacimiento")||""}
+  if(avNom){avNom.value=lsGet("av-nombre")||""}
   if(document.getElementById("r-ayuda")) mostrarTodas();
   if(document.getElementById("r-historial")) cargarHist();
   if(typeof actualizarUI_AI==="function") actualizarUI_AI();
