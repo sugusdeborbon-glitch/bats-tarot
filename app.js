@@ -572,6 +572,7 @@ function renderConIA(cartas,dest,renderFn,ctx){
     renderInterpLarga(dest,cartas,ctx);
     ponerBotones(dest,titulo,panelId);
   }).catch(function(e){
+    console.error("Error textos IA:",e);
     toast((e&&e.message||"Error de IA")+". Se muestran los textos BATS.",true);
     renderFn();
     renderInterpLarga(dest,cartas,ctx);
@@ -596,6 +597,7 @@ function renderInterpLarga(dest,cartas,ctx){
     cartas._interp=t;
     body.innerHTML='<div class="ai-interp-texto">'+interpParaHTML(t)+'</div>';
   }).catch(function(e){
+    console.error("Error interpretacion larga:",e);
     body.innerHTML='<p class="subtle">No se pudo generar la interpretaci\u00f3n'+(e&&e.message?": "+e.message:"")+'</p><div class="ai-interp-btns"><button class="btn btn-outline btn-sm" onclick="reintentarInterp(\''+dest+'\')">Reintentar</button></div>';
   });
 }

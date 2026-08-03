@@ -108,15 +108,32 @@ function llamarIA(messages){
   if(mode==="estandar"){
     var url=getWorkerURL();
     if(!url) return Promise.reject(new Error("No hay URL del Worker configurada"));
-    return fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:messages})}).then(parseAIRespuesta);
+    return fetchConTimeout(url,messages,{});
   }
   if(mode==="propia"){
     var cfg=getAIPropia();
     if(!cfg.key) return Promise.reject(new Error("No hay clave configurada"));
-    var headers={"Content-Type":"application/json","Authorization":"Bearer "+cfg.key};
-    return fetch(cfg.base+"/chat/completions",{method:"POST",headers:headers,body:JSON.stringify({model:cfg.modelo,messages:messages,temperature:0.7,max_tokens:4096})}).then(parseAIRespuesta);
+    return fetchConTimeout(cfg.base+"/chat/completions",messages,{model:cfg.modelo,key:cfg.key});
   }
   return Promise.reject(new Error("Modo IA desactivado"));
+}
+function fetchConTimeout(url,messages,extra){
+  var ctrl=("AbortController" in window)?new AbortController():null;
+  var timer=ctrl?setTimeout(function(){ctrl.abort()},90000):null;
+  function limpiar(){if(timer) clearTimeout(timer)}
+  var opts={
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({messages:messages})
+  };
+  if(extra&&extra.key) opts.headers["Authorization"]="Bearer "+extra.key;
+  if(extra&&extra.model) opts.body=JSON.stringify({model:extra.model,messages:messages,temperature:0.7,max_tokens:4096});
+  if(ctrl) opts.signal=ctrl.signal;
+  return fetch(url,opts).then(parseAIRespuesta).then(function(v){limpiar();return v},function(e){
+    limpiar();
+    if(e&&e.name==="AbortError") throw new Error("La IA tard\u00f3 demasiado. Reintenta.");
+    throw e;
+  });
 }
 function parseAIRespuesta(r){
   return r.text().then(function(txt){
