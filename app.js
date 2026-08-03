@@ -282,6 +282,7 @@ function descargarMD(titulo,cartas,descripcion,situacion,accion,tipo,anotaciones
   });
   var q=calcQuinta(cartas);
   if(q) md+="### ✦ Quintaesencia\n\n**"+q.nombre+"**\n\n"+(cartas._qtext||textoQuinta(q.nombre)||txt(q,false))+"\n\n";
+  if(cartas._interp) md+="### ✦ Interpretación\n\n"+cartas._interp+"\n\n";
   if(accion) md+="**Acción recomendada:** "+accion+"\n\n";
   if(anotaciones) md+="**Anotaciones:** "+anotaciones+"\n\n";
   if(observado) md+="**Lo observado:** "+observado+"\n\n";
@@ -314,13 +315,14 @@ function descargarHTML(titulo,cartas,descripcion,situacion,accion,tipo,anotacion
   }
   var wrap=esCruz?"cross-container":"cards";
   var extraCSS=esCruz?".cross-container{display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:auto auto auto;gap:12px;max-width:520px;margin:16px auto;justify-items:center;align-items:start}.cross-center{grid-column:2;grid-row:2}.cross-left{grid-column:1;grid-row:2}.cross-right{grid-column:3;grid-row:2}.cross-top{grid-column:2;grid-row:1}.cross-bottom{grid-column:2;grid-row:3}.cross-container .card{width:140px}":"";
+  var interpH=cartas._interp?'<div class="interp"><div class="ql">✦ INTERPRETACIÓN</div><div class="ct">'+interpParaHTML(cartas._interp)+'</div></div>':"";
   var html='<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>'+titulo+' - BATS</title>';
-  html+='<style>body{font-family:sans-serif;background:#0d0a13;color:#e8dcc8;padding:20px;max-width:800px;margin:0 auto}h1{color:#d4a847}.cards{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;margin:16px 0}.card{width:160px;text-align:center;background:#1a1225;border-radius:8px;padding:8px;border:1px solid #2a1a3e}.card.inv img,.card.invertida img{transform:rotate(180deg)}.card img,.q img{width:100%;border-radius:6px}.cn{color:#d4a847;font-weight:600;margin-top:4px;font-size:.9rem}.cp{color:#f0d080;font-size:.75rem;margin-top:2px}.ct{color:#b8a898;font-size:.8rem;margin-top:4px;text-align:left}.q{margin:20px auto;padding:12px;background:#1a1225;border:1px solid #d4a847;border-radius:8px;text-align:center;max-width:320px}.ql{color:#f0d080;font-weight:600;margin-bottom:8px}.q img{width:80px}.foot{color:#666;font-size:.8rem;text-align:center;margin-top:24px}'+extraCSS+'</style></head><body>';
+  html+='<style>body{font-family:sans-serif;background:#0d0a13;color:#e8dcc8;padding:20px;max-width:800px;margin:0 auto}h1{color:#d4a847}.cards{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;margin:16px 0}.card{width:160px;text-align:center;background:#1a1225;border-radius:8px;padding:8px;border:1px solid #2a1a3e}.card.inv img,.card.invertida img{transform:rotate(180deg)}.card img,.q img{width:100%;border-radius:6px}.cn{color:#d4a847;font-weight:600;margin-top:4px;font-size:.9rem}.cp{color:#f0d080;font-size:.75rem;margin-top:2px}.ct{color:#b8a898;font-size:.8rem;margin-top:4px;text-align:left}.q{margin:20px auto;padding:12px;background:#1a1225;border:1px solid #d4a847;border-radius:8px;text-align:center;max-width:320px}.ql{color:#f0d080;font-weight:600;margin-bottom:8px}.q img{width:80px}.interp{margin:20px auto;padding:12px;background:#1a1225;border:1px solid #d4a847;border-radius:8px;max-width:620px;text-align:left}.interp .ct{white-space:pre-wrap}.foot{color:#666;font-size:.8rem;text-align:center;margin-top:24px}'+extraCSS+'</style></head><body>';
   html+='<h1>'+titulo+'</h1><p style="color:#b8a898"><em>'+fs+'</em></p>';
   if(descripcion) html+='<p style="font-style:italic;color:#b8a898;margin-bottom:12px">'+descripcion+'</p>';
   if(tipo) html+='<p style="font-style:italic;color:#f0d080;margin-bottom:12px"><strong>Tipo de relación:</strong> '+tipo+'</p>';
   if(situacion) html+='<p style="font-style:italic;color:#f0d080;margin-bottom:12px"><strong>Situación:</strong> '+situacion+'</p>';
-  html+='<div class="'+wrap+'">'+cardsHTML+'</div>'+qH;
+  html+='<div class="'+wrap+'">'+cardsHTML+'</div>'+qH+interpH;
   if(accion) html+='<p style="font-style:italic;color:#b8a898;margin-top:12px"><strong>Acción recomendada:</strong> '+accion+'</p>';
   if(anotaciones) html+='<p style="color:#b8a898;margin-top:8px"><strong>Anotaciones:</strong> '+anotaciones+'</p>';
   if(observado) html+='<p style="color:#b8a898;margin-top:8px"><strong>Lo observado:</strong> '+observado+'</p>';
@@ -349,6 +351,7 @@ function descargarAI(titulo,cartas){
   });
   var q=calcQuinta(cartas);
   if(q) md+="\nQuintaesencia: "+q.nombre+"\n";
+  if(cartas._interp) md+="\nInterpretación:\n"+cartas._interp+"\n";
   if(acc) md+="\nAcción recomendada: "+acc+"\n";
   if(anot) md+="\nAnotaciones: "+anot+"\n";
   if(obs) md+="\nLo observado: "+obs+"\n";
@@ -509,6 +512,7 @@ function compartirTirada(){
   });
   var q=calcQuinta(window._ult);
   if(q)md+="### ✦ Quintaesencia\n\n**"+q.nombre+"**\n\n"+(textoQuinta(q.nombre)||txt(q,false))+"\n\n";
+  if(window._ult._interp)md+="### ✦ Interpretación\n\n"+window._ult._interp+"\n\n";
   if(acc)md+="**Acción recomendada:** "+acc+"\n\n";
   var anot=document.getElementById('anotaciones-'+panelId)?.value||'';
   var obs=document.getElementById('observado-'+panelId)?.value||'';
@@ -590,11 +594,13 @@ function renderInterpLarga(dest,cartas,ctx){
   var body=cont.querySelector(".ai-interp-body");
   generarInterpretacionLarga(cartas,ctx).then(function(t){
     cartas._interp=t;
-    var seg=t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/\n{3,}/g,"\n\n");
-    body.innerHTML='<div class="ai-interp-texto">'+seg.replace(/\n/g,"<br>")+'</div>';
+    body.innerHTML='<div class="ai-interp-texto">'+interpParaHTML(t)+'</div>';
   }).catch(function(e){
     body.innerHTML='<p class="subtle">No se pudo generar la interpretaci\u00f3n'+(e&&e.message?": "+e.message:"")+'</p><div class="ai-interp-btns"><button class="btn btn-outline btn-sm" onclick="reintentarInterp(\''+dest+'\')">Reintentar</button></div>';
   });
+}
+function interpParaHTML(t){
+  return (t||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/\n{3,}/g,"\n\n").replace(/\n/g,"<br>");
 }
 function reintentarInterp(dest){
   if(window._ult) renderInterpLarga(dest,window._ult,window._lastCtx||{});
@@ -796,6 +802,7 @@ function descargarAV(fmt){
   var f=new Date(),fs=f.toLocaleDateString("es-ES",{year:"numeric",month:"long",day:"numeric",hour:"2-digit",minute:"2-digit"});
   var fnac=document.getElementById("av-fecha-nac")?.value||lsGet("av-nacimiento")||"";
   var nombre=document.getElementById("av-nombre")?.value||lsGet("av-nombre")||"";
+  var inAV=window._ult._interp||"";
   if(fmt==="md"){
     var md="# El Arcano Visitante\n\n_Fecha: "+fs+"_";
     md+="\n\n**Arcano:** "+num+" — "+c.nombre;
@@ -806,6 +813,7 @@ function descargarAV(fmt){
     md+="### ¿Qué vienes a mostrarme hoy?\n\n"+(ts&&ts.q1?ts.q1:(d?d.normal:"—"))+"\n\n";
     md+="### ¿Qué patrón conocido me estás ayudando a no repetir hoy?\n\n"+(ts&&ts.q2?ts.q2:(d?d.sombra||d.normal:"—"))+"\n\n";
     md+="### ¿Qué acción consciente me ayuda a escucharte?\n\n"+(ts&&ts.q3?ts.q3:(d?d.ayuda||d.normal:"—"))+"\n\n";
+    if(inAV)md+="### ✦ Interpretación\n\n"+inAV+"\n\n";
     if(anot)md+="**Anotaciones:** "+anot+"\n\n";
     if(obs)md+="**Lo observado:** "+obs+"\n\n";
     md+="_Generado por BATS Tarot_";
@@ -820,6 +828,7 @@ function descargarAV(fmt){
     html+='<h3>¿Qué vienes a mostrarme hoy?</h3><div class="ct">'+(ts&&ts.q1?ts.q1:(d?d.normal:"—"))+'</div>';
     html+='<h3>¿Qué patrón conocido me estás ayudando a no repetir hoy?</h3><div class="ct">'+(ts&&ts.q2?ts.q2:(d?d.sombra||d.normal:"—"))+'</div>';
     html+='<h3>¿Qué acción consciente me ayuda a escucharte?</h3><div class="ct">'+(ts&&ts.q3?ts.q3:(d?d.ayuda||d.normal:"—"))+'</div>';
+    if(inAV)html+='<h3>✦ Interpretación</h3><div class="ct">'+interpParaHTML(inAV)+'</div>';
     if(anot)html+='<h3>Anotaciones</h3><div class="ct">'+anot+'</div>';
     if(obs)html+='<h3>Lo observado</h3><div class="ct">'+obs+'</div>';
     html+='<p class="foot">Generado por BATS Tarot</p></body></html>';
@@ -840,6 +849,7 @@ function compartirAV(){
   md+="\n\n### ¿Qué vienes a mostrarme hoy?\n\n"+(c._avtexts&&c._avtexts.q1?c._avtexts.q1:(d?d.normal:"—"))+"\n\n";
   md+="### ¿Qué patrón conocido me estás ayudando a no repetir hoy?\n\n"+(c._avtexts&&c._avtexts.q2?c._avtexts.q2:(d?d.sombra||d.normal:"—"))+"\n\n";
   md+="### ¿Qué acción consciente me ayuda a escucharte?\n\n"+(c._avtexts&&c._avtexts.q3?c._avtexts.q3:(d?d.ayuda||d.normal:"—"))+"\n\n";
+  if(window._ult._interp)md+="### ✦ Interpretación\n\n"+window._ult._interp+"\n\n";
   if(anot)md+="**Anotaciones:** "+anot+"\n\n";
   if(obs)md+="**Lo observado:** "+obs+"\n\n";
   md+="_Generado por BATS Tarot_";
