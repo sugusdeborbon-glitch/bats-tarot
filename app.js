@@ -554,39 +554,49 @@ function renderConIA(cartas,dest,renderFn,ctx){
   ctx=ctx||{};
   ctx.fecha=ctx.fecha||new Date().toLocaleDateString("es-ES",{year:"numeric",month:"long",day:"numeric"});
   window._lastCtx=ctx;
-  if(typeof getAIMode==="undefined"||getAIMode()==="off"){renderFn();return}
+  var panelId=ctx.panelId||window._lastPanel||"tirada";
+  var titulo=ctx.titulo||window._lastPanelTitle||"Tirada";
+  if(typeof getAIMode==="undefined"||getAIMode()==="off"){
+    renderFn();
+    ponerBotones(dest,titulo,panelId);
+    return;
+  }
   var el=document.getElementById(dest);
   if(el) el.innerHTML='<div class="ai-cargando"><span class="ai-spinner"></span>Interpretando con IA\u2026</div>';
   generarTextosIA(cartas,ctx).then(function(){
     renderFn();
     renderInterpLarga(dest,cartas,ctx);
+    ponerBotones(dest,titulo,panelId);
   }).catch(function(e){
     toast((e&&e.message||"Error de IA")+". Se muestran los textos BATS.",true);
     renderFn();
     renderInterpLarga(dest,cartas,ctx);
+    ponerBotones(dest,titulo,panelId);
   });
 }
 function renderInterpLarga(dest,cartas,ctx){
   ctx=ctx||{};
   var el=document.getElementById(dest);
   if(!el) return;
-  var cont=document.createElement("div");
-  cont.className="ai-interp";
-  cont.id="ai-interp-"+dest;
+  var cont=document.getElementById("ai-interp-"+dest);
+  if(!cont){
+    cont=document.createElement("div");
+    cont.className="ai-interp";
+    cont.id="ai-interp-"+dest;
+    el.appendChild(cont);
+  }
+  cont.style.display="";
   cont.innerHTML='<h4 class="ai-interp-title">\u2726 Interpretaci\u00f3n</h4><div class="ai-interp-body"><div class="ai-cargando"><span class="ai-spinner"></span>Generando interpretaci\u00f3n\u2026</div></div>';
-  el.appendChild(cont);
   var body=cont.querySelector(".ai-interp-body");
   generarInterpretacionLarga(cartas,ctx).then(function(t){
     cartas._interp=t;
     var seg=t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/\n{3,}/g,"\n\n");
-    body.innerHTML='<div class="ai-interp-texto">'+seg.replace(/\n/g,"<br>")+'</div><div class="ai-interp-btns"><button class="btn btn-outline btn-sm" onclick="regenerarInterp(\''+dest+'\')">Regenerar</button></div>';
+    body.innerHTML='<div class="ai-interp-texto">'+seg.replace(/\n/g,"<br>")+'</div>';
   }).catch(function(e){
-    body.innerHTML='<p class="subtle">No se pudo generar la interpretaci\u00f3n'+(e&&e.message?": "+e.message:"")+'</p><div class="ai-interp-btns"><button class="btn btn-outline btn-sm" onclick="regenerarInterp(\''+dest+'\')">Reintentar</button></div>';
+    body.innerHTML='<p class="subtle">No se pudo generar la interpretaci\u00f3n'+(e&&e.message?": "+e.message:"")+'</p><div class="ai-interp-btns"><button class="btn btn-outline btn-sm" onclick="reintentarInterp(\''+dest+'\')">Reintentar</button></div>';
   });
 }
-function regenerarInterp(dest){
-  var cont=document.getElementById("ai-interp-"+dest);
-  if(cont) cont.remove();
+function reintentarInterp(dest){
   if(window._ult) renderInterpLarga(dest,window._ult,window._lastCtx||{});
 }
 function valPanel(id){
@@ -608,8 +618,7 @@ function hacerDiaria(inv){
   window._lastPanelTitle="Cruz Diaria";
   renderConIA(c,"r-diaria",function(){
     mostrarCruz(c,"r-diaria",{posiciones:pos});
-    ponerBotones("r-diaria","Cruz Diaria","diaria");
-  },{titulo:"Cruz Diaria",descripcion:valPanel("desc-diaria"),guion:"diaria"});
+  },{titulo:"Cruz Diaria",descripcion:valPanel("desc-diaria"),guion:"diaria",panelId:"diaria"});
 }
 
 function tirarRelacion(){
@@ -629,8 +638,7 @@ function tirarRelacion(){
   window._lastPanelTitle="Tirada de la relación";
   renderConIA(c,"r-relacion",function(){
     mostrarCompleto(c,"r-relacion",{posiciones:pos});
-    ponerBotones("r-relacion","Tirada de la relaci\u00f3n","rel");
-  },{titulo:"Tirada de la relaci\u00f3n",descripcion:valPanel("desc-rel"),p1:p1,p2:p2,tipoRel:tipoRel,guion:"rel"});
+  },{titulo:"Tirada de la relaci\u00f3n",descripcion:valPanel("desc-rel"),p1:p1,p2:p2,tipoRel:tipoRel,guion:"rel",panelId:"rel"});
 }
 function tirarLaboral(){hacerLaboral(false)}
 function tirarLaboralInv(){hacerLaboral(true)}
@@ -646,8 +654,7 @@ function hacerLaboral(inv){
   window._lastPanelTitle="BATS Laboral";
   renderConIA(c,"r-laboral",function(){
     mostrarCruz(c,"r-laboral",{posiciones:pos});
-    ponerBotones("r-laboral","BATS Laboral","laboral");
-  },{titulo:"BATS Laboral",descripcion:valPanel("desc-laboral"),guion:"laboral"});
+  },{titulo:"BATS Laboral",descripcion:valPanel("desc-laboral"),guion:"laboral",panelId:"laboral"});
 }
 
 function actPos(){
@@ -676,8 +683,7 @@ function tirarPers(){
   window._lastPanelTitle=titulo;
   renderConIA(c,"r-pers",function(){
     mostrarCompleto(c,"r-pers");
-    ponerBotones("r-pers",titulo,"pers");
-  },{titulo:titulo,descripcion:valPanel("desc-pers"),guion:"pers"});
+  },{titulo:titulo,descripcion:valPanel("desc-pers"),guion:"pers",panelId:"pers"});
 }
 
 function tirarAprendizaje(){hacerAprendizaje(document.getElementById("aprendizaje-inv").checked)}
@@ -705,8 +711,7 @@ function hacerAprendizaje(inv){
   window._lastPanelTitle="El Aprendizaje";
   renderConIA(c,"r-aprendizaje",function(){
     mostrarCompleto(c,"r-aprendizaje",{posiciones:pos});
-    ponerBotones("r-aprendizaje","El Aprendizaje","aprendizaje");
-  },{titulo:"El Aprendizaje",situacion:sit,guion:"aprendizaje"});
+  },{titulo:"El Aprendizaje",situacion:sit,guion:"aprendizaje",panelId:"aprendizaje"});
 }
 
 function tirarVisitante(){
@@ -764,6 +769,7 @@ function renderAV(carta,num,d,fnac,nombre,dd,texts){
   html+='<div class="card-result"><div class="pos-name">¿Qué patrón conocido me estás ayudando a no repetir hoy?</div><div class="card-msg">'+(texts?(texts.q2||"—"):(d?d.sombra||d.normal:"—"))+'</div></div>';
   html+='<div class="card-result"><div class="pos-name">¿Qué acción consciente me ayuda a escucharte?</div><div class="card-msg">'+(texts?(texts.q3||"—"):(d?d.ayuda||d.normal:"—"))+'</div></div>';
   html+='</div>';
+  html+='<div class="ai-interp" id="ai-interp-r-arcano-visitante"></div>';
   html+='<div class="cuaderno-section"><h4 style="color:var(--gold);margin:12px 0 6px;font-size:.9rem">Cuaderno de reflexiones</h4>';
   html+='<div class="form-group"><label for="anotaciones-arcano-visitante">Anotaciones</label><div class="char-counter"><textarea id="anotaciones-arcano-visitante" class="input-desc" maxlength="300" placeholder="Escribe lo que consideres..." oninput="var c=document.getElementById(\'cnt-av\');if(c)c.textContent=this.length+\'/300\'"></textarea><span class="counter-text" id="cnt-av">0/300</span></div></div>';
   html+='<div class="form-group"><label for="observado-arcano-visitante">Lo observado</label><textarea id="observado-arcano-visitante" class="input-desc" maxlength="500" placeholder="Escribe después lo que has visto o vivido..."></textarea></div>';

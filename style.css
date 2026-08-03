@@ -215,6 +215,7 @@ label{display:block;font-size:.82rem;color:var(--gold);margin-bottom:3px;margin-
 .ai-cfg-box .form-group select{appearance:auto}
 #cfg-key-status{font-size:.78rem;margin-top:6px}
 .ai-interp{border-top:1px dashed rgba(212,168,71,.35);margin-top:20px;padding-top:12px}
+.ai-interp:empty{display:none}
 .ai-interp-title{color:var(--gold);font-size:.95rem;margin:0 0 10px}
 .ai-interp-texto{color:var(--text);line-height:1.6;font-size:.9rem}
 .ai-interp-btns{margin-top:12px}
