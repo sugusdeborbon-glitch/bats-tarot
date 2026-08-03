@@ -1,4 +1,4 @@
-var CACHE = "bats-v6";
+var CACHE = "bats-v7";
 var STATIC_CACHE = CACHE + "-static";
 var IMG_CACHE = CACHE + "-img";
 
@@ -7,12 +7,12 @@ var ARCHIVOS = [
   "index.html",
   "style.css",
   "app.js",
+  "ai.js",
   "manifest.json",
   "datos_bats.js",
   "quintaesencia_bats.js",
   "icono-512.png",
   "offline.html",
-  "novedades.json",
   "cartas/00-TheFool.jpg",
   "cartas/01-TheMagician.jpg",
   "cartas/02-TheHighPriestess.jpg",
@@ -83,6 +83,7 @@ function isImage(req){
 
 function isStatic(req){
   var url = new URL(req.url);
+  if (url.pathname.indexOf("novedades.json") !== -1) return false;
   return url.pathname.match(/\.(js|css|json|png|jpg|jpeg|gif|svg|ico|webp)$/);
 }
 

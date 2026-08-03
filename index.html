@@ -35,12 +35,22 @@
   <button class="menu-item" onclick="irA('arcano-visitante')">El Arcano Visitante</button>
   <button class="menu-item" onclick="irA('ayuda')">Ayuda · Significados</button>
   <button class="menu-item" onclick="irA('historial')">Historial</button>
+  <button class="menu-item" onclick="irA('config')">Configuración</button>
   <button class="menu-item" onclick="irA('que-es-bats')">Qué es BATS</button>
 </nav>
 
 <section id="panel-inicio" class="panel active">
   <h2>✦ Business Ashram Tarot System</h2>
   <p>Tarot como herramienta de introspección, análisis y crecimiento.</p>
+  <div class="ai-selector" role="group" aria-label="Modo de interpretación">
+    <div class="ai-selector-label">Interpretación de las tiradas</div>
+    <div class="ai-opt-row">
+      <button class="ai-opt" data-ai="off" onclick="elegirAIModo('off',this)">Sin IA</button>
+      <button class="ai-opt" data-ai="estandar" onclick="elegirAIModo('estandar',this)">IA BATS</button>
+      <button class="ai-opt" data-ai="propia" onclick="elegirAIModo('propia',this)">Mi IA</button>
+    </div>
+    <p class="ai-desc" id="ai-desc-inicio">Textos fijos del sistema BATS (sin conexión).</p>
+  </div>
   <div class="btn-group mt-16" style="flex-direction:column;align-items:stretch;max-width:400px;margin:16px auto">
     <button class="btn btn-gold" onclick="irA('diaria')" style="text-align:left;display:flex;justify-content:space-between;align-items:center"><span>✦ Cruz Diaria</span><span style="font-size:.7rem;opacity:.7">5 cartas en cruz</span></button>
     <button class="btn btn-outline" onclick="irA('relacion')" style="text-align:left;display:flex;justify-content:space-between;align-items:center"><span>❤ Tirada de la relación</span><span style="font-size:.7rem;opacity:.7">4 cartas</span></button>
@@ -261,8 +271,71 @@
   <a class="back-link" onclick="irA('inicio')" style="display:block;text-align:center;margin-top:16px">← Inicio</a>
 </section>
 
+<section id="panel-config" class="panel">
+  <a class="back-link" onclick="irA('inicio')">← Inicio</a>
+  <h2>Configuración</h2>
+  <div class="form-group">
+    <label>Interpretación de las tiradas</label>
+    <div class="radio-group" id="cfg-ai-mode">
+      <input type="radio" name="cfg-ai-mode-r" id="cfg-off" value="off" onclick="setAIMode('off');actualizarUI_AI()">
+      <label for="cfg-off">Sin IA (textos BATS)</label>
+      <input type="radio" name="cfg-ai-mode-r" id="cfg-estandar" value="estandar" onclick="setAIMode('estandar');actualizarUI_AI()">
+      <label for="cfg-estandar">IA BATS (DeepSeek)</label>
+      <input type="radio" name="cfg-ai-mode-r" id="cfg-propia" value="propia" onclick="setAIMode('propia');actualizarUI_AI()">
+      <label for="cfg-propia">Mi propia IA</label>
+    </div>
+  </div>
+  <div id="cfg-estandar-box" class="ai-cfg-box" style="display:none">
+    <h4>IA BATS estándar</h4>
+    <p class="subtle" style="text-align:left">La clave de DeepSeek está oculta en el servidor (Cloudflare Worker). Solo necesitas la URL del Worker.</p>
+    <div class="form-group">
+      <label for="cfg-worker">URL del Worker</label>
+      <input type="url" id="cfg-worker" placeholder="https://bats-tarot-ai.bats-tarot.workers.dev">
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-outline btn-sm" onclick="guardarWorkerURL()">Guardar URL</button>
+      <button class="btn btn-outline btn-sm" id="cfg-probar-est" onclick="probarConexionIA(this)">Probar conexión</button>
+    </div>
+  </div>
+  <div id="cfg-propia-box" class="ai-cfg-box" style="display:none">
+    <h4>Mi propia IA (compatible con OpenAI)</h4>
+    <div class="form-group">
+      <label for="cfg-provider">Proveedor</label>
+      <select id="cfg-provider" onchange="cambioProveedor()">
+        <option value="openai">OpenAI</option>
+        <option value="deepseek">DeepSeek</option>
+        <option value="groq">Groq</option>
+        <option value="openrouter">OpenRouter</option>
+        <option value="mistral">Mistral</option>
+        <option value="ollama">Ollama (local)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="cfg-endpoint">Endpoint</label>
+      <input type="url" id="cfg-endpoint" placeholder="https://api.openai.com/v1">
+    </div>
+    <div class="form-group">
+      <label for="cfg-modelo">Modelo</label>
+      <input type="text" id="cfg-modelo" placeholder="gpt-4o-mini">
+    </div>
+    <div class="form-group">
+      <label for="cfg-key">Clave API</label>
+      <input type="password" id="cfg-key" placeholder="sk-..." autocomplete="off">
+      <div id="cfg-key-status"></div>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-outline btn-sm" onclick="guardarAIPropia()">Guardar</button>
+      <button class="btn btn-outline btn-sm" id="cfg-probar" onclick="probarConexionIA(this)">Probar conexión</button>
+      <button class="btn btn-danger btn-sm" onclick="borrarAIPropia()">Eliminar clave</button>
+    </div>
+    <p class="subtle" style="text-align:left">Tu clave se guarda ofuscada solo en este navegador, nunca se muestra y va directamente al proveedor que elijas.</p>
+  </div>
+  <a class="back-link" onclick="irA('inicio')" style="display:block;text-align:center;margin-top:16px">← Inicio</a>
+</section>
+
 <script src="datos_bats.js"></script>
 <script src="quintaesencia_bats.js"></script>
+<script src="ai.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

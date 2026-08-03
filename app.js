@@ -1,4 +1,4 @@
-var BATS_VERSION="1.4.0";
+var BATS_VERSION="1.5.0";
 
 var PALOS=[["bastos","Wands"],["copas","Cups"],["espadas","Swords"],["oros","Pentacles"]];
 var NOMPALO={bastos:"Bastos",copas:"Copas",espadas:"Espadas",oros:"Oros"};
@@ -133,7 +133,7 @@ var PROMPT_AI="Eres un intérprete profesional de tarot Rider-Waite-Smith. Recib
 function qHTML(cartas){
   var q=calcQuinta(cartas);
   if(!q) return '<div class="q-box"><div class="q-label">✦ QUINTAESENCIA</div><div class="q-inner"><div style="color:var(--text2)">No calculada</div></div></div>';
-  var tq=textoQuinta(q.nombre)||txt(q,false);
+  var tq=cartas._qtext||textoQuinta(q.nombre)||txt(q,false);
   return '<div class="q-box"><div class="q-label">✦ QUINTAESENCIA: '+q.nombre+'</div><div class="q-inner">'+imgCard(q)+'<div><div class="q-name">'+q.nombre+'</div><div class="q-text">'+tq+'</div></div></div></div>';
 }
 
@@ -281,7 +281,7 @@ function descargarMD(titulo,cartas,descripcion,situacion,accion,tipo,anotaciones
     md+=(it.texto||txt(c,inv)||"\u2014")+"\n\n";
   });
   var q=calcQuinta(cartas);
-  if(q) md+="### ✦ Quintaesencia\n\n**"+q.nombre+"**\n\n"+(textoQuinta(q.nombre)||txt(q,false))+"\n\n";
+  if(q) md+="### ✦ Quintaesencia\n\n**"+q.nombre+"**\n\n"+(cartas._qtext||textoQuinta(q.nombre)||txt(q,false))+"\n\n";
   if(accion) md+="**Acción recomendada:** "+accion+"\n\n";
   if(anotaciones) md+="**Anotaciones:** "+anotaciones+"\n\n";
   if(observado) md+="**Lo observado:** "+observado+"\n\n";
@@ -310,7 +310,7 @@ function descargarHTML(titulo,cartas,descripcion,situacion,accion,tipo,anotacion
   if(q){
     qH='<div class="q"><div class="ql">✦ QUINTAESENCIA: '+q.nombre+'</div>';
     qH+='<img src="'+BATS_BASE+q.img+'" alt="'+q.nombre+'">';
-    qH+='<div class="cn">'+q.nombre+'</div><div class="ct">'+(textoQuinta(q.nombre)||txt(q,false))+'</div></div>';
+    qH+='<div class="cn">'+q.nombre+'</div><div class="ct">'+(cartas._qtext||textoQuinta(q.nombre)||txt(q,false))+'</div></div>';
   }
   var wrap=esCruz?"cross-container":"cards";
   var extraCSS=esCruz?".cross-container{display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:auto auto auto;gap:12px;max-width:520px;margin:16px auto;justify-items:center;align-items:start}.cross-center{grid-column:2;grid-row:2}.cross-left{grid-column:1;grid-row:2}.cross-right{grid-column:3;grid-row:2}.cross-top{grid-column:2;grid-row:1}.cross-bottom{grid-column:2;grid-row:3}.cross-container .card{width:140px}":"";
@@ -550,6 +550,24 @@ function limpiarHist(){
   toast("Historial eliminado");
 }
 
+function renderConIA(cartas,dest,renderFn,ctx){
+  ctx=ctx||{};
+  ctx.fecha=ctx.fecha||new Date().toLocaleDateString("es-ES",{year:"numeric",month:"long",day:"numeric"});
+  if(typeof getAIMode==="undefined"||getAIMode()==="off"){renderFn();return}
+  var el=document.getElementById(dest);
+  if(el) el.innerHTML='<div class="ai-cargando"><span class="ai-spinner"></span>Interpretando con IA\u2026</div>';
+  generarTextosIA(cartas,ctx).then(function(){
+    renderFn();
+  }).catch(function(e){
+    toast((e&&e.message||"Error de IA")+". Se muestran los textos BATS.",true);
+    renderFn();
+  });
+}
+function valPanel(id){
+  var el=document.getElementById(id);
+  return el?el.value:"";
+}
+
 function tirarDiaria(){hacerDiaria(false)}
 function tirarDiariaInv(){hacerDiaria(true)}
 function hacerDiaria(inv){
@@ -562,8 +580,10 @@ function hacerDiaria(inv){
   window._ult=c;
   window._lastPanel="diaria";
   window._lastPanelTitle="Cruz Diaria";
-  mostrarCruz(c,"r-diaria",{posiciones:pos});
-  ponerBotones("r-diaria","Cruz Diaria","diaria");
+  renderConIA(c,"r-diaria",function(){
+    mostrarCruz(c,"r-diaria",{posiciones:pos});
+    ponerBotones("r-diaria","Cruz Diaria","diaria");
+  },{titulo:"Cruz Diaria",descripcion:valPanel("desc-diaria")});
 }
 
 function tirarRelacion(){
@@ -578,11 +598,13 @@ function tirarRelacion(){
   var pos=["Energ\u00eda del momento de la relaci\u00f3n","Energ\u00eda de "+p1,"Energ\u00eda de "+p2,"Posible salida o direcci\u00f3n"];
   var c=[];
   for(var i=0;i<4;i++){var invC=inv?Math.random()<.5:false;c.push({carta:m[i],invertida:invC,posicion:pos[i],texto:txt(m[i],invC,false)});}
-  mostrarCompleto(c,"r-relacion",{posiciones:pos});
   window._ult=c;
   window._lastPanel="rel";
   window._lastPanelTitle="Tirada de la relación";
-  ponerBotones("r-relacion","Tirada de la relaci\u00f3n","rel");
+  renderConIA(c,"r-relacion",function(){
+    mostrarCompleto(c,"r-relacion",{posiciones:pos});
+    ponerBotones("r-relacion","Tirada de la relaci\u00f3n","rel");
+  },{titulo:"Tirada de la relaci\u00f3n",descripcion:valPanel("desc-rel"),p1:p1,p2:p2,tipoRel:tipoRel});
 }
 function tirarLaboral(){hacerLaboral(false)}
 function tirarLaboralInv(){hacerLaboral(true)}
@@ -596,8 +618,10 @@ function hacerLaboral(inv){
   window._ult=c;
   window._lastPanel="laboral";
   window._lastPanelTitle="BATS Laboral";
-  mostrarCruz(c,"r-laboral",{posiciones:pos});
-  ponerBotones("r-laboral","BATS Laboral","laboral");
+  renderConIA(c,"r-laboral",function(){
+    mostrarCruz(c,"r-laboral",{posiciones:pos});
+    ponerBotones("r-laboral","BATS Laboral","laboral");
+  },{titulo:"BATS Laboral",descripcion:valPanel("desc-laboral")});
 }
 
 function actPos(){
@@ -621,11 +645,13 @@ function tirarPers(){
     c[i-1].posicion=el?el.value:"Posici\u00f3n "+i;
     c[i-1].texto=txt(c[i-1].carta,c[i-1].invertida,false);
   }
-  mostrarCompleto(c,"r-pers");
   window._ult=c;
   window._lastPanel="pers";
   window._lastPanelTitle=titulo;
-  ponerBotones("r-pers",titulo,"pers");
+  renderConIA(c,"r-pers",function(){
+    mostrarCompleto(c,"r-pers");
+    ponerBotones("r-pers",titulo,"pers");
+  },{titulo:titulo,descripcion:valPanel("desc-pers")});
 }
 
 function tirarAprendizaje(){hacerAprendizaje(document.getElementById("aprendizaje-inv").checked)}
@@ -651,8 +677,10 @@ function hacerAprendizaje(inv){
   window._ult=c;
   window._lastPanel="aprendizaje";
   window._lastPanelTitle="El Aprendizaje";
-  mostrarCompleto(c,"r-aprendizaje",{posiciones:pos});
-  ponerBotones("r-aprendizaje","El Aprendizaje","aprendizaje");
+  renderConIA(c,"r-aprendizaje",function(){
+    mostrarCompleto(c,"r-aprendizaje",{posiciones:pos});
+    ponerBotones("r-aprendizaje","El Aprendizaje","aprendizaje");
+  },{titulo:"El Aprendizaje",situacion:sit});
 }
 
 function tirarVisitante(){
@@ -682,14 +710,30 @@ function tirarVisitante(){
   window._ult=c;
   window._lastPanel="arcano-visitante";
   window._lastPanelTitle="El Arcano Visitante";
+  if(typeof getAIMode!=="undefined"&&getAIMode()!=="off"){
+    var rres=document.getElementById("r-arcano-visitante");
+    rres.innerHTML='<div class="ai-cargando"><span class="ai-spinner"></span>Interpretando con IA\u2026</div>';
+    generarIAVisitante(carta).then(function(t){
+      c._avtexts=t;
+      renderAV(carta,num,d,fnac,nombre,dd,t);
+    }).catch(function(e){
+      toast((e&&e.message||"Error de IA")+". Se muestran los textos BATS.",true);
+      renderAV(carta,num,d,fnac,nombre,dd,null);
+    });
+  }else{
+    renderAV(carta,num,d,fnac,nombre,dd,null);
+  }
+}
+function renderAV(carta,num,d,fnac,nombre,dd,texts){
+  texts=texts||null;
   var res=document.getElementById("r-arcano-visitante");
   var html='<div class="result-box">';
   html+='<div class="q-box"><div class="q-label">✦ TU ARCANO DEL DÍA</div><div class="q-inner">'+imgCard(carta)+'<div><div class="q-name">'+(num<=21?"XIIII".substring(0,num).replace(/^(X*)(I{0,3})(IV|V|VI{0,3})$/,"$1$2$3"):num===22?"0/XXII":num)+" — "+carta.nombre+'</div></div></div></div>';
   html+='<div class="av-calc"><strong>Cálculo:</strong> '+fnac.replace(/\//g,"+").replace(/\+/g," + ")+" + "+dd.replace(/\//g,"+").replace(/\+/g," + ")+" + "+normalizarNombre(nombre)+" = <strong>"+num+"</strong></div>";
   html+='<div class="av-questions">';
-  html+='<div class="card-result"><div class="pos-name">¿Qué vienes a mostrarme hoy?</div><div class="card-msg">'+(d?d.normal:"—")+'</div></div>';
-  html+='<div class="card-result"><div class="pos-name">¿Qué patrón conocido me estás ayudando a no repetir hoy?</div><div class="card-msg">'+(d?d.sombra||d.normal:"—")+'</div></div>';
-  html+='<div class="card-result"><div class="pos-name">¿Qué acción consciente me ayuda a escucharte?</div><div class="card-msg">'+(d?d.ayuda||d.normal:"—")+'</div></div>';
+  html+='<div class="card-result"><div class="pos-name">¿Qué vienes a mostrarme hoy?</div><div class="card-msg">'+(texts?(texts.q1||"—"):(d?d.normal:"—"))+'</div></div>';
+  html+='<div class="card-result"><div class="pos-name">¿Qué patrón conocido me estás ayudando a no repetir hoy?</div><div class="card-msg">'+(texts?(texts.q2||"—"):(d?d.sombra||d.normal:"—"))+'</div></div>';
+  html+='<div class="card-result"><div class="pos-name">¿Qué acción consciente me ayuda a escucharte?</div><div class="card-msg">'+(texts?(texts.q3||"—"):(d?d.ayuda||d.normal:"—"))+'</div></div>';
   html+='</div>';
   html+='<div class="cuaderno-section"><h4 style="color:var(--gold);margin:12px 0 6px;font-size:.9rem">Cuaderno de reflexiones</h4>';
   html+='<div class="form-group"><label for="anotaciones-arcano-visitante">Anotaciones</label><div class="char-counter"><textarea id="anotaciones-arcano-visitante" class="input-desc" maxlength="300" placeholder="Escribe lo que consideres..." oninput="var c=document.getElementById(\'cnt-av\');if(c)c.textContent=this.length+\'/300\'"></textarea><span class="counter-text" id="cnt-av">0/300</span></div></div>';
@@ -723,9 +767,10 @@ function descargarAV(fmt){
     md+="\n\n**Fecha de nacimiento:** "+fnac;
     md+="\n\n**Nombre:** "+nombre;
     md+="\n\n---\n\n";
-    md+="### ¿Qué vienes a mostrarme hoy?\n\n"+(d?d.normal:"—")+"\n\n";
-    md+="### ¿Qué patrón conocido me estás ayudando a no repetir hoy?\n\n"+(d?d.sombra||d.normal:"—")+"\n\n";
-    md+="### ¿Qué acción consciente me ayuda a escucharte?\n\n"+(d?d.ayuda||d.normal:"—")+"\n\n";
+    var ts=c._avtexts||null;
+    md+="### ¿Qué vienes a mostrarme hoy?\n\n"+(ts&&ts.q1?ts.q1:(d?d.normal:"—"))+"\n\n";
+    md+="### ¿Qué patrón conocido me estás ayudando a no repetir hoy?\n\n"+(ts&&ts.q2?ts.q2:(d?d.sombra||d.normal:"—"))+"\n\n";
+    md+="### ¿Qué acción consciente me ayuda a escucharte?\n\n"+(ts&&ts.q3?ts.q3:(d?d.ayuda||d.normal:"—"))+"\n\n";
     if(anot)md+="**Anotaciones:** "+anot+"\n\n";
     if(obs)md+="**Lo observado:** "+obs+"\n\n";
     md+="_Generado por BATS Tarot_";
@@ -736,9 +781,10 @@ function descargarAV(fmt){
     html+='<h1>El Arcano Visitante</h1><p style="color:#b8a898"><em>'+fs+'</em></p>';
     html+='<p><strong>'+num+" — "+c.nombre+'</strong></p><p style="color:#b8a898">Nacimiento: '+fnac+' · Nombre: '+nombre+'</p>';
     html+='<img src="'+BATS_BASE+c.img+'" alt="'+c.nombre+'">';
-    html+='<h3>¿Qué vienes a mostrarme hoy?</h3><div class="ct">'+(d?d.normal:"—")+'</div>';
-    html+='<h3>¿Qué patrón conocido me estás ayudando a no repetir hoy?</h3><div class="ct">'+(d?d.sombra||d.normal:"—")+'</div>';
-    html+='<h3>¿Qué acción consciente me ayuda a escucharte?</h3><div class="ct">'+(d?d.ayuda||d.normal:"—")+'</div>';
+    var ts=c._avtexts||null;
+    html+='<h3>¿Qué vienes a mostrarme hoy?</h3><div class="ct">'+(ts&&ts.q1?ts.q1:(d?d.normal:"—"))+'</div>';
+    html+='<h3>¿Qué patrón conocido me estás ayudando a no repetir hoy?</h3><div class="ct">'+(ts&&ts.q2?ts.q2:(d?d.sombra||d.normal:"—"))+'</div>';
+    html+='<h3>¿Qué acción consciente me ayuda a escucharte?</h3><div class="ct">'+(ts&&ts.q3?ts.q3:(d?d.ayuda||d.normal:"—"))+'</div>';
     if(anot)html+='<h3>Anotaciones</h3><div class="ct">'+anot+'</div>';
     if(obs)html+='<h3>Lo observado</h3><div class="ct">'+obs+'</div>';
     html+='<p class="foot">Generado por BATS Tarot</p></body></html>';
@@ -756,9 +802,9 @@ function compartirAV(){
   var f=new Date(),fs=f.toLocaleDateString("es-ES",{year:"numeric",month:"long",day:"numeric",hour:"2-digit",minute:"2-digit"});
   var md="# El Arcano Visitante\n\n_Fecha: "+fs+"_";
   md+="\n\n**Arcano:** "+num+" — "+c.nombre;
-  md+="\n\n### ¿Qué vienes a mostrarme hoy?\n\n"+(d?d.normal:"—")+"\n\n";
-  md+="### ¿Qué patrón conocido me estás ayudando a no repetir hoy?\n\n"+(d?d.sombra||d.normal:"—")+"\n\n";
-  md+="### ¿Qué acción consciente me ayuda a escucharte?\n\n"+(d?d.ayuda||d.normal:"—")+"\n\n";
+  md+="\n\n### ¿Qué vienes a mostrarme hoy?\n\n"+(c._avtexts&&c._avtexts.q1?c._avtexts.q1:(d?d.normal:"—"))+"\n\n";
+  md+="### ¿Qué patrón conocido me estás ayudando a no repetir hoy?\n\n"+(c._avtexts&&c._avtexts.q2?c._avtexts.q2:(d?d.sombra||d.normal:"—"))+"\n\n";
+  md+="### ¿Qué acción consciente me ayuda a escucharte?\n\n"+(c._avtexts&&c._avtexts.q3?c._avtexts.q3:(d?d.ayuda||d.normal:"—"))+"\n\n";
   if(anot)md+="**Anotaciones:** "+anot+"\n\n";
   if(obs)md+="**Lo observado:** "+obs+"\n\n";
   md+="_Generado por BATS Tarot_";
@@ -812,15 +858,36 @@ function mostrarTodas(){
   cont.innerHTML=htm;
 }
 
+function compVersiones(a,b){
+  var pa=a.split(".").map(Number),pb=b.split(".").map(Number);
+  for(var i=0;i<3;i++){
+    var x=pa[i]||0,y=pb[i]||0;
+    if(x!==y) return x>y?1:-1;
+  }
+  return 0;
+}
 function checkNovedades(){
   fetch('novedades.json?t='+Date.now()).then(function(r){return r.json()}).then(function(d){
-    var last=localStorage.getItem('bats-novedades-vista');
-    if(last!==d.version){
-      var m=document.createElement('div');
-      m.className='novedades-modal';
-      m.innerHTML='<div class="novedades-box"><h3>'+d.titulo+'</h3><div class="novedades-texto">'+d.texto+'</div><button class="btn btn-gold" onclick="this.closest(\'.novedades-modal\').remove();localStorage.setItem(\'bats-novedades-vista\',\''+d.version+'\')">Entendido</button></div>';
-      document.body.appendChild(m);
+    var visto=localStorage.getItem('bats-novedades-vista')||'';
+    if(!d.ultima||d.ultima===visto) return;
+    var texto='';
+    if(d.historial){
+      var claves=Object.keys(d.historial).sort(function(a,b){return compVersiones(b,a)});
+      var contado=0;
+      claves.forEach(function(v){
+        if(visto===''||compVersiones(v,visto)>0){
+          var h=d.historial[v];
+          if(contado>0) texto+='<div class="nov-sep"></div>';
+          texto+='<h4>'+h.titulo+'</h4><div>'+h.texto+'</div>';
+          contado++;
+        }
+      });
     }
+    if(!texto) texto=d.texto||'';
+    var m=document.createElement('div');
+    m.className='novedades-modal';
+    m.innerHTML='<div class="novedades-box"><h3>'+(d.titulo||'Novedades')+'</h3><div class="novedades-texto">'+texto+'</div><button class="btn btn-gold" onclick="this.closest(\'.novedades-modal\').remove();localStorage.setItem(\'bats-novedades-vista\',\''+d.ultima+'\')">Entendido</button></div>';
+    document.body.appendChild(m);
   }).catch(function(){});
 }
 
@@ -854,5 +921,7 @@ setTimeout(function(){
   if(avNom){avNom.value=localStorage.getItem("av-nombre")||""}
   if(document.getElementById("r-ayuda")) mostrarTodas();
   if(document.getElementById("r-historial")) cargarHist();
+  if(typeof actualizarUI_AI==="function") actualizarUI_AI();
+  if(document.getElementById("cfg-provider")) cargarPanelConfig();
   initSW();
 },100);
