@@ -120,7 +120,7 @@ function llamarIA(messages){
 }
 function fetchConTimeout(url,messages,extra){
   var ctrl=("AbortController" in window)?new AbortController():null;
-  var timer=ctrl?setTimeout(function(){ctrl.abort()},45000):null;
+  var timer=ctrl?setTimeout(function(){ctrl.abort()},60000):null;
   function limpiar(){if(timer) clearTimeout(timer)}
   var opts={
     method:"POST",

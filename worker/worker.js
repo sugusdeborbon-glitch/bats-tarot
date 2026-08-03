@@ -59,7 +59,7 @@ export default {
       return json({ error: "Método no permitido" }, 405, req);
     }
     const providers = [];
-    if (env.GOOGLE_API_KEY) providers.push({ name: "Google", url: GOOGLE_URL, key: env.GOOGLE_API_KEY, model: GOOGLE_MODEL });
+    if (env.GOOGLE_API_KEY) providers.push({ name: "Google", url: GOOGLE_URL, key: env.GOOGLE_API_KEY, model: GOOGLE_MODEL, googleThinking: "low" });
     if (env.GROQ_API_KEY) providers.push({ name: "Groq", url: GROQ_URL, key: env.GROQ_API_KEY, model: GROQ_MODEL });
     if (env.NVIDIA_API_KEY) providers.push({ name: "NVIDIA", url: NVIDIA_URL, key: env.NVIDIA_API_KEY, model: NVIDIA_MODEL });
     if (!providers.length) {
@@ -107,6 +107,22 @@ export default {
 async function llamarProveedor(provider, messages, payload) {
   const ctrl = new AbortController();
   const timer = setTimeout(function(){ ctrl.abort(); }, 60000);
+  const bodyObj = {
+    model: provider.model,
+    messages: messages,
+    temperature: payload.temperature,
+    max_tokens: payload.max_tokens
+  };
+  if (provider.googleThinking) {
+    bodyObj.extra_body = {
+      google: {
+        thinking_config: {
+          thinking_level: provider.googleThinking,
+          include_thoughts: false
+        }
+      }
+    };
+  }
   try {
     const upstream = await fetch(provider.url, {
       method: "POST",
@@ -114,12 +130,7 @@ async function llamarProveedor(provider, messages, payload) {
         "Content-Type": "application/json",
         "Authorization": "Bearer " + provider.key
       },
-      body: JSON.stringify({
-        model: provider.model,
-        messages: messages,
-        temperature: payload.temperature,
-        max_tokens: payload.max_tokens
-      }),
+      body: JSON.stringify(bodyObj),
       signal: ctrl.signal
     });
     const data = await upstream.json();
