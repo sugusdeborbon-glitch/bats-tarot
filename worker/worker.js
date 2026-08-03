@@ -10,7 +10,7 @@ const ALLOWED_ORIGINS = [
 ];
 const RATE_LIMIT_MAX = 10;
 const RATE_LIMIT_WINDOW_MS = 60000;
-const MAX_TOKENS = 1024;
+const MAX_TOKENS = 4096;
 
 const hits = new Map();
 
@@ -93,7 +93,8 @@ export default {
         return json({ content: res.content }, 200, req);
       }
       last = res;
-      if (res.status !== 429 && res.status !== 0) break;
+      const es4xx = res.status >= 400 && res.status < 500;
+      if (es4xx && res.status !== 429) break;
     }
     if (last) {
       const status = last.status && last.status >= 400 ? last.status : 502;
