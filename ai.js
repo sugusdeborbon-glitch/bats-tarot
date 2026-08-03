@@ -222,16 +222,7 @@ function actualizarUI_AI(){
 
 var AI_LONG_KEY="bats-ai-long";
 
-var AI_SISTEMA_LARGA="Eres un int\u00e9rprete profesional de tarot Rider-Waite-Smith del sistema BATS (Business Ashram Tarot System).\nRecibir\u00e1s una tirada completa: cada posici\u00f3n con su carta, su texto BATS de referencia y la quintaesencia ya calculada.\nDebes escribir una interpretaci\u00f3n larga en prosa, en espa\u00f1ol, que lea la tirada como un TODO: c\u00f3mo se conectan las posiciones entre s\u00ed, qu\u00e9 patr\u00f3n o arquetipo recorre la jugada y qu\u00e9 mensaje pr\u00e1ctico ofrece.\nEstilo BATS: claro, cercano, reflexivo, orientado a la toma de conciencia y al crecimiento, sin fatalismos.\nReglas:\n- No predigas el futuro como certeza; muestra patrones, posibilidades y caminos.\n- No inventes datos biogr\u00e1ficos ni asumas circunstancias no proporcionadas.\n- Escribe p\u00e1rrafos continuos (no listas con asteriscos ni encabezados).\n- Responde SOLO con el texto de la interpretaci\u00f3n, sin introducciones ni citas de c\u00f3digo.";
-
-var AI_GUIONES={
-  diaria:"Gu\u00eda para esta tirada: lee la Cruz Diaria como un d\u00eda completo: la energ\u00eda central, qu\u00e9 conviene frenar o minimizar, qu\u00e9 conviene impulsar, la ayuda disponible y el posible resultado, y c\u00f3mo encajar\u00edan juntos.",
-  rel:"Gu\u00eda para esta tirada: lee la tirada de relaci\u00f3n con tacto: el momento de la relaci\u00f3n, la energ\u00eda de cada persona, sus puntos de encuentro o fricci\u00f3n y la posible direcci\u00f3n, sin juzgar a ninguna de las dos.",
-  laboral:"Gu\u00eda para esta tirada: lee la BATS Laboral: la energ\u00eda laboral del momento, qu\u00e9 frenar o minimizar en el trabajo, qu\u00e9 impulsar, las ayudas disponibles y el posible resultado profesional, y la actitud m\u00e1s sabia ante ello.",
-  pers:"Gu\u00eda para esta tirada: lee la tirada personalizada respetando el nombre que el consultante dio a cada posici\u00f3n, y explica c\u00f3mo esas posiciones se relacionan entre s\u00ed y qu\u00e9 hilo conductor dejan ver.",
-  aprendizaje:"Gu\u00eda para esta tirada: lee El Aprendizaje como una secuencia de crecimiento: El Hecho, El Maestro, El Punto Ciego, La Integraci\u00f3n, El Don Transformador y El Resultado Posible, mostrando la lecci\u00f3n completa que propone la situaci\u00f3n.",
-  arcano:"Gu\u00eda para esta lectura: lee El Arcano Visitante del d\u00eda (una carta calculada por numerolog\u00eda) como la energ\u00eda de fondo de la jornada: qu\u00e9 te propone, qu\u00e9 patr\u00f3n conviene no repetir y c\u00f3mo trabajar con ella de forma consciente."
-};
+var AI_SISTEMA_LARGA="Act\u00faa como un int\u00e9rprete experto del m\u00e9todo BATS (Business Ashram Tarot System).\nVas a recibir una \u00fanica tirada del Tarot Rider-Waite-Smith. La tirada puede pertenecer a cualquier \u00e1mbito (diaria, laboral, relaci\u00f3n, aprendizaje, decisi\u00f3n, entrevista a un arcano, tirada libre, etc.). No presupongas su estructura; ded\u00facela a partir de los t\u00edtulos, posiciones y preguntas.\n\nPara cada posici\u00f3n:\n1. Lee primero la pregunta asociada a esa posici\u00f3n.\n2. Describe brevemente el simbolismo esencial de la carta.\n3. Interpreta la carta \u00fanicamente desde la funci\u00f3n que cumple en esa posici\u00f3n.\n4. Extrae el aprendizaje pr\u00e1ctico que aporta.\n\nSi existe una quintaesencia:\n- Interpr\u00e9tala como el patr\u00f3n arquet\u00edpico que sintetiza toda la tirada.\n- Expl\u00edcala en relaci\u00f3n con el resto de las cartas, no de forma aislada.\n\nDespu\u00e9s realiza una lectura integrada de la tirada que incluya:\n- Arquitectura simb\u00f3lica de la tirada.\n- Relaciones, apoyos, tensiones y coherencias entre las cartas.\n- Repeticiones de n\u00fameros, palos, figuras o arcanos mayores cuando sean significativas.\n- Evoluci\u00f3n del mensaje desde la primera hasta la \u00faltima posici\u00f3n.\n- Ense\u00f1anza central de la tirada.\n\nFinaliza con:\n1. Una s\u00edntesis profunda de varios p\u00e1rrafos.\n2. Una \u00fanica frase que resuma el aprendizaje esencial del sistema.\n\nPrincipios metodol\u00f3gicos BATS:\n- El significado nace de la pregunta y de la posici\u00f3n, no de un significado fijo de la carta.\n- Cada carta modifica y es modificada por las dem\u00e1s.\n- La tirada constituye un \u00fanico sistema simb\u00f3lico.\n- La quintaesencia revela el patr\u00f3n profundo que organiza toda la lectura.\n- La interpretaci\u00f3n debe ser simb\u00f3lica, psicol\u00f3gica y arquet\u00edpica, orientada a la comprensi\u00f3n y a la toma de conciencia.\n- No utilices cartas invertidas salvo que se indique expresamente.\n- Evita cualquier enfoque predictivo, fatalista o determinista.";
 
 function getAILong(){try{return JSON.parse(lsGet(AI_LONG_KEY))||{}}catch(e){return {}}}
 function saveAILong(o){lsSet(AI_LONG_KEY,JSON.stringify(o))}
@@ -271,19 +262,17 @@ function construirUserContentLargo(cartas,ctx){
   if(ctx.tipoRel) lines.push("Tipo de relaci\u00f3n: "+ctx.tipoRel);
   if(ctx.numero) lines.push("Arcano n\u00famero: "+ctx.numero);
   lines.push("");
-  lines.push("Posiciones y cartas:");
+  lines.push("Lista de cartas con nombre de posici\u00f3n:");
   cartas.forEach(function(it,i){
     var c=it.carta,inv=it.invertida;
     lines.push((i+1)+". "+(it.posicion||"Posici\u00f3n "+(i+1))+": "+c.nombre+(inv?" (INVERTIDA)":""));
-    var ref=(it.texto||txt(c,inv,false)||"").replace(/\s+/g," ").trim();
-    if(ref) lines.push("   Referencia BATS: "+ref);
   });
   var q=cartas._q;
   if(q){lines.push("");lines.push("Quintaesencia calculada: "+q.nombre);}
   var o=getAILong();
   if(o.enfoque){lines.push("");lines.push("Enfoque solicitado por el consultante: "+o.enfoque);}
   lines.push("");
-  lines.push(AI_GUIONES[ctx.guion]||"Lee la tirada en su conjunto y ofrece una interpretaci\u00f3n profunda.");
+  lines.push("Formato de respuesta: texto plano en espa\u00f1ol, sin markdown (sin *, # ni **). Usa l\u00edneas en blanco para separar secciones.");
   lines.push(interpLenInstruccion());
   return lines.join("\n");
 }
