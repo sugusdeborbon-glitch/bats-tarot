@@ -1,13 +1,14 @@
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GROQ_MODEL = "llama-3.3-70b-versatile";
-const DEEPSEEK_URL = "https://api.deepseek.com/chat/completions";const DEEPSEEK_MODEL = "deepseek-chat";
+const NVIDIA_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
+const NVIDIA_MODEL = "meta/llama-3.3-70b-instruct";
 const ALLOWED_ORIGINS = [
   "https://sugusdeborbon-glitch.github.io",
   "null"
 ];
 const RATE_LIMIT_MAX = 10;
 const RATE_LIMIT_WINDOW_MS = 60000;
-const MAX_TOKENS = 4096;
+const MAX_TOKENS = 2048;
 
 const hits = new Map();
 
@@ -55,12 +56,10 @@ export default {
     if (req.method !== "POST") {
       return json({ error: "Método no permitido" }, 405, req);
     }
-    const provider = env.GROQ_API_KEY
-      ? { name: "Groq", url: GROQ_URL, key: env.GROQ_API_KEY, model: GROQ_MODEL }
-      : env.DEEPSEEK_API_KEY
-        ? { name: "DeepSeek", url: DEEPSEEK_URL, key: env.DEEPSEEK_API_KEY, model: DEEPSEEK_MODEL }
-        : null;
-    if (!provider) {
+    const providers = [];
+    if (env.GROQ_API_KEY) providers.push({ name: "Groq", url: GROQ_URL, key: env.GROQ_API_KEY, model: GROQ_MODEL });
+    if (env.NVIDIA_API_KEY) providers.push({ name: "NVIDIA", url: NVIDIA_URL, key: env.NVIDIA_API_KEY, model: NVIDIA_MODEL });
+    if (!providers.length) {
       return json({ error: "Configuración del servidor incompleta" }, 500, req);
     }
     if (rateLimited(req)) {
@@ -79,6 +78,32 @@ export default {
       return json({ error: "Faltan los mensajes" }, 400, req);
     }
 
+    const payload = {
+      temperature: body.temperature != null ? body.temperature : 0.7,
+      max_tokens: body.max_tokens || MAX_TOKENS
+    };
+
+    let last = null;
+    for (const provider of providers) {
+      const res = await llamarProveedor(provider, messages, payload);
+      if (res.ok) {
+        return json({ content: res.content }, 200, req);
+      }
+      last = res;
+      if (res.status !== 429 && res.status !== 0) break;
+    }
+    if (last) {
+      const status = last.status && last.status >= 400 ? last.status : 502;
+      return json({ error: last.err }, status, req);
+    }
+    return json({ error: "Error desconocido del proveedor" }, 502, req);
+  }
+};
+
+async function llamarProveedor(provider, messages, payload) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(function(){ ctrl.abort(); }, 25000);
+  try {
     const upstream = await fetch(provider.url, {
       method: "POST",
       headers: {
@@ -86,22 +111,29 @@ export default {
         "Authorization": "Bearer " + provider.key
       },
       body: JSON.stringify({
-        model: body.model || provider.model,
+        model: provider.model,
         messages: messages,
-        temperature: body.temperature != null ? body.temperature : 0.7,
-        max_tokens: body.max_tokens || MAX_TOKENS
-      })
+        temperature: payload.temperature,
+        max_tokens: payload.max_tokens
+      }),
+      signal: ctrl.signal
     });
-
     const data = await upstream.json();
     if (!upstream.ok) {
-      return json({ error: provider.name + ": " + (data.error && data.error.message || "error") }, 502, req);
+      return {
+        ok: false,
+        status: upstream.status,
+        err: provider.name + ": " + (data.error && data.error.message || "error")
+      };
     }
-
     const content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
     if (!content) {
-      return json({ error: "Respuesta vacía de " + provider.name }, 502, req);
+      return { ok: false, status: 502, err: "Respuesta vacía de " + provider.name };
     }
-    return json({ content: content }, 200, req);
+    return { ok: true, status: upstream.status, content: content };
+  } catch (e) {
+    return { ok: false, status: 0, err: provider.name + ": la petición tardó demasiado o falló la conexión." };
+  } finally {
+    clearTimeout(timer);
   }
-};
+}
