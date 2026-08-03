@@ -1,5 +1,5 @@
 const GOOGLE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
-const GOOGLE_MODEL = "gemini-2.5-flash";
+const GOOGLE_MODEL = "gemini-3.6-flash";
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GROQ_MODEL = "llama-3.3-70b-versatile";
 const NVIDIA_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
@@ -123,10 +123,13 @@ async function llamarProveedor(provider, messages, payload) {
     });
     const data = await upstream.json();
     if (!upstream.ok) {
+      const detalle = data && data.error
+        ? (data.error.message || data.error.status || JSON.stringify(data.error))
+        : (data && data.error_type ? data.error_type : JSON.stringify(data).slice(0, 300));
       return {
         ok: false,
         status: upstream.status,
-        err: provider.name + ": " + (data.error && data.error.message || "error")
+        err: provider.name + " (" + upstream.status + "): " + detalle
       };
     }
     const content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
