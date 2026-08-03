@@ -7,6 +7,7 @@ const ALLOWED_ORIGINS = [
 ];
 const RATE_LIMIT_MAX = 10;
 const RATE_LIMIT_WINDOW_MS = 60000;
+const MAX_TOKENS = 4096;
 
 const hits = new Map();
 
@@ -88,7 +89,7 @@ export default {
         model: body.model || provider.model,
         messages: messages,
         temperature: body.temperature != null ? body.temperature : 0.7,
-        max_tokens: body.max_tokens || 1600
+        max_tokens: body.max_tokens || MAX_TOKENS
       })
     });
 

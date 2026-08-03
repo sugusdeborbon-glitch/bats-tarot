@@ -114,7 +114,7 @@ function llamarIA(messages){
     var cfg=getAIPropia();
     if(!cfg.key) return Promise.reject(new Error("No hay clave configurada"));
     var headers={"Content-Type":"application/json","Authorization":"Bearer "+cfg.key};
-    return fetch(cfg.base+"/chat/completions",{method:"POST",headers:headers,body:JSON.stringify({model:cfg.modelo,messages:messages,temperature:0.7,max_tokens:1600})}).then(parseAIRespuesta);
+    return fetch(cfg.base+"/chat/completions",{method:"POST",headers:headers,body:JSON.stringify({model:cfg.modelo,messages:messages,temperature:0.7,max_tokens:4096})}).then(parseAIRespuesta);
   }
   return Promise.reject(new Error("Modo IA desactivado"));
 }
