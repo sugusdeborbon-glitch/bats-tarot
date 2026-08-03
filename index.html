@@ -280,14 +280,14 @@
       <input type="radio" name="cfg-ai-mode-r" id="cfg-off" value="off" onclick="setAIMode('off');actualizarUI_AI()">
       <label for="cfg-off">Sin IA (textos BATS)</label>
       <input type="radio" name="cfg-ai-mode-r" id="cfg-estandar" value="estandar" onclick="setAIMode('estandar');actualizarUI_AI()">
-      <label for="cfg-estandar">IA BATS (DeepSeek)</label>
+      <label for="cfg-estandar">IA BATS</label>
       <input type="radio" name="cfg-ai-mode-r" id="cfg-propia" value="propia" onclick="setAIMode('propia');actualizarUI_AI()">
       <label for="cfg-propia">Mi propia IA</label>
     </div>
   </div>
   <div id="cfg-estandar-box" class="ai-cfg-box" style="display:none">
     <h4>IA BATS estándar</h4>
-    <p class="subtle" style="text-align:left">La clave de DeepSeek está oculta en el servidor (Cloudflare Worker). Solo necesitas la URL del Worker.</p>
+    <p class="subtle" style="text-align:left">La clave de IA está oculta en el servidor (Cloudflare Worker). Solo necesitas la URL del Worker.</p>
     <div class="form-group">
       <label for="cfg-worker">URL del Worker</label>
       <input type="url" id="cfg-worker" placeholder="https://bats-tarot-ai.bats-tarot.workers.dev">

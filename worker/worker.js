@@ -1,5 +1,6 @@
-const DEEPSEEK_URL = "https://api.deepseek.com/chat/completions";
-const MODEL = "deepseek-chat";
+const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
+const GROQ_MODEL = "llama-3.3-70b-versatile";
+const DEEPSEEK_URL = "https://api.deepseek.com/chat/completions";const DEEPSEEK_MODEL = "deepseek-chat";
 const ALLOWED_ORIGINS = [
   "https://sugusdeborbon-glitch.github.io",
   "null"
@@ -53,7 +54,12 @@ export default {
     if (req.method !== "POST") {
       return json({ error: "Método no permitido" }, 405, req);
     }
-    if (!env.DEEPSEEK_API_KEY) {
+    const provider = env.GROQ_API_KEY
+      ? { name: "Groq", url: GROQ_URL, key: env.GROQ_API_KEY, model: GROQ_MODEL }
+      : env.DEEPSEEK_API_KEY
+        ? { name: "DeepSeek", url: DEEPSEEK_URL, key: env.DEEPSEEK_API_KEY, model: DEEPSEEK_MODEL }
+        : null;
+    if (!provider) {
       return json({ error: "Configuración del servidor incompleta" }, 500, req);
     }
     if (rateLimited(req)) {
@@ -72,14 +78,14 @@ export default {
       return json({ error: "Faltan los mensajes" }, 400, req);
     }
 
-    const upstream = await fetch(DEEPSEEK_URL, {
+    const upstream = await fetch(provider.url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer " + env.DEEPSEEK_API_KEY
+        "Authorization": "Bearer " + provider.key
       },
       body: JSON.stringify({
-        model: body.model || MODEL,
+        model: body.model || provider.model,
         messages: messages,
         temperature: body.temperature != null ? body.temperature : 0.7,
         max_tokens: body.max_tokens || 1600
@@ -88,12 +94,12 @@ export default {
 
     const data = await upstream.json();
     if (!upstream.ok) {
-      return json({ error: "DeepSeek: " + (data.error && data.error.message || "error") }, 502, req);
+      return json({ error: provider.name + ": " + (data.error && data.error.message || "error") }, 502, req);
     }
 
     const content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
     if (!content) {
-      return json({ error: "Respuesta vacía de DeepSeek" }, 502, req);
+      return json({ error: "Respuesta vacía de " + provider.name }, 502, req);
     }
     return json({ content: content }, 200, req);
   }

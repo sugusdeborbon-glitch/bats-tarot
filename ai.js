@@ -20,7 +20,7 @@ var AI_SISTEMA_AV="Eres un int\u00e9rprete profesional de tarot del sistema BATS
 function getAIMode(){return localStorage.getItem(AI_MODE_KEY)||"off"}
 function setAIMode(m){localStorage.setItem(AI_MODE_KEY,m)}
 function modoDesc(m){
-  if(m==="estandar") return "Interpretaci\u00f3n con IA BATS (DeepSeek) \u2014 textos generados al momento.";
+  if(m==="estandar") return "Interpretaci\u00f3n con IA BATS \u2014 textos generados al momento.";
   if(m==="propia") return "Interpretaci\u00f3n con tu propia clave de IA (proveedor compatible con OpenAI).";
   return "Textos fijos del sistema BATS (sin conexi\u00f3n).";
 }
