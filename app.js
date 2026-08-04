@@ -1,4 +1,4 @@
-var BATS_VERSION="1.5.4";
+var BATS_VERSION="1.5.5";
 
 var PALOS=[["bastos","Wands"],["copas","Cups"],["espadas","Swords"],["oros","Pentacles"]];
 var NOMPALO={bastos:"Bastos",copas:"Copas",espadas:"Espadas",oros:"Oros"};
@@ -591,7 +591,7 @@ function renderInterpLarga(dest,cartas,ctx){
     el.appendChild(cont);
   }
   cont.style.display="";
-  cont.innerHTML='<h4 class="ai-interp-title">\u2726 Interpretaci\u00f3n</h4><div class="ai-interp-body"><div class="ai-cargando"><span class="ai-spinner"></span>Generando interpretaci\u00f3n<span class="ai-interp-t"></span>\u2026</div></div>';
+  cont.innerHTML='<h4 class="ai-interp-title">\u2726 Interpretaci\u00f3n</h4><div class="ai-interp-body"><div class="ai-cargando"><span class="ai-spinner"></span>Generando interpretaci\u00f3n<span class="ai-interp-t"></span>\u2026 <span class="ai-interp-v" style="font-size:.75em;opacity:.6">v'+BATS_VERSION+'</span></div></div>';
   var body=cont.querySelector(".ai-interp-body");
   var tEl=body.querySelector(".ai-interp-t");
   var ini=Date.now(),tick=null,failsafe=null;
@@ -979,6 +979,9 @@ function initSW(){
 }
 
 setTimeout(function(){
+  var vd=document.getElementById("vers-app");
+  if(vd) vd.textContent="BATS Tarot v"+BATS_VERSION;
+  console.log("[BATS] version cargada:",BATS_VERSION);
   var rp1=document.getElementById("rel-p1"),rp2=document.getElementById("rel-p2");
   if(rp1){rp1.value=lsGet("bats-rel-p1")||"Persona 1"}
   if(rp2){rp2.value=lsGet("bats-rel-p2")||"Persona 2"}
