@@ -1,4 +1,4 @@
-var BATS_VERSION="1.5.6";
+var BATS_VERSION="1.5.7";
 
 var PALOS=[["bastos","Wands"],["copas","Cups"],["espadas","Swords"],["oros","Pentacles"]];
 var NOMPALO={bastos:"Bastos",copas:"Copas",espadas:"Espadas",oros:"Oros"};
@@ -263,7 +263,7 @@ function cuadernoHTML(panelId){
 }
 function ponerBotones(dest,titulo,panelId){
   var el=document.getElementById(dest);
-  el.innerHTML+=cuadernoHTML(panelId)+'<div class="btn-group mt-8">'+btnMD(titulo,panelId)+btnHTML(titulo,panelId)+btnAI(titulo,panelId)+btnCompartir(titulo)+btnGuardar(titulo)+'</div>';
+  el.insertAdjacentHTML("beforeend",cuadernoHTML(panelId)+'<div class="btn-group mt-8">'+btnMD(titulo,panelId)+btnHTML(titulo,panelId)+btnAI(titulo,panelId)+btnCompartir(titulo)+btnGuardar(titulo)+'</div>');
 }
 
 var BATS_BASE="https://sugusdeborbon-glitch.github.io/bats-tarot/";
@@ -821,7 +821,7 @@ function renderAV(carta,num,d,fnac,nombre,dd,texts){
   btns+='<button class="btn btn-outline btn-sm" onclick="compartirAV()">Compartir</button>';
   btns+='<button class="btn btn-outline btn-sm" onclick="guardarHist(\'El Arcano Visitante\',window._ult,\'\',\'El Arcano Visitante\')">Guardar</button>';
   btns+='</div>';
-  res.innerHTML+=btns;
+  res.insertAdjacentHTML("beforeend",btns);
 }
 function descargarAV(fmt){
   var anot=document.getElementById('anotaciones-arcano-visitante')?.value||'';

@@ -4,6 +4,12 @@ const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GROQ_MODEL = "llama-3.3-70b-versatile";
 const NVIDIA_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
 const NVIDIA_MODEL = "meta/llama-3.1-8b-instruct";
+const CEREBRAS_URL = "https://api.cerebras.ai/v1/chat/completions";
+const CEREBRAS_MODEL = "gpt-oss-120b";
+const SAMBANOVA_URL = "https://api.sambanova.ai/v1/chat/completions";
+const SAMBANOVA_MODEL = "Meta-Llama-3.3-70B-Instruct";
+const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
+const OPENROUTER_MODEL = "openrouter/free";
 const ALLOWED_ORIGINS = [
   "https://sugusdeborbon-glitch.github.io",
   "null"
@@ -62,6 +68,9 @@ export default {
     if (env.GOOGLE_API_KEY) providers.push({ name: "Google", url: GOOGLE_URL, key: env.GOOGLE_API_KEY, model: GOOGLE_MODEL, googleThinking: "low" });
     if (env.GROQ_API_KEY) providers.push({ name: "Groq", url: GROQ_URL, key: env.GROQ_API_KEY, model: GROQ_MODEL });
     if (env.NVIDIA_API_KEY) providers.push({ name: "NVIDIA", url: NVIDIA_URL, key: env.NVIDIA_API_KEY, model: NVIDIA_MODEL });
+    if (env.CEREBRAS_API_KEY) providers.push({ name: "Cerebras", url: CEREBRAS_URL, key: env.CEREBRAS_API_KEY, model: CEREBRAS_MODEL });
+    if (env.SAMBANOVA_API_KEY) providers.push({ name: "SambaNova", url: SAMBANOVA_URL, key: env.SAMBANOVA_API_KEY, model: SAMBANOVA_MODEL });
+    if (env.OPENROUTER_API_KEY) providers.push({ name: "OpenRouter", url: OPENROUTER_URL, key: env.OPENROUTER_API_KEY, model: OPENROUTER_MODEL });
     if (!providers.length) {
       return json({ error: "Configuración del servidor incompleta" }, 500, req);
     }

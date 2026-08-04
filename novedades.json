@@ -1,13 +1,13 @@
 {
-  "ultima": "1.5.6",
-  "titulo": "Novedades v1.5.6",
-  "texto": "<p><strong>IA BATS</strong> \u2014 La interpretaci\u00f3n larga ahora muestra en pantalla cada paso (petici\u00f3n enviada, respuesta recibida) y si algo falla, lo indica r\u00e1pido con bot\u00f3n para reintentar.</p>",
+  "ultima": "1.5.7",
+  "titulo": "Novedades v1.5.7",
+  "texto": "<p><strong>Corregido el bloqueo de la IA</strong> \u2014 La interpretaci\u00f3n larga ya no se queda colgada: ahora muestra el contador, avanza por pasos y aparece el resultado. Tambi\u00e9n se han a\u00f1adido nuevos proveedores de IA r\u00e1pidos como respaldo.</p>",
   "historial": {
-    "1.5.6": {
-      "titulo": "Novedades v1.5.6",
-      "texto": "<p><strong>IA BATS</strong> \u2014 La interpretaci\u00f3n larga ahora muestra en pantalla cada paso (petici\u00f3n enviada, respuesta recibida) y si algo falla, lo indica r\u00e1pido con bot\u00f3n para reintentar.</p>"
+    "1.5.7": {
+      "titulo": "Novedades v1.5.7",
+      "texto": "<p><strong>Corregido el bloqueo de la IA</strong> \u2014 La interpretaci\u00f3n larga ya no se queda colgada: ahora muestra el contador, avanza por pasos y aparece el resultado. Tambi\u00e9n se han a\u00f1adido nuevos proveedores de IA r\u00e1pidos como respaldo.</p>"
     },
-    "1.5.5": {
+    "1.5.6": {
       "titulo": "Novedades v1.5.4",
       "texto": "<p><strong>IA m\u00e1s r\u00e1pida y sin bloqueos</strong> \u2014 La interpretaci\u00f3n larga ahora es mucho m\u00e1s r\u00e1pida, muestra un contador de espera y nunca se queda colgada: si tarda demasiado, aparece el error con un bot\u00f3n para reintentar.</p>"
     },
