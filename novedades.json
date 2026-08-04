@@ -1,8 +1,12 @@
 {
-  "ultima": "1.5.7",
-  "titulo": "Novedades v1.5.7",
-  "texto": "<p><strong>Corregido el bloqueo de la IA</strong> \u2014 La interpretaci\u00f3n larga ya no se queda colgada: ahora muestra el contador, avanza por pasos y aparece el resultado. Tambi\u00e9n se han a\u00f1adido nuevos proveedores de IA r\u00e1pidos como respaldo.</p>",
+  "ultima": "1.5.8",
+  "titulo": "Novedades v1.5.8",
+  "texto": "<p><strong>Descarga IA sin interpretaci\u00f3n</strong> \u2014 El archivo \u201cDescargar IA\u201d ya incluye solo la tirada y las cartas, sin la interpretaci\u00f3n, para que puedas ped\u00edrsela a otra IA. El resto de descargas no cambian.</p>",
   "historial": {
+    "1.5.8": {
+      "titulo": "Novedades v1.5.8",
+      "texto": "<p><strong>Descarga IA sin interpretaci\u00f3n</strong> \u2014 El archivo \u201cDescargar IA\u201d ya incluye solo la tirada y las cartas, sin la interpretaci\u00f3n, para que puedas ped\u00edrsela a otra IA. El resto de descargas no cambian.</p>"
+    },
     "1.5.7": {
       "titulo": "Novedades v1.5.7",
       "texto": "<p><strong>Corregido el bloqueo de la IA</strong> \u2014 La interpretaci\u00f3n larga ya no se queda colgada: ahora muestra el contador, avanza por pasos y aparece el resultado. Tambi\u00e9n se han a\u00f1adido nuevos proveedores de IA r\u00e1pidos como respaldo.</p>"

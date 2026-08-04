@@ -1,4 +1,4 @@
-var BATS_VERSION="1.5.7";
+var BATS_VERSION="1.5.8";
 
 var PALOS=[["bastos","Wands"],["copas","Cups"],["espadas","Swords"],["oros","Pentacles"]];
 var NOMPALO={bastos:"Bastos",copas:"Copas",espadas:"Espadas",oros:"Oros"};
@@ -351,7 +351,6 @@ function descargarAI(titulo,cartas){
   });
   var q=calcQuinta(cartas);
   if(q) md+="\nQuintaesencia: "+q.nombre+"\n";
-  if(cartas._interp) md+="\nInterpretación:\n"+cartas._interp+"\n";
   if(acc) md+="\nAcción recomendada: "+acc+"\n";
   if(anot) md+="\nAnotaciones: "+anot+"\n";
   if(obs) md+="\nLo observado: "+obs+"\n";
