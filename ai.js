@@ -8,6 +8,7 @@ var AI_CFG_KEY="bats-ai-cfg";
 var AI_WORKER_URL_KEY="bats-ai-worker";
 var AI_KEY_SEED="BATS_2026_v1";
 var AI_WORKER_DEFAULT="https://bats-tarot-ai.bats-tarot.workers.dev";
+var AI_WORKER_TOKEN="cc983d628f91dd472207d8b210489722e6d6";
 
 var AI_PROVIDERS=[
   {id:"openai",nombre:"OpenAI",base:"https://api.openai.com/v1",modelo:"gpt-4o-mini"},
@@ -108,7 +109,7 @@ function llamarIA(messages){
   if(mode==="estandar"){
     var url=getWorkerURL();
     if(!url||!/^https:\/\//i.test(url)) return Promise.reject(new Error("URL del Worker de IA inv\u00e1lida o vac\u00eda. Rev\u00edsala en Configuraci\u00f3n."));
-    return fetchConTimeout(url,messages,{});
+    return fetchConTimeout(url,messages,{token:AI_WORKER_TOKEN});
   }
   if(mode==="propia"){
     var cfg=getAIPropia();
@@ -129,6 +130,7 @@ function fetchConTimeout(url,messages,extra){
     body:JSON.stringify({messages:messages})
   };
   if(extra&&extra.key) opts.headers["Authorization"]="Bearer "+extra.key;
+  if(extra&&extra.token) opts.headers["X-BATS-Token"]=extra.token;
   if(extra&&extra.model) opts.body=JSON.stringify({model:extra.model,messages:messages,temperature:0.7,max_tokens:4096});
   if(ctrl) opts.signal=ctrl.signal;
   status("Enviando petici\u00f3n al servidor de IA\u2026");

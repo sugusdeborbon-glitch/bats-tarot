@@ -12,7 +12,7 @@ const ALLOWED_ORIGINS = [
   "https://sugusdeborbon-glitch.github.io",
   "null"
 ];
-const RATE_LIMIT_MAX = 10;
+const RATE_LIMIT_MAX = 5;
 const RATE_LIMIT_WINDOW_MS = 60000;
 const MAX_TOKENS = 4096;
 
@@ -24,7 +24,7 @@ function corsHeaders(req) {
     return {
       "Access-Control-Allow-Origin": origin,
       "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
+      "Access-Control-Allow-Headers": "Content-Type, X-BATS-Token",
       "Vary": "Origin"
     };
   }
@@ -62,6 +62,9 @@ export default {
     }
     if (req.method !== "POST") {
       return json({ error: "Método no permitido" }, 405, req);
+    }
+    if (env.BATS_TOKEN && req.headers.get("X-BATS-Token") !== env.BATS_TOKEN) {
+      return json({ error: "No autorizado" }, 401, req);
     }
     let providers = [];
     if (env.GROQ_API_KEY) providers.push({ name: "Groq", url: GROQ_URL, key: env.GROQ_API_KEY, model: GROQ_MODEL });
