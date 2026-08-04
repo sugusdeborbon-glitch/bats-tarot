@@ -1,4 +1,4 @@
-var BATS_VERSION="1.5.9";
+var BATS_VERSION="1.5.10";
 
 var PALOS=[["bastos","Wands"],["copas","Cups"],["espadas","Swords"],["oros","Pentacles"]];
 var NOMPALO={bastos:"Bastos",copas:"Copas",espadas:"Espadas",oros:"Oros"};

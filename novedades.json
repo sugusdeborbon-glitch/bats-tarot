@@ -1,8 +1,12 @@
 {
-  "ultima": "1.5.9",
-  "titulo": "Novedades v1.5.9",
-  "texto": "<p><strong>M\u00e1s privacidad y seguridad</strong> \u2014 El servidor de IA ahora est\u00e1 protegido con autenticaci\u00f3n interna y l\u00edmites de peticiones m\u00e1s estrictos. La configuraci\u00f3n de \u201cIA BATS est\u00e1ndar\u201d se simplifica: ya no es necesario ver ni tocar la URL del servidor.</p>",
+  "ultima": "1.5.10",
+  "titulo": "Novedades v1.5.10",
+  "texto": "<p><strong>Correcci\u00f3n</strong> \u2014 El bot\u00f3n \u201cProbar conexi\u00f3n\u201d de la IA BATS vuelve a funcionar correctamente.</p>",
   "historial": {
+    "1.5.10": {
+      "titulo": "Novedades v1.5.10",
+      "texto": "<p><strong>Correcci\u00f3n</strong> \u2014 El bot\u00f3n \u201cProbar conexi\u00f3n\u201d de la IA BATS vuelve a funcionar correctamente.</p>"
+    },
     "1.5.9": {
       "titulo": "Novedades v1.5.9",
       "texto": "<p><strong>M\u00e1s privacidad y seguridad</strong> \u2014 El servidor de IA ahora est\u00e1 protegido con autenticaci\u00f3n interna y l\u00edmites de peticiones m\u00e1s estrictos. La configuraci\u00f3n de \u201cIA BATS est\u00e1ndar\u201d se simplifica: ya no es necesario ver ni tocar la URL del servidor.</p>"

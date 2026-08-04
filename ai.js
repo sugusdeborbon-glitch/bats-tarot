@@ -217,8 +217,8 @@ function probarConexionIA(btn){
   var orig=b?b.textContent:"";
   if(b){b.disabled=true;b.textContent="Probando\u2026"}
   llamarIA([
-    {role:"system",content:"Responde solo con la palabra OK."},
-    {role:"user",content:"Dime OK"}
+    {role:"system",content:"Eres una IA de tarot. Responde en espa\u00f1ol con una frase completa y natural."},
+    {role:"user",content:"\u00bfQu\u00e9 representa El Mago en una tirada?"}
   ]).then(function(){
     if(b){b.disabled=false;b.textContent=orig}
     toast("\u2713 Conexi\u00f3n con la IA correcta");
