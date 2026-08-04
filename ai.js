@@ -122,6 +122,7 @@ function fetchConTimeout(url,messages,extra){
   var ctrl=("AbortController" in window)?new AbortController():null;
   var timer=ctrl?setTimeout(function(){ctrl.abort()},60000):null;
   function limpiar(){if(timer) clearTimeout(timer)}
+  function status(s){try{if(window._iaStatus) window._iaStatus(s)}catch(e){}}
   var opts={
     method:"POST",
     headers:{"Content-Type":"application/json"},
@@ -130,11 +131,13 @@ function fetchConTimeout(url,messages,extra){
   if(extra&&extra.key) opts.headers["Authorization"]="Bearer "+extra.key;
   if(extra&&extra.model) opts.body=JSON.stringify({model:extra.model,messages:messages,temperature:0.7,max_tokens:4096});
   if(ctrl) opts.signal=ctrl.signal;
+  status("Enviando petici\u00f3n al servidor de IA\u2026");
   var p;
   try{ p=fetch(url,opts); }
   catch(e){ limpiar(); return Promise.reject(new Error("URL del servidor de IA inv\u00e1lida. Rev\u00edsala en Configuraci\u00f3n.")); }
-  return p.then(parseAIRespuesta).then(function(v){limpiar();return v},function(e){
+  return p.then(function(r){status("Respuesta recibida, procesando\u2026");return parseAIRespuesta(r)}).then(function(v){limpiar();return v},function(e){
     limpiar();
+    status("error");
     if(e&&e.name==="AbortError") throw new Error("La IA tard\u00f3 demasiado. Reintenta.");
     throw e;
   });

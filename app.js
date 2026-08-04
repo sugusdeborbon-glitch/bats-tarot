@@ -1,4 +1,4 @@
-var BATS_VERSION="1.5.5";
+var BATS_VERSION="1.5.6";
 
 var PALOS=[["bastos","Wands"],["copas","Cups"],["espadas","Swords"],["oros","Pentacles"]];
 var NOMPALO={bastos:"Bastos",copas:"Copas",espadas:"Espadas",oros:"Oros"};
@@ -568,15 +568,15 @@ function renderConIA(cartas,dest,renderFn,ctx){
   var el=document.getElementById(dest);
   if(el) el.innerHTML='<div class="ai-cargando"><span class="ai-spinner"></span>Interpretando con IA\u2026</div>';
   generarTextosIA(cartas,ctx).then(function(){
-    renderFn();
-    renderInterpLarga(dest,cartas,ctx);
-    ponerBotones(dest,titulo,panelId);
+    try{renderFn()}catch(e){console.error("renderFn:",e)}
+    try{renderInterpLarga(dest,cartas,ctx)}catch(e){console.error("renderInterpLarga:",e);toast("Error al iniciar la interpretaci\u00f3n larga: "+(e&&e.message||e),true)}
+    try{ponerBotones(dest,titulo,panelId)}catch(e){console.error("ponerBotones:",e)}
   }).catch(function(e){
     console.error("Error textos IA:",e);
     toast((e&&e.message||"Error de IA")+". Se muestran los textos BATS.",true);
-    renderFn();
-    renderInterpLarga(dest,cartas,ctx);
-    ponerBotones(dest,titulo,panelId);
+    try{renderFn()}catch(e2){console.error("renderFn:",e2)}
+    try{renderInterpLarga(dest,cartas,ctx)}catch(e3){console.error("renderInterpLarga:",e3);toast("Error al iniciar la interpretaci\u00f3n larga: "+(e3&&e3.message||e3),true)}
+    try{ponerBotones(dest,titulo,panelId)}catch(e4){console.error("ponerBotones:",e4)}
   });
 }
 function renderInterpLarga(dest,cartas,ctx){
@@ -591,27 +591,39 @@ function renderInterpLarga(dest,cartas,ctx){
     el.appendChild(cont);
   }
   cont.style.display="";
-  cont.innerHTML='<h4 class="ai-interp-title">\u2726 Interpretaci\u00f3n</h4><div class="ai-interp-body"><div class="ai-cargando"><span class="ai-spinner"></span>Generando interpretaci\u00f3n<span class="ai-interp-t"></span>\u2026 <span class="ai-interp-v" style="font-size:.75em;opacity:.6">v'+BATS_VERSION+'</span></div></div>';
-  var body=cont.querySelector(".ai-interp-body");
+  cont.innerHTML='<h4 class="ai-interp-title">\u2726 Interpretaci\u00f3n</h4><div class="ai-interp-body"><div class="ai-cargando"><span class="ai-spinner"></span>Generando interpretaci\u00f3n<span class="ai-interp-t"></span>\u2026 <span class="ai-interp-v" style="font-size:.75em;opacity:.6">v'+BATS_VERSION+'</span><span class="ai-interp-status" style="display:block;font-size:.72em;opacity:.75;margin-top:4px"></span></div></div>';
+  var body=cont.querySelector(".ai-interp-body")||cont;
   var tEl=body.querySelector(".ai-interp-t");
-  var ini=Date.now(),tick=null,failsafe=null;
-  function limpiar(){if(tick) clearInterval(tick);if(failsafe) clearTimeout(failsafe)}
+  var sEl=body.querySelector(".ai-interp-status");
+  var ini=Date.now(),tick=null,failsafe=null,acabado=false;
+  function limpiar(){acabado=true;if(tick){clearInterval(tick);tick=null}if(failsafe){clearTimeout(failsafe);failsafe=null}}
   function mostrarError(e){
     limpiar();
-    console.error("Error interpretacion larga:",e);
+    try{console.error("Error interpretacion larga:",e)}catch(_){}
     body.innerHTML='<p class="subtle">No se pudo generar la interpretaci\u00f3n'+(e&&e.message?": "+e.message:"")+'</p><div class="ai-interp-btns"><button class="btn btn-outline btn-sm" onclick="reintentarInterp(\''+dest+'\')">Reintentar</button></div>';
   }
-  tick=setInterval(function(){
-    if(tEl) tEl.textContent=" ("+Math.round((Date.now()-ini)/1000)+" s)";
-  },1000);
+  function mostrarOK(t){
+    limpiar();
+    cartas._interp=t;
+    body.innerHTML='<div class="ai-interp-texto">'+interpParaHTML(t)+'</div>';
+  }
+  function tickS(){
+    if(!acabado&&tEl) tEl.textContent=" ("+Math.round((Date.now()-ini)/1000)+" s)";
+  }
+  window._iaStatus=function(s){
+    if(acabado) return;
+    if(sEl) sEl.textContent=s;
+    try{console.log("[BATS-IA]",s)}catch(_){}
+  };
+  tickS();
+  tick=setInterval(tickS,1000);
   failsafe=setTimeout(function(){
+    if(acabado) return;
     if(body&&body.querySelector(".ai-spinner")) mostrarError(new Error("La IA tard\u00f3 demasiado. Reintenta."));
-  },65000);
+  },30000);
   try{
     generarInterpretacionLarga(cartas,ctx).then(function(t){
-      limpiar();
-      cartas._interp=t;
-      body.innerHTML='<div class="ai-interp-texto">'+interpParaHTML(t)+'</div>';
+      mostrarOK(t);
     }).catch(function(e){
       mostrarError(e);
     });
@@ -774,11 +786,11 @@ function tirarVisitante(){
     generarIAVisitante(carta).then(function(t){
       c._avtexts=t;
       renderAV(carta,num,d,fnac,nombre,dd,t);
-      renderInterpLarga("r-arcano-visitante",c,window._lastCtx);
+      try{renderInterpLarga("r-arcano-visitante",c,window._lastCtx)}catch(e){console.error("renderInterpLarga AV:",e);toast("Error al iniciar la interpretaci\u00f3n larga: "+(e&&e.message||e),true)}
     }).catch(function(e){
       toast((e&&e.message||"Error de IA")+". Se muestran los textos BATS.",true);
       renderAV(carta,num,d,fnac,nombre,dd,null);
-      renderInterpLarga("r-arcano-visitante",c,window._lastCtx);
+      try{renderInterpLarga("r-arcano-visitante",c,window._lastCtx)}catch(e2){console.error("renderInterpLarga AV:",e2)}
     });
   }else{
     renderAV(carta,num,d,fnac,nombre,dd,null);
