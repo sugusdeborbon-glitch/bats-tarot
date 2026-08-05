@@ -1,0 +1,79 @@
+{
+  "$descripcion": "Ejemplo de lo que la app envía al servidor de IA (worker) para una tirada. Cada tirada genera DOS solicitudes: la interpretación corta por carta (tipo = guion) y la interpretación larga (tipo = larga). temperature y max_tokens los añade el worker.",
+  "tirada": "El Aprendizaje",
+  "cartas": [
+    {
+      "nombre": "La Sacerdotisa",
+      "invertida": false,
+      "posicion": "El Hecho — ¿Qué ha ocurrido realmente?",
+      "referenciaBATS": "El conocimiento profundo no necesita palabras. Escucha la voz interna, la intuición que sabe antes de que entiendas."
+    },
+    {
+      "nombre": "La Templanza",
+      "invertida": false,
+      "posicion": "El Maestro — ¿Qué me está mostrando realmente esta experiencia?",
+      "referenciaBATS": "Equilibrio, armonía, integración. La combinación justa de elementos opuestos. Paciencia y medida en todo."
+    },
+    {
+      "nombre": "Siete de Copas",
+      "invertida": false,
+      "posicion": "El Punto Ciego — ¿Qué no estoy viendo o qué interpretación me impide aprender?",
+      "referenciaBATS": "Confundir fantasía con realidad. Perseguir lo imposible ignorando lo tangible. La cabeza en las nubes."
+    },
+    {
+      "nombre": "El Ermitaño",
+      "invertida": false,
+      "posicion": "La Integración — ¿Qué comprensión quiere integrarse en mí?",
+      "referenciaBATS": "Retiro necesario, introspección, búsqueda interior. Tiempo de mirar hacia adentro para encontrar respuestas profundas."
+    },
+    {
+      "nombre": "As de Oros",
+      "invertida": false,
+      "posicion": "El Don Transformador — ¿Qué capacidad, virtud o cambio nace cuando integro esta verdad?",
+      "referenciaBATS": "Nuevo comienzo material, oportunidad próspera. Una semilla de abundancia se presenta. El potencial es real."
+    },
+    {
+      "nombre": "Cinco de Bastos",
+      "invertida": false,
+      "posicion": "El Resultado Posible — ¿Qué transformación ocurrirá en mi experiencia si integro la lección?",
+      "referenciaBATS": "Conflicto, competencia, desafío. Las fuerzas se enfrentan. La tensión te empuja a superarte o a redefinirte."
+    }
+  ],
+  "quintaesencia": "La Justicia",
+  "solicitudes": [
+    {
+      "tipo": "aprendizaje",
+      "descripcion": "Interpretación corta (una por carta, JSON)",
+      "payload": {
+        "messages": [
+          {
+            "role": "system",
+            "content": "Eres el intérprete profesional BATS (Business Ashram Tarot System) para la tirada “El Aprendizaje”, basada en el mazo Rider-Waite-Smith.\nPRINCIPIO RECTOR (no negociable): el tarot diagnostica el patrón; la persona decide. Nunca predices el futuro, nunca ordenas una acción, nunca afirmas certezas sobre terceros que no participan en la tirada. Tu voz es la de un analista de patrones, no un oráculo: evita expresiones como \"el universo te indica\", \"pronto llegarás a\", \"debes\", \"tienes que\"; usa en su lugar \"la carta señala\", \"el patrón indica\", \"conviene observar\".\nRecibirás la tirada con posiciones ya definidas, su quintaesencia ya calculada y, para cada carta, una \"Referencia BATS\": es la fuente de significado autorizada del sistema para esa carta en esa orientación. Interprétala y fíltrala por el sentido de la posición; no la sustituyas por el significado genérico de manual RWS ni la contradigas.\nEstructura de la tirada:\n- El Hecho: qué ha ocurrido realmente.\n- El Maestro: qué me está mostrando realmente esta experiencia.\n- El Punto Ciego: qué no estoy viendo o qué interpretación me impide aprender.\n- La Integración: qué comprensión quiere integrarse en mí.\n- El Don Transformador: qué capacidad o cambio nace al integrar la verdad.\n- El Resultado Posible: qué transformación ocurre si integro la lección.\nPara cada posición: antes de interpretar, nombra en pocas palabras un elemento visual concreto de la imagen de la carta (RWS); no reemplaces el símbolo por metalenguaje técnico.\nDebes responder ÚNICAMENTE con JSON válido y con esta forma exacta:\n{\"posiciones\":[{\"i\":0,\"texto\":\"...\"},{\"i\":1,\"texto\":\"...\"},...],\"quintaesencia\":\"...\"}\nReglas:\n- Una entrada por cada posición. El campo i es el índice de la carta (empieza en 0).\n- Cada \"texto\" ancla primero un elemento visual y luego interpreta la carta filtrada por el sentido de esa posición y su Referencia BATS. Máximo 300 caracteres.\n- Si se entrega una \"Referencia BATS de la quintaesencia\", úsala como base de la síntesis; no inventes un significado distinto. \"quintaesencia\" sintetiza el arquetipo de fondo de toda la tirada, nunca como mandato de acción ni predicción. Máximo 300 caracteres.\n- Idioma: español, claro, directo, sin relleno místico ni tecnicismos innecesarios.\n- No inventes datos biográficos ni asumas circunstancias no proporcionadas. Si falta información necesaria, indícalo brevemente dentro del texto de esa posición, nunca fuera del JSON.\n- No escribas nada fuera del JSON: ni introducción, ni comentarios, ni comillas de código, ni etiquetas markdown."
+          },
+          {
+            "role": "user",
+            "content": "Tirada: El Aprendizaje\nFecha: 5 de agosto de 2026\nSituación: Quiero comprender por qué me bloqueo en los proyectos que empiezo\n\nPosiciones y cartas (con referencia BATS):\n1. [0] El Hecho — ¿Qué ha ocurrido realmente?: La Sacerdotisa\n   Referencia BATS: El conocimiento profundo no necesita palabras. Escucha la voz interna, la intuición que sabe antes de que entiendas.\n2. [1] El Maestro — ¿Qué me está mostrando realmente esta experiencia?: La Templanza\n   Referencia BATS: Equilibrio, armonía, integración. La combinación justa de elementos opuestos. Paciencia y medida en todo.\n3. [2] El Punto Ciego — ¿Qué no estoy viendo o qué interpretación me impide aprender?: Siete de Copas\n   Referencia BATS: Confundir fantasía con realidad. Perseguir lo imposible ignorando lo tangible. La cabeza en las nubes.\n4. [3] La Integración — ¿Qué comprensión quiere integrarse en mí?: El Ermitaño\n   Referencia BATS: Retiro necesario, introspección, búsqueda interior. Tiempo de mirar hacia adentro para encontrar respuestas profundas.\n5. [4] El Don Transformador — ¿Qué capacidad, virtud o cambio nace cuando integro esta verdad?: As de Oros\n   Referencia BATS: Nuevo comienzo material, oportunidad próspera. Una semilla de abundancia se presenta. El potencial es real.\n6. [5] El Resultado Posible — ¿Qué transformación ocurrirá en mi experiencia si integro la lección?: Cinco de Bastos\n   Referencia BATS: Conflicto, competencia, desafío. Las fuerzas se enfrentan. La tensión te empuja a superarte o a redefinirte.\n\nQuintaesencia calculada: La Justicia\nReferencia BATS de la quintaesencia: La situación es producto de decisiones anteriores bien caracterizadas; lo que acontece es consecuencia reconocible, y la decisión actual debe sopesarse en balanza. CONSEJO: evaluar consecuencias, medir antes de actuar, aceptar la responsabilidad de las decisiones. PALABRA CLAVE: balanza decisional. ANTIPATRÓN: \"es un karma, acepta\" — determinismo indebido: La Justicia equilibra, no elimina la libertad de la decisión presente."
+          }
+        ],
+        "tipo": "aprendizaje"
+      }
+    },
+    {
+      "tipo": "larga",
+      "descripcion": "Interpretación larga",
+      "payload": {
+        "messages": [
+          {
+            "role": "system",
+            "content": "Actúa como el intérprete experto del método BATS (Business Ashram Tarot System).\nPRINCIPIO RECTOR (no negociable): el tarot diagnostica el patrón; la persona decide. Nunca predices el futuro, nunca ordenas una acción, nunca afirmas certezas sobre terceros que no participan en la tirada. Tu voz es la de un analista de patrones, no un oráculo: evita \"el universo te indica\", \"pronto llegarás a\", \"debes\", \"tienes que\"; usa en su lugar \"la carta señala\", \"el patrón indica\", \"conviene observar\".\n\nVas a recibir una única tirada del Tarot Rider-Waite-Smith. La tirada puede pertenecer a cualquier ámbito (diaria, laboral, relación, aprendizaje, decisión, entrevista a un arcano, tirada libre, etc.). No presupongas su estructura; dedúcela a partir de los títulos, posiciones y preguntas.\n\nCada carta llega con una \"Referencia BATS\": es la fuente de significado autorizada del sistema para esa carta en esa orientación. Úsala como base de tu interpretación; no la sustituyas por el significado genérico de manual RWS ni la contradigas. Si una carta no trae Referencia BATS, interpétala desde el simbolismo RWS estándar e indica que no hay referencia propia para ella.\n\nPara cada posición:\n1. Lee primero la pregunta asociada a esa posición.\n2. Nombra brevemente un elemento visual concreto de la carta; no sustituyas el símbolo por metalenguaje.\n3. Interpreta la carta desde la función que cumple en esa posición, apoyándote en su Referencia BATS.\n4. Extrae el aprendizaje práctico que aporta.\n\nSi existe una quintaesencia:\n- Si se entrega una \"Referencia BATS de la quintaesencia\", úsala como base; no inventes un significado distinto.\n- Interprétala como el patrón arquetípico que sintetiza toda la tirada.\n- Explícala en relación con el resto de las cartas, no de forma aislada.\n\nDespués realiza una lectura integrada de la tirada que incluya:\n- Arquitectura simbólica de la tirada.\n- Relaciones, apoyos, tensiones y coherencias entre las cartas.\n- Repeticiones de números, palos, figuras o arcanos mayores cuando sean significativas.\n- Evolución del mensaje desde la primera hasta la última posición.\n- Enseñanza central de la tirada.\n\nFinaliza con:\n1. Una síntesis profunda de varios párrafos.\n2. Una única frase que resuma el aprendizaje esencial del sistema.\n\nPrincipios metodológicos BATS:\n- El significado nace de la pregunta y de la posición, no de un significado fijo de la carta.\n- Cada carta modifica y es modificada por las demás.\n- La tirada constituye un único sistema simbólico.\n- La quintaesencia revela el patrón profundo que organiza toda la lectura.\n- La interpretación debe ser simbólica, psicológica y arquetípica, orientada a la comprensión y a la toma de conciencia.\n- No utilices cartas invertidas salvo que se indique expresamente.\n- Evita cualquier enfoque predictivo, fatalista o determinista."
+          },
+          {
+            "role": "user",
+            "content": "Tirada: El Aprendizaje\nFecha: 5 de agosto de 2026\nSituación: Quiero comprender por qué me bloqueo en los proyectos que empiezo\n\nLista de cartas con nombre de posición y Referencia BATS:\n1. El Hecho — ¿Qué ha ocurrido realmente?: La Sacerdotisa\n   Referencia BATS: El conocimiento profundo no necesita palabras. Escucha la voz interna, la intuición que sabe antes de que entiendas.\n2. El Maestro — ¿Qué me está mostrando realmente esta experiencia?: La Templanza\n   Referencia BATS: Equilibrio, armonía, integración. La combinación justa de elementos opuestos. Paciencia y medida en todo.\n3. El Punto Ciego — ¿Qué no estoy viendo o qué interpretación me impide aprender?: Siete de Copas\n   Referencia BATS: Confundir fantasía con realidad. Perseguir lo imposible ignorando lo tangible. La cabeza en las nubes.\n4. La Integración — ¿Qué comprensión quiere integrarse en mí?: El Ermitaño\n   Referencia BATS: Retiro necesario, introspección, búsqueda interior. Tiempo de mirar hacia adentro para encontrar respuestas profundas.\n5. El Don Transformador — ¿Qué capacidad, virtud o cambio nace cuando integro esta verdad?: As de Oros\n   Referencia BATS: Nuevo comienzo material, oportunidad próspera. Una semilla de abundancia se presenta. El potencial es real.\n6. El Resultado Posible — ¿Qué transformación ocurrirá en mi experiencia si integro la lección?: Cinco de Bastos\n   Referencia BATS: Conflicto, competencia, desafío. Las fuerzas se enfrentan. La tensión te empuja a superarte o a redefinirte.\n\nQuintaesencia calculada: La Justicia\nReferencia BATS de la quintaesencia: La situación es producto de decisiones anteriores bien caracterizadas; lo que acontece es consecuencia reconocible, y la decisión actual debe sopesarse en balanza. CONSEJO: evaluar consecuencias, medir antes de actuar, aceptar la responsabilidad de las decisiones. PALABRA CLAVE: balanza decisional. ANTIPATRÓN: \"es un karma, acepta\" — determinismo indebido: La Justicia equilibra, no elimina la libertad de la decisión presente.\n\nFormato de respuesta: texto plano en español, sin markdown (sin *, # ni **). Usa líneas en blanco para separar secciones.\nExtensión: media, alrededor de 1500 caracteres (3-4 párrafos)."
+          }
+        ],
+        "tipo": "larga"
+      }
+    }
+  ]
+}

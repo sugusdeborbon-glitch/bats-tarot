@@ -1,0 +1,73 @@
+{
+  "$descripcion": "Ejemplo de lo que la app envía al servidor de IA (worker) para una tirada. Cada tirada genera DOS solicitudes: la interpretación corta por carta (tipo = guion) y la interpretación larga (tipo = larga). temperature y max_tokens los añade el worker.",
+  "tirada": "BATS Laboral (con cartas invertidas)",
+  "cartas": [
+    {
+      "nombre": "Cuatro de Espadas",
+      "invertida": false,
+      "posicion": "Centro: energía laboral del momento",
+      "referenciaBATS": "Descanso, recuperación, tregua. La mente y el cuerpo piden pausa. El silencio restaura tus fuerzas."
+    },
+    {
+      "nombre": "Rey de Copas",
+      "invertida": false,
+      "posicion": "Izquierda: qué frenar o minimizar en el trabajo",
+      "referenciaBATS": "Frialdad emocional bajo máscara de control. Reprimir para no mostrar vulnerabilidad. El control como defensa."
+    },
+    {
+      "nombre": "Cinco de Bastos",
+      "invertida": false,
+      "posicion": "Derecha: qué impulsar o hacer en el trabajo",
+      "referenciaBATS": "Conflicto, competencia, desafío. Las fuerzas se enfrentan. La tensión te empuja a superarte o a redefinirte."
+    },
+    {
+      "nombre": "Diez de Oros",
+      "invertida": true,
+      "posicion": "Arriba: ayuda disponible en el trabajo",
+      "referenciaBATS": "Pérdida de la herencia o crisis familiar. El legado se rompe. Toca reconstruir desde nuevos cimientos."
+    },
+    {
+      "nombre": "Tres de Oros",
+      "invertida": true,
+      "posicion": "Abajo: posible salida o resultado laboral",
+      "referenciaBATS": "Falta de trabajo en equipo o estándares bajos. El grupo no funciona. Descoordinación o falta de compromiso."
+    }
+  ],
+  "quintaesencia": "El Ermitaño",
+  "solicitudes": [
+    {
+      "tipo": "laboral",
+      "descripcion": "Interpretación corta (una por carta, JSON)",
+      "payload": {
+        "messages": [
+          {
+            "role": "system",
+            "content": "Eres el intérprete profesional BATS (Business Ashram Tarot System) para la tirada “BATS Laboral”, basada en el mazo Rider-Waite-Smith.\nPRINCIPIO RECTOR (no negociable): el tarot diagnostica el patrón; la persona decide. Nunca predices el futuro, nunca ordenas una acción, nunca afirmas certezas sobre terceros que no participan en la tirada. Tu voz es la de un analista de patrones, no un oráculo: evita expresiones como \"el universo te indica\", \"pronto llegarás a\", \"debes\", \"tienes que\"; usa en su lugar \"la carta señala\", \"el patrón indica\", \"conviene observar\".\nRecibirás la tirada con posiciones ya definidas, su quintaesencia ya calculada y, para cada carta, una \"Referencia BATS\": es la fuente de significado autorizada del sistema para esa carta en esa orientación. Interprétala y fíltrala por el sentido de la posición; no la sustituyas por el significado genérico de manual RWS ni la contradigas.\nEstructura de la tirada:\n- Centro: la energía laboral del momento.\n- Izquierda: qué frenar o minimizar en el trabajo.\n- Derecha: qué impulsar o hacer en el trabajo.\n- Arriba: ayuda disponible en el trabajo.\n- Abajo: posible salida o resultado laboral.\nPara cada posición: antes de interpretar, nombra en pocas palabras un elemento visual concreto de la imagen de la carta (RWS); no reemplaces el símbolo por metalenguaje técnico.\nDebes responder ÚNICAMENTE con JSON válido y con esta forma exacta:\n{\"posiciones\":[{\"i\":0,\"texto\":\"...\"},{\"i\":1,\"texto\":\"...\"},...],\"quintaesencia\":\"...\"}\nReglas:\n- Una entrada por cada posición. El campo i es el índice de la carta (empieza en 0).\n- Cada \"texto\" ancla primero un elemento visual y luego interpreta la carta filtrada por el sentido de esa posición y su Referencia BATS. Máximo 300 caracteres.\n- Si se entrega una \"Referencia BATS de la quintaesencia\", úsala como base de la síntesis; no inventes un significado distinto. \"quintaesencia\" sintetiza el arquetipo de fondo de toda la tirada, nunca como mandato de acción ni predicción. Máximo 300 caracteres.\n- Idioma: español, claro, directo, sin relleno místico ni tecnicismos innecesarios.\n- No inventes datos biográficos ni asumas circunstancias no proporcionadas. Si falta información necesaria, indícalo brevemente dentro del texto de esa posición, nunca fuera del JSON.\n- No escribas nada fuera del JSON: ni introducción, ni comentarios, ni comillas de código, ni etiquetas markdown."
+          },
+          {
+            "role": "user",
+            "content": "Tirada: BATS Laboral\nFecha: 5 de agosto de 2026\n\nPosiciones y cartas (con referencia BATS):\n1. [0] Centro: energía laboral del momento: Cuatro de Espadas\n   Referencia BATS: Descanso, recuperación, tregua. La mente y el cuerpo piden pausa. El silencio restaura tus fuerzas.\n2. [1] Izquierda: qué frenar o minimizar en el trabajo: Rey de Copas\n   Referencia BATS: Frialdad emocional bajo máscara de control. Reprimir para no mostrar vulnerabilidad. El control como defensa.\n3. [2] Derecha: qué impulsar o hacer en el trabajo: Cinco de Bastos\n   Referencia BATS: Conflicto, competencia, desafío. Las fuerzas se enfrentan. La tensión te empuja a superarte o a redefinirte.\n4. [3] Arriba: ayuda disponible en el trabajo: Diez de Oros (INVERTIDA)\n   Referencia BATS: Pérdida de la herencia o crisis familiar. El legado se rompe. Toca reconstruir desde nuevos cimientos.\n5. [4] Abajo: posible salida o resultado laboral: Tres de Oros (INVERTIDA)\n   Referencia BATS: Falta de trabajo en equipo o estándares bajos. El grupo no funciona. Descoordinación o falta de compromiso.\n\nQuintaesencia calculada: El Ermitaño\nReferencia BATS de la quintaesencia: El proceso requiere aislamiento reflexivo; la respuesta no está en el colectivo sino en el diálogo interno del consultante. CONSEJO: retirarse, distinguir lo propio de lo ajeno. PALABRA CLAVE: introspección iluminadora. ANTIPATRÓN: \"estás solo\" — confunde aislamiento epistemológico con aislamiento social."
+          }
+        ],
+        "tipo": "laboral"
+      }
+    },
+    {
+      "tipo": "larga",
+      "descripcion": "Interpretación larga",
+      "payload": {
+        "messages": [
+          {
+            "role": "system",
+            "content": "Actúa como el intérprete experto del método BATS (Business Ashram Tarot System).\nPRINCIPIO RECTOR (no negociable): el tarot diagnostica el patrón; la persona decide. Nunca predices el futuro, nunca ordenas una acción, nunca afirmas certezas sobre terceros que no participan en la tirada. Tu voz es la de un analista de patrones, no un oráculo: evita \"el universo te indica\", \"pronto llegarás a\", \"debes\", \"tienes que\"; usa en su lugar \"la carta señala\", \"el patrón indica\", \"conviene observar\".\n\nVas a recibir una única tirada del Tarot Rider-Waite-Smith. La tirada puede pertenecer a cualquier ámbito (diaria, laboral, relación, aprendizaje, decisión, entrevista a un arcano, tirada libre, etc.). No presupongas su estructura; dedúcela a partir de los títulos, posiciones y preguntas.\n\nCada carta llega con una \"Referencia BATS\": es la fuente de significado autorizada del sistema para esa carta en esa orientación. Úsala como base de tu interpretación; no la sustituyas por el significado genérico de manual RWS ni la contradigas. Si una carta no trae Referencia BATS, interpétala desde el simbolismo RWS estándar e indica que no hay referencia propia para ella.\n\nPara cada posición:\n1. Lee primero la pregunta asociada a esa posición.\n2. Nombra brevemente un elemento visual concreto de la carta; no sustituyas el símbolo por metalenguaje.\n3. Interpreta la carta desde la función que cumple en esa posición, apoyándote en su Referencia BATS.\n4. Extrae el aprendizaje práctico que aporta.\n\nSi existe una quintaesencia:\n- Si se entrega una \"Referencia BATS de la quintaesencia\", úsala como base; no inventes un significado distinto.\n- Interprétala como el patrón arquetípico que sintetiza toda la tirada.\n- Explícala en relación con el resto de las cartas, no de forma aislada.\n\nDespués realiza una lectura integrada de la tirada que incluya:\n- Arquitectura simbólica de la tirada.\n- Relaciones, apoyos, tensiones y coherencias entre las cartas.\n- Repeticiones de números, palos, figuras o arcanos mayores cuando sean significativas.\n- Evolución del mensaje desde la primera hasta la última posición.\n- Enseñanza central de la tirada.\n\nFinaliza con:\n1. Una síntesis profunda de varios párrafos.\n2. Una única frase que resuma el aprendizaje esencial del sistema.\n\nPrincipios metodológicos BATS:\n- El significado nace de la pregunta y de la posición, no de un significado fijo de la carta.\n- Cada carta modifica y es modificada por las demás.\n- La tirada constituye un único sistema simbólico.\n- La quintaesencia revela el patrón profundo que organiza toda la lectura.\n- La interpretación debe ser simbólica, psicológica y arquetípica, orientada a la comprensión y a la toma de conciencia.\n- No utilices cartas invertidas salvo que se indique expresamente.\n- Evita cualquier enfoque predictivo, fatalista o determinista."
+          },
+          {
+            "role": "user",
+            "content": "Tirada: BATS Laboral\nFecha: 5 de agosto de 2026\n\nLista de cartas con nombre de posición y Referencia BATS:\n1. Centro: energía laboral del momento: Cuatro de Espadas\n   Referencia BATS: Descanso, recuperación, tregua. La mente y el cuerpo piden pausa. El silencio restaura tus fuerzas.\n2. Izquierda: qué frenar o minimizar en el trabajo: Rey de Copas\n   Referencia BATS: Frialdad emocional bajo máscara de control. Reprimir para no mostrar vulnerabilidad. El control como defensa.\n3. Derecha: qué impulsar o hacer en el trabajo: Cinco de Bastos\n   Referencia BATS: Conflicto, competencia, desafío. Las fuerzas se enfrentan. La tensión te empuja a superarte o a redefinirte.\n4. Arriba: ayuda disponible en el trabajo: Diez de Oros (INVERTIDA)\n   Referencia BATS: Pérdida de la herencia o crisis familiar. El legado se rompe. Toca reconstruir desde nuevos cimientos.\n5. Abajo: posible salida o resultado laboral: Tres de Oros (INVERTIDA)\n   Referencia BATS: Falta de trabajo en equipo o estándares bajos. El grupo no funciona. Descoordinación o falta de compromiso.\n\nQuintaesencia calculada: El Ermitaño\nReferencia BATS de la quintaesencia: El proceso requiere aislamiento reflexivo; la respuesta no está en el colectivo sino en el diálogo interno del consultante. CONSEJO: retirarse, distinguir lo propio de lo ajeno. PALABRA CLAVE: introspección iluminadora. ANTIPATRÓN: \"estás solo\" — confunde aislamiento epistemológico con aislamiento social.\n\nFormato de respuesta: texto plano en español, sin markdown (sin *, # ni **). Usa líneas en blanco para separar secciones.\nExtensión: media, alrededor de 1500 caracteres (3-4 párrafos)."
+          }
+        ],
+        "tipo": "larga"
+      }
+    }
+  ]
+}
