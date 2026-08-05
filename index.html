@@ -274,6 +274,74 @@
 <section id="panel-config" class="panel">
   <a class="back-link" onclick="irA('inicio')">← Inicio</a>
   <h2>Configuración</h2>
+  <div id="admin-box" class="ai-cfg-box" style="display:none;border-color:var(--gold)">
+    <h4>🔑 Panel de administración</h4>
+    <p class="subtle" style="text-align:left">Acceso privado para la administración de la app. Aquí se configura cómo funciona la IA para todos los usuarios.</p>
+    <div class="form-group">
+      <label for="admin-pass">Contraseña de administrador</label>
+      <input type="password" id="admin-pass" placeholder="Contraseña" autocomplete="off">
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-gold" onclick="adminDesbloquear()">Entrar</button>
+    </div>
+    <div id="admin-error" class="subtle" style="text-align:left"></div>
+  </div>
+  <div id="admin-panel" class="ai-cfg-box" style="display:none;border-color:var(--gold)">
+    <h4>🔑 Panel de administración IA</h4>
+    <p class="subtle" style="text-align:left">Los cambios se aplican para todas las tiradas de todos los usuarios. Pulsa «Guardar cambios» al terminar.</p>
+    <div class="btn-group" style="justify-content:flex-start">
+      <button class="btn btn-outline btn-sm active" id="admin-tab-btn-basico" onclick="adminTab('basico')">Básico</button>
+      <button class="btn btn-outline btn-sm" id="admin-tab-btn-avanzado" onclick="adminTab('avanzado')">Avanzado</button>
+      <button class="btn btn-danger btn-sm" onclick="adminCerrar()">Cerrar sesión</button>
+    </div>
+    <div id="admin-tab-basico">
+      <div class="form-group">
+        <label>Proveedor principal</label>
+        <p class="subtle" style="text-align:left">El primero de la lista es el que se usa siempre. Si falla, la app pasa automáticamente al siguiente. Usa las flechas para cambiar el orden y las casillas para encender o apagar cada proveedor.</p>
+        <div id="admin-proveedores"></div>
+      </div>
+      <div class="form-group">
+        <label for="admin-temp">Creatividad: <span id="admin-temp-val">0.7</span></label>
+        <input type="range" id="admin-temp" min="0" max="1.5" step="0.1" value="0.7" oninput="adminTempVal()" style="width:100%;padding:0;border:none">
+        <div style="display:flex;justify-content:space-between" class="subtle"><span>Menos creativa</span><span>Más creativa</span></div>
+      </div>
+      <div class="form-group">
+        <label for="admin-len">Longitud por defecto de la interpretación larga</label>
+        <select id="admin-len">
+          <option value="media">Media (~1.500 caracteres)</option>
+          <option value="corta">Corta (~500 caracteres)</option>
+          <option value="larga">Larga (~3.000 caracteres)</option>
+        </select>
+      </div>
+    </div>
+    <div id="admin-tab-avanzado" style="display:none">
+      <div class="form-group">
+        <label for="admin-maxtok">Máximo de tokens de la respuesta</label>
+        <input type="number" id="admin-maxtok" min="128" max="8192" step="64" value="4096">
+        <p class="subtle" style="text-align:left">Un token es más o menos un trocito de palabra. Más tokens permiten respuestas más largas, pero tardan un poco más.</p>
+      </div>
+      <div class="form-group">
+        <label for="admin-sys-corta">Instrucciones · Tirada normal</label>
+        <textarea id="admin-sys-corta" class="input-desc" rows="6"></textarea>
+        <button class="btn btn-outline btn-sm" onclick="adminRestaurarSistema('corta')">Restaurar original</button>
+      </div>
+      <div class="form-group">
+        <label for="admin-sys-av">Instrucciones · Arcano Visitante</label>
+        <textarea id="admin-sys-av" class="input-desc" rows="6"></textarea>
+        <button class="btn btn-outline btn-sm" onclick="adminRestaurarSistema('av')">Restaurar original</button>
+      </div>
+      <div class="form-group">
+        <label for="admin-sys-larga">Instrucciones · Interpretación larga</label>
+        <textarea id="admin-sys-larga" class="input-desc" rows="8"></textarea>
+        <button class="btn btn-outline btn-sm" onclick="adminRestaurarSistema('larga')">Restaurar original</button>
+      </div>
+    </div>
+    <div class="btn-group" style="margin-top:12px">
+      <button class="btn btn-gold" onclick="adminGuardar()">Guardar cambios</button>
+      <button class="btn btn-outline btn-sm" onclick="adminRestaurarTodo()">Restaurar valores originales</button>
+    </div>
+    <div id="admin-msg" class="subtle" style="text-align:left"></div>
+  </div>
   <div class="form-group">
     <label>Interpretación de las tiradas</label>
     <div class="radio-group" id="cfg-ai-mode">
@@ -349,10 +417,10 @@
 
   <div id="vers-app" style="text-align:center;font-size:.7rem;opacity:.6;padding:14px 0 20px"></div>
 
-<script src="datos_bats.js?v=1.5.10"></script>
-<script src="quintaesencia_bats.js?v=1.5.10"></script>
-<script src="ai.js?v=1.5.10"></script>
-<script src="app.js?v=1.5.10"></script>
+<script src="datos_bats.js?v=1.6.0"></script>
+<script src="quintaesencia_bats.js?v=1.6.0"></script>
+<script src="ai.js?v=1.6.0"></script>
+<script src="app.js?v=1.6.0"></script>
 
 </body>
 </html>

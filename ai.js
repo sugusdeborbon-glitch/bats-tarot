@@ -104,12 +104,12 @@ function cargarPanelConfig(){
   cargarAIInterpretacion();
 }
 
-function llamarIA(messages){
+function llamarIA(messages,tipo){
   var mode=getAIMode();
   if(mode==="estandar"){
     var url=getWorkerURL();
     if(!url||!/^https:\/\//i.test(url)) return Promise.reject(new Error("URL del Worker de IA inv\u00e1lida o vac\u00eda. Rev\u00edsala en Configuraci\u00f3n."));
-    return fetchConTimeout(url,messages,{token:AI_WORKER_TOKEN});
+    return fetchConTimeout(url,messages,{token:AI_WORKER_TOKEN,tipo:tipo});
   }
   if(mode==="propia"){
     var cfg=getAIPropia();
@@ -132,6 +132,7 @@ function fetchConTimeout(url,messages,extra){
   if(extra&&extra.key) opts.headers["Authorization"]="Bearer "+extra.key;
   if(extra&&extra.token) opts.headers["X-BATS-Token"]=extra.token;
   if(extra&&extra.model) opts.body=JSON.stringify({model:extra.model,messages:messages,temperature:0.7,max_tokens:4096});
+  if(extra&&extra.tipo&&!extra.model) opts.body=JSON.stringify({messages:messages,tipo:extra.tipo});
   if(ctrl) opts.signal=ctrl.signal;
   status("Enviando petici\u00f3n al servidor de IA\u2026");
   var p;
@@ -193,7 +194,7 @@ function generarTextosIA(cartas,ctx){
   return llamarIA([
     {role:"system",content:AI_SISTEMA},
     {role:"user",content:construirUserContent(cartas,ctx)}
-  ]).then(extraerJSON).then(function(data){
+  ],"corta").then(extraerJSON).then(function(data){
     var pos=data.posiciones||[],map={};
     pos.forEach(function(p){if(p&&p.i!=null) map[p.i]=p.texto});
     cartas.forEach(function(it,i){if(map[i]) it.texto=map[i]});
@@ -210,7 +211,7 @@ function generarIAVisitante(carta){
   return llamarIA([
     {role:"system",content:AI_SISTEMA_AV},
     {role:"user",content:user}
-  ]).then(extraerJSON);
+  ],"av").then(extraerJSON);
 }
 function probarConexionIA(btn){
   var b=btn||null;
@@ -306,5 +307,25 @@ function generarInterpretacionLarga(cartas,ctx){
   return llamarIA([
     {role:"system",content:AI_SISTEMA_LARGA},
     {role:"user",content:construirUserContentLargo(cartas,ctx)}
-  ]).then(function(t){return (t||"").trim()});
+  ],"larga").then(function(t){return (t||"").trim()});
 }
+
+function adminGetToken(){try{return sessionStorage.getItem(STORE_PFX+"bats-admin-token")}catch(e){return null}}
+function adminSetToken(t){try{sessionStorage.setItem(STORE_PFX+"bats-admin-token",t)}catch(e){}}
+function adminClearToken(){try{sessionStorage.removeItem(STORE_PFX+"bats-admin-token")}catch(e){}}
+function adminFetch(method,token,cfg){
+  return fetch(getWorkerURL()+"/api/config",{
+    method:method,
+    headers:{"Content-Type":"application/json","X-Admin-Token":token},
+    body:cfg?JSON.stringify(cfg):undefined
+  }).then(function(r){
+    return r.text().then(function(txt){
+      var data;
+      try{data=JSON.parse(txt)}catch(e){throw new Error("Respuesta no v\u00e1lida del servidor")}
+      if(!r.ok) throw new Error(data.error||"Error del servidor ("+r.status+")");
+      return data;
+    });
+  });
+}
+function adminGetConfig(token){return adminFetch("GET",token)}
+function adminSaveConfig(token,cfg){return adminFetch("PUT",token,cfg)}

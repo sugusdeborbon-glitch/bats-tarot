@@ -52,6 +52,8 @@ header h1{font-size:1.15rem;color:var(--gold);letter-spacing:1px}
 .btn-outline{background:transparent;border:1px solid var(--gold);color:var(--gold)}
 .btn-outline:hover{background:var(--bg3);transform:translateY(-1px)}
 .btn-sm{padding:6px 14px;font-size:.8rem}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn.active{background:var(--gold);color:var(--bg);border-color:var(--gold);font-weight:700}
 .btn-group{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:10px 0}
 .btn-danger{background:var(--danger);color:#fff}
 .btn-danger:hover{background:#e74c3c}

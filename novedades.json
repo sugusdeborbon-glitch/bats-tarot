@@ -1,8 +1,12 @@
 {
-  "ultima": "1.5.10",
-  "titulo": "Novedades v1.5.10",
-  "texto": "<p><strong>Correcci\u00f3n</strong> \u2014 El bot\u00f3n \u201cProbar conexi\u00f3n\u201d de la IA BATS vuelve a funcionar correctamente.</p>",
+  "ultima": "1.6.0",
+  "titulo": "Novedades v1.6.0",
+  "texto": "<p><strong>Panel de administraci\u00f3n de IA</strong> \u2014 La administraci\u00f3n de la app ahora puede configurar c\u00f3mo funciona la IA para todos los usuarios desde un panel privado: elegir el orden y la activaci\u00f3n de los proveedores, la creatividad, la longitud por defecto y las instrucciones. Acceso solo con URL secreta y contrase\u00f1a.</p>",
   "historial": {
+    "1.6.0": {
+      "titulo": "Novedades v1.6.0",
+      "texto": "<p><strong>Panel de administraci\u00f3n de IA</strong> \u2014 La administraci\u00f3n de la app ahora puede configurar c\u00f3mo funciona la IA para todos los usuarios desde un panel privado: elegir el orden y la activaci\u00f3n de los proveedores, la creatividad, la longitud por defecto y las instrucciones. Acceso solo con URL secreta y contrase\u00f1a.</p>"
+    },
     "1.5.10": {
       "titulo": "Novedades v1.5.10",
       "texto": "<p><strong>Correcci\u00f3n</strong> \u2014 El bot\u00f3n \u201cProbar conexi\u00f3n\u201d de la IA BATS vuelve a funcionar correctamente.</p>"

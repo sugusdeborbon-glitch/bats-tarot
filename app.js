@@ -1,4 +1,4 @@
-var BATS_VERSION="1.5.10";
+var BATS_VERSION="1.6.0";
 
 var PALOS=[["bastos","Wands"],["copas","Cups"],["espadas","Swords"],["oros","Pentacles"]];
 var NOMPALO={bastos:"Bastos",copas:"Copas",espadas:"Espadas",oros:"Oros"};
@@ -989,6 +989,166 @@ function initSW(){
   }
 }
 
+var ADMIN_URL_KEY="b3a2b557191caaaf8e5c246b";
+var _adminState={config:null,defaults:null,available:null,pendingOrder:null,pendingOn:null};
+
+function initAdmin(){
+  var box=document.getElementById("admin-box");
+  if(!box) return;
+  var params=new URLSearchParams(location.search);
+  if(params.get("admin")!==ADMIN_URL_KEY) return;
+  box.style.display="block";
+  var tok=adminGetToken();
+  if(tok) adminEntrar(tok);
+}
+function adminDesbloquear(){
+  var pass=document.getElementById("admin-pass").value.trim();
+  if(!pass){adminMsg("Escribe la contrase\u00f1a de administrador.",true);return}
+  adminEntrar(pass);
+}
+function adminEntrar(token){
+  adminMsg("Entrando\u2026");
+  adminGetConfig(token).then(function(data){
+    adminSetToken(token);
+    _adminState.config=data.config||{};
+    _adminState.defaults=data.defaults||["groq","sambanova","google","openrouter","nvidia"];
+    _adminState.available=data.available||[];
+    _adminState.pendingOrder=null;
+    _adminState.pendingOn=null;
+    document.getElementById("admin-box").style.display="none";
+    document.getElementById("admin-pass").value="";
+    document.getElementById("admin-panel").style.display="block";
+    adminPoblar();
+    adminMsg("Sesi\u00f3n iniciada como administradora. Edita y pulsa \u00abGuardar cambios\u00bb.");
+  },function(e){
+    adminClearToken();
+    adminMsg((e&&e.message)||"No se pudo entrar. Comprueba la contrase\u00f1a.",true);
+  });
+}
+function adminCerrar(){
+  adminClearToken();
+  _adminState.config=null;
+  _adminState.pendingOrder=null;
+  _adminState.pendingOn=null;
+  document.getElementById("admin-panel").style.display="none";
+  document.getElementById("admin-box").style.display="block";
+  adminMsg("");
+  toast("Sesi\u00f3n de administraci\u00f3n cerrada");
+}
+function adminMsg(msg,err){
+  var el=document.getElementById("admin-msg");
+  if(!el) return;
+  el.textContent=msg;
+  el.style.color=err?"var(--danger,#e74c3c)":"var(--gold,#c9a45c)";
+}
+function adminTab(id){
+  var bas=id==="basico";
+  document.getElementById("admin-tab-basico").style.display=bas?"block":"none";
+  document.getElementById("admin-tab-avanzado").style.display=bas?"none":"block";
+  document.getElementById("admin-tab-btn-basico").classList.toggle("active",bas);
+  document.getElementById("admin-tab-btn-avanzado").classList.toggle("active",!bas);
+}
+function adminTempVal(){
+  var el=document.getElementById("admin-temp");
+  var v=parseFloat(el.value);
+  document.getElementById("admin-temp-val").textContent=v.toFixed(1);
+}
+function adminNombres(){
+  var names={};
+  (_adminState.available||[]).forEach(function(p){names[p.id]=p.nombre||p.name||p.id});
+  return names;
+}
+function adminLeerActivos(){
+  var on={};
+  (_adminState.available||[]).forEach(function(p){
+    var el=document.getElementById("admin-on-"+p.id);
+    if(el) on[p.id]=el.checked;
+  });
+  return on;
+}
+function adminOrdenActual(){
+  var o=_adminState.pendingOrder||(Array.isArray(_adminState.config&&_adminState.config.providerOrder)&&_adminState.config.providerOrder.length?_adminState.config.providerOrder:null)||_adminState.defaults;
+  return o.slice();
+}
+function adminPoblar(){
+  var cfg=_adminState.config||{};
+  var order=adminOrdenActual();
+  var on=_adminState.pendingOn||cfg.providersOn||{};
+  var names=adminNombres();
+  var html="";
+  order.forEach(function(id,i){
+    html+='<div class="admin-prov" style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.08)">'
+      +'<span style="opacity:.5;width:16px">'+(i+1)+'</span>'
+      +'<input type="checkbox" id="admin-on-'+id+'" '+(on[id]===false?"":"checked")+' onchange="adminCambio()" style="width:auto">'
+      +'<span style="flex:1;text-align:left">'+names[id]+'</span>'
+      +'<button class="btn btn-outline btn-sm" onclick="adminMover('+i+',-1)" '+(i===0?"disabled":"")+'>\u25B2</button>'
+      +'<button class="btn btn-outline btn-sm" onclick="adminMover('+i+',1)" '+(i===order.length-1?"disabled":"")+'>\u25BC</button>'
+      +'</div>';
+  });
+  document.getElementById("admin-proveedores").innerHTML=html;
+  document.getElementById("admin-temp").value=cfg.temperature!=null?cfg.temperature:0.7;
+  adminTempVal();
+  document.getElementById("admin-len").value=cfg.lenDefault||"media";
+  document.getElementById("admin-maxtok").value=cfg.maxTokens||4096;
+  document.getElementById("admin-sys-corta").value=cfg.systemCorta!=null?cfg.systemCorta:AI_SISTEMA;
+  document.getElementById("admin-sys-av").value=cfg.systemAV!=null?cfg.systemAV:AI_SISTEMA_AV;
+  document.getElementById("admin-sys-larga").value=cfg.systemLarga!=null?cfg.systemLarga:AI_SISTEMA_LARGA;
+}
+function adminCambio(){
+  _adminState.pendingOn=adminLeerActivos();
+}
+function adminMover(i,dir){
+  var order=adminOrdenActual();
+  var j=i+dir;
+  if(j<0||j>=order.length) return;
+  var t=order[i];order[i]=order[j];order[j]=t;
+  _adminState.pendingOrder=order;
+  adminPoblar();
+}
+function adminGuardar(){
+  var cfg={};
+  cfg.providerOrder=adminOrdenActual();
+  cfg.providersOn=adminLeerActivos();
+  cfg.temperature=parseFloat(document.getElementById("admin-temp").value);
+  cfg.maxTokens=parseInt(document.getElementById("admin-maxtok").value,10)||4096;
+  cfg.lenDefault=document.getElementById("admin-len").value;
+  var sc=document.getElementById("admin-sys-corta").value;
+  var sav=document.getElementById("admin-sys-av").value;
+  var sl=document.getElementById("admin-sys-larga").value;
+  if(sc!==AI_SISTEMA) cfg.systemCorta=sc;
+  if(sav!==AI_SISTEMA_AV) cfg.systemAV=sav;
+  if(sl!==AI_SISTEMA_LARGA) cfg.systemLarga=sl;
+  var tok=adminGetToken();
+  adminMsg("Guardando\u2026");
+  adminSaveConfig(tok,cfg).then(function(data){
+    _adminState.config=data.config||cfg;
+    _adminState.pendingOrder=null;
+    _adminState.pendingOn=null;
+    adminPoblar();
+    adminMsg("\u2713 Cambios guardados. Ya est\u00e1n aplicados para todas las tiradas.");
+  },function(e){
+    adminMsg((e&&e.message)||"No se pudieron guardar los cambios.",true);
+  });
+}
+function adminRestaurarSistema(tipo){
+  var map={corta:AI_SISTEMA,av:AI_SISTEMA_AV,larga:AI_SISTEMA_LARGA};
+  var el=document.getElementById("admin-sys-"+tipo);
+  if(el){el.value=map[tipo];toast("Instrucciones originales restauradas")}
+}
+function adminRestaurarTodo(){
+  if(!confirm("\u00bfVolver a los valores originales de f\u00e1brica para la IA de todos los usuarios?")) return;
+  var tok=adminGetToken();
+  adminSaveConfig(tok,{}).then(function(){
+    _adminState.config={};
+    _adminState.pendingOrder=null;
+    _adminState.pendingOn=null;
+    adminPoblar();
+    adminMsg("\u2713 Valores originales restaurados.");
+  },function(e){
+    adminMsg((e&&e.message)||"No se pudieron restaurar los valores.",true);
+  });
+}
+
 setTimeout(function(){
   var vd=document.getElementById("vers-app");
   if(vd) vd.textContent="BATS Tarot v"+BATS_VERSION;
@@ -1005,5 +1165,6 @@ setTimeout(function(){
   if(document.getElementById("r-historial")) cargarHist();
   if(typeof actualizarUI_AI==="function") actualizarUI_AI();
   if(document.getElementById("cfg-provider")) cargarPanelConfig();
+  if(typeof initAdmin==="function") initAdmin();
   initSW();
 },100);
