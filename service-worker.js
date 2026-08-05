@@ -1,4 +1,4 @@
-var CACHE = "bats-v20";
+var CACHE = "bats-v21";
 var STATIC_CACHE = CACHE + "-static";
 var IMG_CACHE = CACHE + "-img";
 

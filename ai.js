@@ -23,6 +23,28 @@ var AI_SISTEMA="Eres un int\u00e9rprete profesional de tarot Rider-Waite-Smith d
 
 var AI_SISTEMA_AV="Eres un int\u00e9rprete profesional de tarot del sistema BATS (Business Ashram Tarot System).\nRecibir\u00e1s el Arcano Visitante del d\u00eda (una carta calculada por numerolog\u00eda) y tres preguntas fijas.\nResponde \u00daNICAMENTE con JSON v\u00e1lido de esta forma exacta:\n{\"q1\":\"...\",\"q2\":\"...\",\"q3\":\"...\"}\nReglas:\n- q1: \u00bfQu\u00e9 vienes a mostrarme hoy? M\u00e1ximo 300 caracteres.\n- q2: \u00bfQu\u00e9 patr\u00f3n conocido me est\u00e1s ayudando a no repetir hoy? M\u00e1ximo 300 caracteres.\n- q3: \u00bfQu\u00e9 acci\u00f3n consciente me ayuda a escucharte? M\u00e1ximo 300 caracteres.\n- Idioma: espa\u00f1ol. No predigas el futuro; muestra patrones y posibilidades.\n- No escribas nada fuera del JSON.";
 
+function _sistemaBase(nombre,estructura){
+  return "Eres un int\u00e9rprete profesional de tarot Rider-Waite-Smith del sistema BATS (Business Ashram Tarot System).\n"
+    + "Recibir\u00e1s la tirada \u201c"+nombre+"\u201d con posiciones ya definidas y su quintaesencia ya calculada.\n"
+    + "Estructura de la tirada:\n"+estructura+"\n"
+    + "Debes responder \u00daNICAMENTE con JSON v\u00e1lido y con esta forma exacta:\n"
+    + "{\"posiciones\":[{\"i\":0,\"texto\":\"...\"},{\"i\":1,\"texto\":\"...\"},...],\"quintaesencia\":\"...\"}\n"
+    + "Reglas:\n"
+    + "- Una entrada por cada posici\u00f3n. El campo i es el \u00edndice de la carta (empieza en 0).\n"
+    + "- Cada \"texto\" interpreta la carta filtrada por el sentido de esa posici\u00f3n concreta. M\u00e1ximo 300 caracteres.\n"
+    + "- \"quintaesencia\" sintetiza el arquetipo de fondo de toda la tirada, nunca como mandato de acci\u00f3n ni predicci\u00f3n. M\u00e1ximo 300 caracteres.\n"
+    + "- Idioma: espa\u00f1ol, claro y cercano.\n"
+    + "- No inventes datos biogr\u00e1ficos ni asumas circunstancias no proporcionadas. Si falta informaci\u00f3n necesaria, ind\u00edcala brevemente.\n"
+    + "- No escribas nada fuera del JSON: ni introducci\u00f3n, ni comentarios, ni comillas de c\u00f3digo.";
+}
+
+var AI_SISTEMA_DIARIA=_sistemaBase("Cruz Diaria","- Centro: la energ\u00eda del d\u00eda (el n\u00facleo de la jornada).\n- Izquierda: qu\u00e9 frenar o minimizar.\n- Derecha: qu\u00e9 impulsar o hacer.\n- Arriba: ayuda disponible.\n- Abajo: posible salida o resultado.");
+var AI_SISTEMA_REL=_sistemaBase("Tirada de la relaci\u00f3n","- Energ\u00eda del momento de la relaci\u00f3n.\n- Energ\u00eda de la Persona 1.\n- Energ\u00eda de la Persona 2.\n- Posible salida o direcci\u00f3n.");
+var AI_SISTEMA_LABORAL=_sistemaBase("BATS Laboral","- Centro: la energ\u00eda laboral del momento.\n- Izquierda: qu\u00e9 frenar o minimizar en el trabajo.\n- Derecha: qu\u00e9 impulsar o hacer en el trabajo.\n- Arriba: ayuda disponible en el trabajo.\n- Abajo: posible salida o resultado laboral.");
+var AI_SISTEMA_APRENDIZAJE=_sistemaBase("El Aprendizaje","- El Hecho: qu\u00e9 ha ocurrido realmente.\n- El Maestro: qu\u00e9 me est\u00e1 mostrando realmente esta experiencia.\n- El Punto Ciego: qu\u00e9 no estoy viendo o qu\u00e9 interpretaci\u00f3n me impide aprender.\n- La Integraci\u00f3n: qu\u00e9 comprensi\u00f3n quiere integrarse en m\u00ed.\n- El Don Transformador: qu\u00e9 capacidad o cambio nace al integrar la verdad.\n- El Resultado Posible: qu\u00e9 transformaci\u00f3n ocurre si integro la lecci\u00f3n.");
+var AI_SISTEMA_PERS=_sistemaBase("Tirada Personalizada","- Cada posici\u00f3n lleva el t\u00edtulo que la persona eligi\u00f3; ese t\u00edtulo define su funci\u00f3n.\n- No asumas un significado fijo de la carta: interpr\u00e9tala desde la funci\u00f3n que cumple en su posici\u00f3n.");
+var AI_SISTEMA_POR_GUION={diaria:AI_SISTEMA_DIARIA,rel:AI_SISTEMA_REL,laboral:AI_SISTEMA_LABORAL,aprendizaje:AI_SISTEMA_APRENDIZAJE,pers:AI_SISTEMA_PERS};
+
 function getAIMode(){return lsGet(AI_MODE_KEY)||"off"}
 function setAIMode(m){lsSet(AI_MODE_KEY,m)}
 function modoDesc(m){
@@ -189,12 +211,14 @@ function construirUserContent(cartas,ctx){
   return lines.join("\n");
 }
 function generarTextosIA(cartas,ctx){
+  ctx=ctx||{};
   var q=calcQuinta(cartas);
   if(q) cartas._q=q;
+  var sistema=(AI_SISTEMA_POR_GUION[ctx.guion])||AI_SISTEMA;
   return llamarIA([
-    {role:"system",content:AI_SISTEMA},
+    {role:"system",content:sistema},
     {role:"user",content:construirUserContent(cartas,ctx)}
-  ],"corta").then(extraerJSON).then(function(data){
+  ],ctx.guion||"corta").then(extraerJSON).then(function(data){
     var pos=data.posiciones||[],map={};
     pos.forEach(function(p){if(p&&p.i!=null) map[p.i]=p.texto});
     cartas.forEach(function(it,i){if(map[i]) it.texto=map[i]});

@@ -321,12 +321,32 @@
         <p class="subtle" style="text-align:left">Un token es más o menos un trocito de palabra. Más tokens permiten respuestas más largas, pero tardan un poco más.</p>
       </div>
       <div class="form-group">
-        <label for="admin-sys-corta">Instrucciones · Tirada normal</label>
-        <textarea id="admin-sys-corta" class="input-desc" rows="6"></textarea>
-        <button class="btn btn-outline btn-sm" onclick="adminRestaurarSistema('corta')">Restaurar original</button>
+        <label for="admin-sys-diaria">Instrucciones · Cruz Diaria</label>
+        <textarea id="admin-sys-diaria" class="input-desc" rows="6"></textarea>
+        <button class="btn btn-outline btn-sm" onclick="adminRestaurarSistema('diaria')">Restaurar original</button>
       </div>
       <div class="form-group">
-        <label for="admin-sys-av">Instrucciones · Arcano Visitante</label>
+        <label for="admin-sys-rel">Instrucciones · Tirada de la relación</label>
+        <textarea id="admin-sys-rel" class="input-desc" rows="6"></textarea>
+        <button class="btn btn-outline btn-sm" onclick="adminRestaurarSistema('rel')">Restaurar original</button>
+      </div>
+      <div class="form-group">
+        <label for="admin-sys-laboral">Instrucciones · BATS Laboral</label>
+        <textarea id="admin-sys-laboral" class="input-desc" rows="6"></textarea>
+        <button class="btn btn-outline btn-sm" onclick="adminRestaurarSistema('laboral')">Restaurar original</button>
+      </div>
+      <div class="form-group">
+        <label for="admin-sys-aprendizaje">Instrucciones · El Aprendizaje</label>
+        <textarea id="admin-sys-aprendizaje" class="input-desc" rows="7"></textarea>
+        <button class="btn btn-outline btn-sm" onclick="adminRestaurarSistema('aprendizaje')">Restaurar original</button>
+      </div>
+      <div class="form-group">
+        <label for="admin-sys-pers">Instrucciones · Tirada Personalizada</label>
+        <textarea id="admin-sys-pers" class="input-desc" rows="6"></textarea>
+        <button class="btn btn-outline btn-sm" onclick="adminRestaurarSistema('pers')">Restaurar original</button>
+      </div>
+      <div class="form-group">
+        <label for="admin-sys-av">Instrucciones · El Arcano Visitante</label>
         <textarea id="admin-sys-av" class="input-desc" rows="6"></textarea>
         <button class="btn btn-outline btn-sm" onclick="adminRestaurarSistema('av')">Restaurar original</button>
       </div>
@@ -417,10 +437,10 @@
 
   <div id="vers-app" style="text-align:center;font-size:.7rem;opacity:.6;padding:14px 0 20px"></div>
 
-<script src="datos_bats.js?v=1.6.0"></script>
-<script src="quintaesencia_bats.js?v=1.6.0"></script>
-<script src="ai.js?v=1.6.0"></script>
-<script src="app.js?v=1.6.0"></script>
+<script src="datos_bats.js?v=1.6.1"></script>
+<script src="quintaesencia_bats.js?v=1.6.1"></script>
+<script src="ai.js?v=1.6.1"></script>
+<script src="app.js?v=1.6.1"></script>
 
 </body>
 </html>

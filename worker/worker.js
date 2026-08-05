@@ -106,7 +106,7 @@ const LEN_LINES = {
 function applyOverrides(messages, cfg, tipo) {
   if (!Array.isArray(messages) || !messages.length) return messages;
   let msgs = messages;
-  const keyMap = { corta: "systemCorta", larga: "systemLarga", av: "systemAV" };
+  const keyMap = { diaria: "systemDiaria", rel: "systemRel", laboral: "systemLaboral", aprendizaje: "systemAprendizaje", pers: "systemPers", av: "systemAV", larga: "systemLarga" };
   const overKey = keyMap[tipo];
   if (overKey && cfg[overKey] && typeof cfg[overKey] === "string" && msgs[0] && msgs[0].role === "system") {
     msgs = msgs.slice();
@@ -142,7 +142,7 @@ function sanitizeConfig(body) {
     }
     cfg.providersOn = on;
   }
-  for (const k of ["systemCorta", "systemLarga", "systemAV"]) {
+  for (const k of ["systemDiaria", "systemRel", "systemLaboral", "systemAprendizaje", "systemPers", "systemAV", "systemLarga"]) {
     if (typeof body[k] === "string") cfg[k] = body[k];
   }
   if (typeof body.temperature === "number" && body.temperature >= 0 && body.temperature <= 2) {

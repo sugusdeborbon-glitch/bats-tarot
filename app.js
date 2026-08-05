@@ -1,4 +1,4 @@
-var BATS_VERSION="1.6.0";
+var BATS_VERSION="1.6.1";
 
 var PALOS=[["bastos","Wands"],["copas","Cups"],["espadas","Swords"],["oros","Pentacles"]];
 var NOMPALO={bastos:"Bastos",copas:"Copas",espadas:"Espadas",oros:"Oros"};
@@ -991,6 +991,24 @@ function initSW(){
 
 var ADMIN_URL_KEY="b3a2b557191caaaf8e5c246b";
 var _adminState={config:null,defaults:null,available:null,pendingOrder:null,pendingOn:null};
+var ADMIN_SISTEMAS_DEFAULT={
+  diaria:AI_SISTEMA_DIARIA,
+  rel:AI_SISTEMA_REL,
+  laboral:AI_SISTEMA_LABORAL,
+  aprendizaje:AI_SISTEMA_APRENDIZAJE,
+  pers:AI_SISTEMA_PERS,
+  av:AI_SISTEMA_AV,
+  larga:AI_SISTEMA_LARGA
+};
+var ADMIN_SISTEMAS_CFGKEY={
+  diaria:"systemDiaria",
+  rel:"systemRel",
+  laboral:"systemLaboral",
+  aprendizaje:"systemAprendizaje",
+  pers:"systemPers",
+  av:"systemAV",
+  larga:"systemLarga"
+};
 
 function initAdmin(){
   var box=document.getElementById("admin-box");
@@ -1090,9 +1108,11 @@ function adminPoblar(){
   adminTempVal();
   document.getElementById("admin-len").value=cfg.lenDefault||"media";
   document.getElementById("admin-maxtok").value=cfg.maxTokens||4096;
-  document.getElementById("admin-sys-corta").value=cfg.systemCorta!=null?cfg.systemCorta:AI_SISTEMA;
-  document.getElementById("admin-sys-av").value=cfg.systemAV!=null?cfg.systemAV:AI_SISTEMA_AV;
-  document.getElementById("admin-sys-larga").value=cfg.systemLarga!=null?cfg.systemLarga:AI_SISTEMA_LARGA;
+  for(var g in ADMIN_SISTEMAS_DEFAULT){
+    var elS=document.getElementById("admin-sys-"+g);
+    if(!elS) continue;
+    elS.value=cfg[ADMIN_SISTEMAS_CFGKEY[g]]!=null?cfg[ADMIN_SISTEMAS_CFGKEY[g]]:ADMIN_SISTEMAS_DEFAULT[g];
+  }
 }
 function adminCambio(){
   _adminState.pendingOn=adminLeerActivos();
@@ -1112,12 +1132,12 @@ function adminGuardar(){
   cfg.temperature=parseFloat(document.getElementById("admin-temp").value);
   cfg.maxTokens=parseInt(document.getElementById("admin-maxtok").value,10)||4096;
   cfg.lenDefault=document.getElementById("admin-len").value;
-  var sc=document.getElementById("admin-sys-corta").value;
-  var sav=document.getElementById("admin-sys-av").value;
-  var sl=document.getElementById("admin-sys-larga").value;
-  if(sc!==AI_SISTEMA) cfg.systemCorta=sc;
-  if(sav!==AI_SISTEMA_AV) cfg.systemAV=sav;
-  if(sl!==AI_SISTEMA_LARGA) cfg.systemLarga=sl;
+  for(var g in ADMIN_SISTEMAS_DEFAULT){
+    var elS=document.getElementById("admin-sys-"+g);
+    if(!elS) continue;
+    var val=elS.value;
+    if(val!==ADMIN_SISTEMAS_DEFAULT[g]) cfg[ADMIN_SISTEMAS_CFGKEY[g]]=val;
+  }
   var tok=adminGetToken();
   adminMsg("Guardando\u2026");
   adminSaveConfig(tok,cfg).then(function(data){
@@ -1130,10 +1150,9 @@ function adminGuardar(){
     adminMsg((e&&e.message)||"No se pudieron guardar los cambios.",true);
   });
 }
-function adminRestaurarSistema(tipo){
-  var map={corta:AI_SISTEMA,av:AI_SISTEMA_AV,larga:AI_SISTEMA_LARGA};
-  var el=document.getElementById("admin-sys-"+tipo);
-  if(el){el.value=map[tipo];toast("Instrucciones originales restauradas")}
+function adminRestaurarSistema(g){
+  var el=document.getElementById("admin-sys-"+g);
+  if(el){el.value=ADMIN_SISTEMAS_DEFAULT[g]||"";toast("Instrucciones originales restauradas")}
 }
 function adminRestaurarTodo(){
   if(!confirm("\u00bfVolver a los valores originales de f\u00e1brica para la IA de todos los usuarios?")) return;
