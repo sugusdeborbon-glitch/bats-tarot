@@ -1,8 +1,12 @@
 {
-  "ultima": "1.6.1",
-  "titulo": "Novedades v1.6.1",
-  "texto": "<p><strong>Instrucciones por tirada</strong> \u2014 En el panel de administraci\u00f3n, las instrucciones de la IA ahora son diferentes para cada tirada: Cruz Diaria, Tirada de la relaci\u00f3n, BATS Laboral, El Aprendizaje, Tirada Personalizada, El Arcano Visitante y la Interpretaci\u00f3n larga. Cada una se puede adaptar y restaurar por separado.</p>",
+  "ultima": "1.7.0",
+  "titulo": "Novedades v1.7.0",
+  "texto": "<p><strong>Lectura por voz</strong> \u2014 Ahora puedes escuchar tus tiradas e interpretaciones. Bot\u00f3n <strong>Escuchar</strong> en cada lectura con pausa, reanudar y parar, velocidad (0,75\u00d7, 1\u00d7, 1,25\u00d7) y selector de voces en espa\u00f1ol. Las lecturas guardadas en el historial tambi\u00e9n se pueden escuchar.</p>",
   "historial": {
+    "1.7.0": {
+      "titulo": "Novedades v1.7.0",
+      "texto": "<p><strong>Lectura por voz</strong> \u2014 Ahora puedes escuchar tus tiradas e interpretaciones. Bot\u00f3n <strong>Escuchar</strong> en cada lectura con pausa, reanudar y parar, velocidad (0,75\u00d7, 1\u00d7, 1,25\u00d7) y selector de voces en espa\u00f1ol. Las lecturas guardadas en el historial tambi\u00e9n se pueden escuchar.</p>"
+    },
     "1.6.1": {
       "titulo": "Novedades v1.6.1",
       "texto": "<p><strong>Instrucciones por tirada</strong> \u2014 En el panel de administraci\u00f3n, las instrucciones de la IA ahora son diferentes para cada tirada: Cruz Diaria, Tirada de la relaci\u00f3n, BATS Laboral, El Aprendizaje, Tirada Personalizada, El Arcano Visitante y la Interpretaci\u00f3n larga. Cada una se puede adaptar y restaurar por separado.</p>"

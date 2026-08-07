@@ -221,5 +221,14 @@ label{display:block;font-size:.82rem;color:var(--gold);margin-bottom:3px;margin-
 .ai-interp-title{color:var(--gold);font-size:.95rem;margin:0 0 10px}
 .ai-interp-texto{color:var(--text);line-height:1.6;font-size:.9rem}
 .ai-interp-btns{margin-top:12px}
+.voz-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:12px;padding:8px 10px;border:1px solid var(--bg3);border-radius:var(--radius);background:var(--bg2)}
+.voz-bar .voz-label{font-size:.75rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.voz-bar .btn{padding:4px 10px;font-size:.78rem}
+.voz-bar .btn:disabled{opacity:.45;cursor:not-allowed}
+.voz-bar .voz-tasa-group{display:inline-flex;gap:2px;margin-left:2px}
+.voz-bar .voz-tasa{border-color:var(--bg3);color:var(--text2)}
+.voz-bar .voz-tasa.active{background:var(--gold);border-color:var(--gold);color:var(--bg);font-weight:700}
+.voz-bar .voz-select{flex:1 1 120px;min-width:120px;max-width:220px;padding:5px 8px;font-size:.78rem;border-radius:8px;border:1px solid var(--bg3);background:var(--bg);color:var(--text)}
+.voz-bar .voz-notice{flex-basis:100%;font-size:.78rem;color:var(--danger,#e5484d)}
 .nov-sep{height:1px;background:var(--bg3);margin:12px 0}
 .novedades-texto h4{color:var(--gold);font-size:.95rem;margin-bottom:6px}

@@ -1,4 +1,4 @@
-var BATS_VERSION="1.6.1";
+var BATS_VERSION="1.7.0";
 
 var PALOS=[["bastos","Wands"],["copas","Cups"],["espadas","Swords"],["oros","Pentacles"]];
 var NOMPALO={bastos:"Bastos",copas:"Copas",espadas:"Espadas",oros:"Oros"};
@@ -87,6 +87,7 @@ function cerrarMenu(){
 }
 function irA(id){
   cerrarMenu();
+  if(typeof vozParar==="function"){try{vozParar()}catch(e){}}
   document.querySelectorAll(".panel").forEach(function(p){p.classList.remove("active")});
   var el=document.getElementById("panel-"+id);
   if(el) el.classList.add("active");
@@ -180,7 +181,7 @@ function guardarHist(tipo,cartas,descripcion,titulo){
   var tipo_rel=document.getElementById('tipo-'+window._lastPanel)?.value||'';
   var anot=document.getElementById('anotaciones-'+window._lastPanel)?.value||'';
   var obs=document.getElementById('observado-'+window._lastPanel)?.value||'';
-  h.unshift({fecha:new Date().toISOString(),tipo:tipo,descripcion:descripcion||"",titulo:titulo||"",situacion:sit,accion:acc,tipo_rel:tipo_rel,anotaciones:anot,observado:obs,cartas:cartas.map(function(it){
+  h.unshift({fecha:new Date().toISOString(),tipo:tipo,descripcion:descripcion||"",titulo:titulo||"",situacion:sit,accion:acc,tipo_rel:tipo_rel,anotaciones:anot,observado:obs,_interp:cartas._interp||"",_qtext:cartas._qtext||"",cartas:cartas.map(function(it){
     return {nombre:it.carta.nombre,img:it.carta.img,valor:it.carta.valor,tipo:it.carta.tipo,nucleo:it.carta.nucleo,letras:it.carta.letras,invertida:it.invertida,posicion:it.posicion,texto:it.texto||txt(it.carta,it.invertida)};
   }),resumen:cartas.map(function(it){return it.carta.nombre+(it.invertida?"(inv)":"")}).join(", ")});
   if(h.length>50) h=h.slice(0,50);
@@ -417,6 +418,8 @@ function verHist(i){
   var h=JSON.parse(lsGet("bats-hist")||"[]");
   var hr=h[i];if(!hr)return;
   var cartas=hr.cartas.map(function(it){return{carta:it,invertida:it.invertida,texto:it.texto,posicion:it.posicion}});
+  cartas._interp=hr._interp||"";
+  cartas._qtext=hr._qtext||"";
   var htm='<div class="result-box"><h3 style="color:var(--gold);margin-bottom:6px">'+(hr.titulo||hr.tipo)+'</h3>';
   var fs=new Date(hr.fecha).toLocaleDateString("es-ES",{year:"numeric",month:"long",day:"numeric",hour:"2-digit",minute:"2-digit"});
   htm+='<p style="color:var(--text-muted);margin-bottom:8px;font-size:.85rem">'+fs+'</p>';
@@ -442,12 +445,26 @@ function verHist(i){
     htm+='</div>';
   }
   htm+=qHTML(cartas);
+  if(hr._interp){
+    htm+='<div class="ai-interp-texto" style="margin-top:10px">'+interpParaHTML(hr._interp)+'</div>';
+  }else{
+    htm+='<p style="font-style:italic;color:var(--text-muted);margin-top:10px;font-size:.85rem">Lectura sin interpretación guardada.</p>';
+  }
+  if(typeof vozSoporte==="function"&&vozSoporte()){
+    htm+=vozBarHTML("hist-"+i);
+    VOZ.textos["hist-"+i]=vozTextoDe(cartas,{guion:/arcano/i.test(hr.tipo||"")?"arcano":null});
+  }
   htm+='<div class="cuaderno-section"><h4 style="color:var(--gold);margin:12px 0 6px;font-size:.9rem">Cuaderno de reflexiones</h4>';
   htm+='<div class="form-group"><label for="c-anot-'+i+'">Anotaciones</label><div class="char-counter"><textarea id="c-anot-'+i+'" class="input-desc" maxlength="300" oninput="var c=document.getElementById(\'cnt-'+i+'\');if(c)c.textContent=this.length+\'/300\'" placeholder="Escribe lo que consideres sobre esta tirada...">'+(hr.anotaciones||"")+'</textarea><span class="counter-text" id="cnt-'+i+'">'+(hr.anotaciones||"").length+'/300</span></div></div>';
   htm+='<div class="form-group"><label for="c-obs-'+i+'">Lo observado</label><textarea id="c-obs-'+i+'" class="input-desc" maxlength="500" placeholder="Escribe después lo que has visto o vivido respecto a lo que entendiste...">'+(hr.observado||"")+'</textarea></div>';
   htm+='<div class="btn-group"><button class="btn btn-outline btn-sm" onclick="guardarCuaderno('+i+')">Guardar cambios</button></div></div>';
   htm+='<div class="btn-group mt-8"><button class="btn btn-outline btn-sm" onclick="compartirHist('+i+')">Compartir</button><button class="btn btn-outline btn-sm" onclick="descargarHistMD('+i+')">MD</button><button class="btn btn-outline btn-sm" onclick="descargarHistHTML('+i+')">HTML</button><button class="btn btn-outline btn-sm" onclick="descargarHistAI('+i+')">IA</button><button class="btn btn-outline btn-sm" onclick="cargarHist()">← Volver</button></div></div>';
   document.getElementById("r-historial").innerHTML=htm;
+  if(typeof vozSoporte==="function"&&vozSoporte()){
+    var sel=document.querySelector("#r-historial .voz-select");
+    if(sel) vozPoblarSelect(sel);
+    vozActualizarBarras();
+  }
 }
 function guardarCuaderno(i){
   var h=JSON.parse(lsGet("bats-hist")||"[]");
@@ -557,6 +574,7 @@ function renderConIA(cartas,dest,renderFn,ctx){
   ctx=ctx||{};
   ctx.fecha=ctx.fecha||new Date().toLocaleDateString("es-ES",{year:"numeric",month:"long",day:"numeric"});
   window._lastCtx=ctx;
+  if(typeof vozParar==="function"){try{vozParar()}catch(e){}}
   var panelId=ctx.panelId||window._lastPanel||"tirada";
   var titulo=ctx.titulo||window._lastPanelTitle||"Tirada";
   if(typeof getAIMode==="undefined"||getAIMode()==="off"){
@@ -605,6 +623,13 @@ function renderInterpLarga(dest,cartas,ctx){
     limpiar();
     cartas._interp=t;
     body.innerHTML='<div class="ai-interp-texto">'+interpParaHTML(t)+'</div>';
+    if(typeof vozSoporte==="function"&&vozSoporte()){
+      var vd=String(dest).replace(/"/g,"");
+      body.insertAdjacentHTML("beforeend",vozBarHTML(vd));
+      VOZ.textos[vd]=vozTextoDe(cartas,ctx);
+      vozPoblarSelect(body.querySelector(".voz-select"));
+      vozActualizarBarras();
+    }
   }
   function tickS(){
     if(!acabado&&tEl) tEl.textContent=" ("+Math.round((Date.now()-ini)/1000)+" s)";
@@ -1168,6 +1193,240 @@ function adminRestaurarTodo(){
   });
 }
 
+/* ============ LECTURA POR VOZ (Web Speech API) ============ */
+var VOZ={estado:"idle",idx:0,partes:[],utter:null,dest:null,textos:{},voz:null,tasa:1,cargado:false};
+var VOZ_RATE_KEY="bats-voz-tasa";
+var VOZ_VOZ_KEY="bats-voz-voice";
+function vozSoporte(){return typeof window!=="undefined"&&("speechSynthesis" in window)&&("SpeechSynthesisUtterance" in window)}
+function vozVozes(){try{return window.speechSynthesis.getVoices()||[]}catch(e){return []}}
+function vozEsVoz(v){return v&&/^es\b|^es-/i.test(v.lang||"")}
+function vozTieneES(){return vozVozes().some(vozEsVoz)}
+function vozVozesES(){
+  var vs=vozVozes().filter(vozEsVoz);
+  vs.sort(function(a,b){
+    var ea=(a.lang||"").toLowerCase()==="es-es"?0:1;
+    var eb=(b.lang||"").toLowerCase()==="es-es"?0:1;
+    return (ea-eb)||(a.name||"").localeCompare(b.name||"");
+  });
+  return vs;
+}
+function vozVozPorURI(uri){
+  var vs=vozVozes();
+  for(var i=0;i<vs.length;i++) if(vs[i].voiceURI===uri) return vs[i];
+  return null;
+}
+function vozVozActual(){
+  if(VOZ.voz) return VOZ.voz;
+  var saved=lsGet(VOZ_VOZ_KEY);
+  if(saved){var v=vozVozPorURI(saved);if(v)return v}
+  return vozVozesES()[0]||null;
+}
+function vozTextoDe(cartas,ctx){
+  ctx=ctx||window._lastCtx||{};
+  var partes=[];
+  if(cartas&&cartas.length){
+    cartas.forEach(function(it,i){
+      var c=it.carta;
+      if(!c) return;
+      var pos=(it.posicion||"").replace(/\s+/g," ").trim();
+      var nm=c.nombre||"";
+      if(it.invertida) nm+=" (invertida)";
+      var t=(it.texto||"").replace(/\s+/g," ").trim();
+      var seg=(pos?pos+": ":"")+nm;
+      if(t) seg+=". "+t;
+      if(seg) partes.push(seg);
+    });
+    if(ctx.guion!=="arcano"){
+      var q=calcQuinta(cartas);
+      if(q){
+        var qt=(cartas._qtext||textoQuinta(q.nombre)||txt(q,false)||"").replace(/\s+/g," ").trim();
+        partes.push("Quintaesencia: "+q.nombre+(qt?". "+qt:""));
+      }
+    }
+  }
+  if(cartas&&cartas._interp){var li=String(cartas._interp).replace(/\s+/g," ").trim();if(li)partes.push(li)}
+  return partes.join(". ");
+}
+function vozDividir(texto,max){
+  max=max||300;
+  var s=String(texto||"").replace(/[#*_~`>]/g,"").replace(/\s+/g," ").trim();
+  if(!s) return [];
+  var chunks=[],rest=s;
+  while(rest.length>max){
+    var slice=rest.substring(0,max);
+    var cut=slice.lastIndexOf(". ");
+    if(cut<max*0.5) cut=slice.lastIndexOf(" ");
+    if(cut<=0) cut=max;
+    var piece=slice.substring(0,cut).trim();
+    if(piece) chunks.push(piece);
+    rest=rest.substring(cut).trim();
+  }
+  if(rest) chunks.push(rest);
+  return chunks;
+}
+function vozPoblarSelect(sel){
+  if(!sel) return;
+  var es=vozVozesES();
+  var saved=lsGet(VOZ_VOZ_KEY);
+  sel.innerHTML="";
+  if(!es.length){
+    var opt=document.createElement("option");
+    opt.value="";opt.textContent="Sin voz en español";
+    sel.appendChild(opt);sel.disabled=true;
+    return;
+  }
+  sel.disabled=false;
+  var selIdx=0;
+  es.forEach(function(v,i){
+    var o=document.createElement("option");
+    o.value=v.voiceURI;
+    o.textContent=v.name+" ("+v.lang+")";
+    sel.appendChild(o);
+    if(saved&&v.voiceURI===saved) selIdx=i;
+  });
+  sel.selectedIndex=selIdx;
+}
+function vozBarHTML(dest){
+  var d=String(dest||"").replace(/"/g,"");
+  var h='<div class="voz-bar" id="voz-'+d+'" data-dest="'+d+'">';
+  h+='<span class="voz-label">Leer</span>';
+  h+='<button class="btn btn-outline btn-sm voz-play" onclick="vozLeer(\''+d+'\')">\u25B6 Escuchar</button>';
+  h+='<button class="btn btn-outline btn-sm voz-pause" onclick="vozPausa()" disabled>\u23F8 Pausa</button>';
+  h+='<button class="btn btn-outline btn-sm voz-stop" onclick="vozParar()" disabled>\u23F9 Parar</button>';
+  h+='<span class="voz-tasa-group">';
+  [0.75,1,1.25].forEach(function(t){
+    h+='<button class="btn btn-outline btn-sm voz-tasa'+(t===1?" active":"")+'" data-t="'+t+'" onclick="vozTasa('+t+')">'+t+'\u00D7</button>';
+  });
+  h+='</span>';
+  h+='<select class="voz-select" onchange="vozCambiarVoz(\''+d+'\',this.value)"></select>';
+  h+='<span class="voz-notice" style="display:none"></span>';
+  h+='</div>';
+  return h;
+}
+function vozActualizarBarras(){
+  if(typeof document==="undefined") return;
+  var bars=document.querySelectorAll(".voz-bar");
+  for(var i=0;i<bars.length;i++){
+    var bar=bars[i];
+    var dest=bar.getAttribute("data-dest")||(bar.id||"").replace(/^voz-/,"");
+    var play=bar.querySelector(".voz-play"),pause=bar.querySelector(".voz-pause"),stop=bar.querySelector(".voz-stop");
+    var notice=bar.querySelector(".voz-notice");
+    if(!play) continue;
+    if(!vozSoporte()){
+      if(notice){notice.style.display="block";notice.textContent="Este dispositivo no soporta lectura por voz."}
+      play.disabled=true;if(pause)pause.disabled=true;if(stop)stop.disabled=true;
+      continue;
+    }
+    if(!vozTieneES()&&VOZ.cargado){
+      if(notice){notice.style.display="block";notice.textContent="No hay voz en español instalada en este dispositivo"}
+      play.disabled=true;if(pause)pause.disabled=true;if(stop)stop.disabled=true;
+      continue;
+    }
+    if(!VOZ.cargado){
+      if(notice){notice.style.display="none"}
+      play.disabled=true;play.textContent="\u2026 Cargando voces";
+      if(pause)pause.disabled=true;if(stop)stop.disabled=true;
+      continue;
+    }
+    if(notice){notice.style.display="none"}
+    play.disabled=false;play.textContent="\u25B6 Escuchar";
+    if(VOZ.estado==="hablando"&&VOZ.dest===dest){
+      play.textContent="\u25B6 Leyendo\u2026";if(pause)pause.disabled=false;if(stop)stop.disabled=false;
+    }else if(VOZ.estado==="pausado"&&VOZ.dest===dest){
+      play.textContent="\u25B6 Reanudar";if(pause)pause.disabled=true;if(stop)stop.disabled=false;
+    }else{
+      if(pause)pause.disabled=true;if(stop)stop.disabled=true;
+    }
+  }
+}
+function vozHablar(){
+  if(!VOZ.partes||VOZ.idx>=VOZ.partes.length){vozTerminar();return}
+  var u=new SpeechSynthesisUtterance(VOZ.partes[VOZ.idx]);
+  var v=vozVozActual();
+  if(v){u.voice=v;u.lang=v.lang}else{u.lang="es-ES"}
+  u.rate=VOZ.tasa;u.pitch=1;
+  u.onend=function(){VOZ.idx++;if(VOZ.idx<VOZ.partes.length)vozHablar();else vozTerminar();};
+  u.onerror=function(){vozTerminar();};
+  VOZ.utter=u;VOZ.estado="hablando";vozActualizarBarras();
+  try{window.speechSynthesis.speak(u)}catch(e){vozTerminar()}
+}
+function vozLeer(dest){
+  if(!vozSoporte()){toast("Este dispositivo no soporta lectura por voz",true);return}
+  var texto=VOZ.textos[dest]||(window._ult?vozTextoDe(window._ult):"");
+  if(!texto){toast("No hay texto que leer",true);return}
+  if(VOZ.estado==="pausado"&&VOZ.dest===dest){vozReanudar();return}
+  vozParar(false);
+  if(!vozTieneES()){
+    VOZ.cargado=true;vozActualizarBarras();
+    toast("No hay voz en español instalada en este dispositivo",true);return;
+  }
+  VOZ.partes=vozDividir(texto);
+  VOZ.idx=0;VOZ.dest=dest;VOZ.tasa=vozTasaActual();
+  vozHablar();
+}
+function vozPausa(){
+  if(!vozSoporte()||VOZ.estado!=="hablando")return;
+  try{window.speechSynthesis.pause()}catch(e){}
+  VOZ.estado="pausado";vozActualizarBarras();
+}
+function vozReanudar(){
+  if(!vozSoporte()||VOZ.estado!=="pausado")return;
+  try{window.speechSynthesis.resume()}catch(e){}
+  VOZ.estado="hablando";vozActualizarBarras();
+}
+function vozParar(actualizar){
+  actualizar=(actualizar===undefined)?true:actualizar;
+  if(vozSoporte()){try{window.speechSynthesis.cancel()}catch(e){}}
+  VOZ.estado="idle";VOZ.idx=0;VOZ.partes=[];VOZ.utter=null;VOZ.dest=null;
+  if(actualizar) vozActualizarBarras();
+}
+function vozTerminar(){
+  VOZ.estado="idle";VOZ.idx=0;VOZ.partes=[];VOZ.utter=null;VOZ.dest=null;
+  vozActualizarBarras();
+}
+function vozTasaActual(){
+  var t=parseFloat(lsGet(VOZ_RATE_KEY));
+  return (t===0.75||t===1||t===1.25)?t:1;
+}
+function vozTasa(t){
+  if(t!==0.75&&t!==1&&t!==1.25)return;
+  VOZ.tasa=t;lsSet(VOZ_RATE_KEY,String(t));
+  var btns=document.querySelectorAll(".voz-tasa");
+  for(var i=0;i<btns.length;i++) btns[i].classList.toggle("active",parseFloat(btns[i].getAttribute("data-t"))===t);
+  if(VOZ.estado==="hablando"||VOZ.estado==="pausado"){
+    if(vozSoporte()){try{window.speechSynthesis.cancel()}catch(e){}}
+    VOZ.estado="idle";
+    if(VOZ.partes&&VOZ.idx<VOZ.partes.length){VOZ.estado="hablando";var _v=VOZ;setTimeout(function(){vozHablar()},30)}
+  }
+}
+function vozCambiarVoz(dest,uri){
+  var v=uri?vozVozPorURI(uri):null;
+  if(!v)return;
+  VOZ.voz=v;lsSet(VOZ_VOZ_KEY,v.voiceURI);
+  if(VOZ.estado==="hablando"||VOZ.estado==="pausado"){
+    var actual=VOZ.idx;
+    if(vozSoporte()){try{window.speechSynthesis.cancel()}catch(e){}}
+    VOZ.estado="idle";VOZ.idx=actual;VOZ.estado="hablando";
+    setTimeout(function(){vozHablar()},30);
+  }
+}
+function vozCargar(){
+  if(!vozSoporte())return;
+  function revisar(){
+    VOZ.cargado=true;
+    var sels=document.querySelectorAll(".voz-select");
+    for(var i=0;i<sels.length;i++) vozPoblarSelect(sels[i]);
+    vozActualizarBarras();
+  }
+  try{window.speechSynthesis.addEventListener("voiceschanged",revisar)}catch(e){}
+  try{window.speechSynthesis.onvoiceschanged=revisar}catch(e){}
+  revisar();
+  if(!vozVozes().length){
+    setTimeout(revisar,400);
+    setTimeout(revisar,1500);
+  }
+}
+
 setTimeout(function(){
   var vd=document.getElementById("vers-app");
   if(vd) vd.textContent="BATS Tarot v"+BATS_VERSION;
@@ -1185,5 +1444,6 @@ setTimeout(function(){
   if(typeof actualizarUI_AI==="function") actualizarUI_AI();
   if(document.getElementById("cfg-provider")) cargarPanelConfig();
   if(typeof initAdmin==="function") initAdmin();
+  if(typeof vozCargar==="function"){vozCargar();vozTasa(vozTasaActual())}
   initSW();
 },100);
