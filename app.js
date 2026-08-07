@@ -1,4 +1,4 @@
-var BATS_VERSION="1.7.0";
+var BATS_VERSION="1.7.1";
 
 var PALOS=[["bastos","Wands"],["copas","Cups"],["espadas","Swords"],["oros","Pentacles"]];
 var NOMPALO={bastos:"Bastos",copas:"Copas",espadas:"Espadas",oros:"Oros"};
@@ -1357,13 +1357,15 @@ function vozLeer(dest){
   if(!texto){toast("No hay texto que leer",true);return}
   if(VOZ.estado==="pausado"&&VOZ.dest===dest){vozReanudar();return}
   vozParar(false);
-  if(!vozTieneES()){
-    VOZ.cargado=true;vozActualizarBarras();
-    toast("No hay voz en español instalada en este dispositivo",true);return;
-  }
-  VOZ.partes=vozDividir(texto);
-  VOZ.idx=0;VOZ.dest=dest;VOZ.tasa=vozTasaActual();
-  vozHablar();
+  vozConVoices(function(){
+    if(!vozTieneES()){
+      VOZ.cargado=true;vozActualizarBarras();
+      toast("No hay voz en español instalada en este dispositivo",true);return;
+    }
+    VOZ.partes=vozDividir(texto);
+    VOZ.idx=0;VOZ.dest=dest;VOZ.tasa=vozTasaActual();
+    vozHablar();
+  });
 }
 function vozPausa(){
   if(!vozSoporte()||VOZ.estado!=="hablando")return;
@@ -1411,21 +1413,53 @@ function vozCambiarVoz(dest,uri){
     setTimeout(function(){vozHablar()},30);
   }
 }
+var VOZ_ULTIMA_FIRMA="";
+function vozFirma(){
+  try{return vozVozes().map(function(v){return (v.voiceURI||"")+"|"+(v.lang||"")}).join(";")}catch(e){return ""}
+}
+function vozCalentar(){
+  try{
+    var u=new SpeechSynthesisUtterance(" ");
+    u.volume=0;u.rate=1;u.pitch=1;
+    window.speechSynthesis.speak(u);
+    setTimeout(function(){try{window.speechSynthesis.cancel()}catch(e){}},60);
+  }catch(e){}
+}
 function vozCargar(){
   if(!vozSoporte())return;
+  var marco=Date.now();
+  var detenido=false;
   function revisar(){
-    VOZ.cargado=true;
-    var sels=document.querySelectorAll(".voz-select");
-    for(var i=0;i<sels.length;i++) vozPoblarSelect(sels[i]);
+    if(detenido) return;
+    var vs=vozVozes();
+    if(vs.length) VOZ.cargado=true;
+    else if(Date.now()-marco>=10000) VOZ.cargado=true;
+    var firma=vozFirma();
+    if(firma!==VOZ_ULTIMA_FIRMA){
+      VOZ_ULTIMA_FIRMA=firma;
+      var sels=document.querySelectorAll(".voz-select");
+      for(var i=0;i<sels.length;i++) vozPoblarSelect(sels[i]);
+    }
     vozActualizarBarras();
   }
   try{window.speechSynthesis.addEventListener("voiceschanged",revisar)}catch(e){}
   try{window.speechSynthesis.onvoiceschanged=revisar}catch(e){}
+  vozCalentar();
   revisar();
-  if(!vozVozes().length){
-    setTimeout(revisar,400);
-    setTimeout(revisar,1500);
-  }
+  var iv=setInterval(revisar,500);
+  setTimeout(function(){detenido=true;clearInterval(iv)},60000);
+}
+function vozConVoices(cb){
+  if(vozVozes().length){cb();return}
+  vozCalentar();
+  var intentos=0;
+  var iv=setInterval(function(){
+    intentos++;
+    if(vozVozes().length||intentos>=10){
+      clearInterval(iv);
+      cb();
+    }
+  },300);
 }
 function vozDescargarMP3(dest){
   var texto=VOZ.textos[dest]||(window._ult?vozTextoDe(window._ult):"");
