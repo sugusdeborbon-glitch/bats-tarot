@@ -1299,6 +1299,7 @@ function vozBarHTML(dest){
   });
   h+='</span>';
   h+='<select class="voz-select" onchange="vozCambiarVoz(\''+d+'\',this.value)"></select>';
+  h+='<button class="btn btn-outline btn-sm voz-mp3" data-mp3="'+d+'" onclick="vozDescargarMP3(\''+d+'\')">\u2B07 MP3</button>';
   h+='<span class="voz-notice" style="display:none"></span>';
   h+='</div>';
   return h;
@@ -1425,6 +1426,36 @@ function vozCargar(){
     setTimeout(revisar,400);
     setTimeout(revisar,1500);
   }
+}
+function vozDescargarMP3(dest){
+  var texto=VOZ.textos[dest]||(window._ult?vozTextoDe(window._ult):"");
+  if(!texto){toast("No hay texto que descargar",true);return}
+  if(typeof getWorkerURL!=="function"||typeof AI_WORKER_TOKEN==="undefined"){toast("Servicio de voz no disponible",true);return}
+  var btn=document.querySelector('[data-mp3="'+dest+'"]');
+  if(btn){btn.disabled=true;btn.textContent="Generando MP3\u2026"}
+  var voz=vozVozActual();
+  var lang=(voz&&voz.lang)?String(voz.lang):"es-ES";
+  var tl=/^es-US$/i.test(lang)?"es-US":"es";
+  var url=getWorkerURL()+"/api/tts";
+  fetch(url,{
+    method:"POST",
+    headers:{"Content-Type":"application/json","X-BATS-Token":AI_WORKER_TOKEN},
+    body:JSON.stringify({text:texto,voice:tl})
+  }).then(function(r){
+    if(!r.ok) return r.json().catch(function(){return{}}).then(function(j){throw new Error(j.error||("Error del servidor ("+r.status+")"))});
+    return r.blob();
+  }).then(function(blob){
+    var u=URL.createObjectURL(blob);
+    var a=document.createElement("a");
+    a.href=u;a.download="lectura-bats.mp3";
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(function(){URL.revokeObjectURL(u)},4000);
+    toast("MP3 descargado");
+  }).catch(function(e){
+    toast("No se pudo generar el MP3: "+(e&&e.message||"error"),true);
+  }).finally(function(){
+    if(btn){btn.disabled=false;btn.textContent="\u2B07 MP3"}
+  });
 }
 
 setTimeout(function(){

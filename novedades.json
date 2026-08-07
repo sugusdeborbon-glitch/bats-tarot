@@ -1,11 +1,11 @@
 {
   "ultima": "1.7.0",
   "titulo": "Novedades v1.7.0",
-  "texto": "<p><strong>Lectura por voz</strong> \u2014 Ahora puedes escuchar tus tiradas e interpretaciones. Bot\u00f3n <strong>Escuchar</strong> en cada lectura con pausa, reanudar y parar, velocidad (0,75\u00d7, 1\u00d7, 1,25\u00d7) y selector de voces en espa\u00f1ol. Las lecturas guardadas en el historial tambi\u00e9n se pueden escuchar.</p>",
+  "texto": "<p><strong>Lectura por voz</strong> \u2014 Ahora puedes escuchar tus tiradas e interpretaciones. Bot\u00f3n <strong>Escuchar</strong> en cada lectura con pausa, reanudar y parar, velocidad (0,75\u00d7, 1\u00d7, 1,25\u00d7) y selector de voces en espa\u00f1ol. Las lecturas guardadas en el historial tambi\u00e9n se pueden escuchar. Bot\u00f3n <strong>Descargar MP3</strong> para guardar la lectura como audio; el audio se genera al momento y nunca se guarda.</p>",
   "historial": {
     "1.7.0": {
       "titulo": "Novedades v1.7.0",
-      "texto": "<p><strong>Lectura por voz</strong> \u2014 Ahora puedes escuchar tus tiradas e interpretaciones. Bot\u00f3n <strong>Escuchar</strong> en cada lectura con pausa, reanudar y parar, velocidad (0,75\u00d7, 1\u00d7, 1,25\u00d7) y selector de voces en espa\u00f1ol. Las lecturas guardadas en el historial tambi\u00e9n se pueden escuchar.</p>"
+      "texto": "<p><strong>Lectura por voz</strong> \u2014 Ahora puedes escuchar tus tiradas e interpretaciones. Bot\u00f3n <strong>Escuchar</strong> en cada lectura con pausa, reanudar y parar, velocidad (0,75\u00d7, 1\u00d7, 1,25\u00d7) y selector de voces en espa\u00f1ol. Las lecturas guardadas en el historial tambi\u00e9n se pueden escuchar. Bot\u00f3n <strong>Descargar MP3</strong> para guardar la lectura como audio; el audio se genera al momento y nunca se guarda.</p>"
     },
     "1.6.1": {
       "titulo": "Novedades v1.6.1",

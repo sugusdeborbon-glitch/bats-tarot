@@ -17,6 +17,9 @@ const RATE_LIMIT_WINDOW_MS = 60000;
 const MAX_TOKENS = 4096;
 const ADMIN_ENDPOINT = "/api/config";
 const CONFIG_KEY = "ai_config";
+const TTS_ENDPOINT = "/api/tts";
+const TTS_MAX_TEXT = 20000;
+const TTS_GOOGLE = "https://translate.google.com/translate_tts";
 
 const PROVIDERS = [
   { id: "groq", name: "Groq", url: GROQ_URL, model: GROQ_MODEL, keyEnv: "GROQ_API_KEY" },
@@ -184,6 +187,44 @@ export default {
       return json({ error: "Método no permitido" }, 405, req);
     }
 
+    if (url.pathname === TTS_ENDPOINT) {
+      if (req.method !== "POST") {
+        return json({ error: "Método no permitido" }, 405, req);
+      }
+      if (env.BATS_TOKEN && req.headers.get("X-BATS-Token") !== env.BATS_TOKEN) {
+        return json({ error: "No autorizado" }, 401, req);
+      }
+      if (rateLimited(req)) {
+        return json({ error: "Demasiadas peticiones. Inténtalo en un momento." }, 429, req);
+      }
+      let body;
+      try {
+        body = await req.json();
+      } catch (e) {
+        return json({ error: "Cuerpo JSON inválido" }, 400, req);
+      }
+      const text = typeof body.text === "string" ? body.text.trim() : "";
+      if (!text) {
+        return json({ error: "Falta el texto" }, 400, req);
+      }
+      if (text.length > TTS_MAX_TEXT) {
+        return json({ error: "Texto demasiado largo" }, 413, req);
+      }
+      const lang = body.voice === "es-US" ? "es-US" : "es";
+      const res = await ttsGoogle(text, lang);
+      if (res.error) {
+        return json({ error: res.error }, 502, req);
+      }
+      return new Response(res.data, {
+        status: 200,
+        headers: Object.assign({
+          "Content-Type": "audio/mpeg",
+          "Content-Disposition": 'attachment; filename="lectura-bats.mp3"',
+          "Cache-Control": "no-store"
+        }, corsHeaders(req))
+      });
+    }
+
     if (req.method !== "POST") {
       return json({ error: "Método no permitido" }, 405, req);
     }
@@ -290,4 +331,65 @@ async function llamarProveedor(provider, messages, payload) {
   } finally {
     clearTimeout(timer);
   }
+}
+
+function splitTTS(text, max) {
+  max = max || 150;
+  const s = String(text).replace(/\s+/g, " ").trim();
+  if (!s) return [];
+  const chunks = [];
+  let rest = s;
+  while (rest.length > max) {
+    const slice = rest.substring(0, max);
+    let cut = slice.lastIndexOf(". ");
+    if (cut < max * 0.5) cut = slice.lastIndexOf("; ");
+    if (cut < max * 0.5) cut = slice.lastIndexOf(", ");
+    if (cut <= 0) cut = slice.lastIndexOf(" ");
+    if (cut <= 0) cut = max;
+    const piece = slice.substring(0, cut).trim();
+    if (piece) chunks.push(piece);
+    rest = rest.substring(cut).trim();
+  }
+  if (rest) chunks.push(rest);
+  return chunks;
+}
+
+async function ttsGoogle(text, lang) {
+  const chunks = splitTTS(text, 150);
+  if (!chunks.length) return { error: "Texto vacío" };
+  const parts = [];
+  for (const chunk of chunks) {
+    const url = TTS_GOOGLE
+      + "?ie=UTF-8&q=" + encodeURIComponent(chunk)
+      + "&tl=" + encodeURIComponent(lang)
+      + "&client=tw-ob";
+    let upstream;
+    try {
+      upstream = await fetch(url, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+          "Referer": "https://translate.google.com/"
+        }
+      });
+    } catch (e) {
+      return { error: "No se pudo contactar con el proveedor de voz." };
+    }
+    if (!upstream.ok) {
+      return { error: "El proveedor de voz respondió con estado " + upstream.status };
+    }
+    try {
+      const buf = await upstream.arrayBuffer();
+      parts.push(new Uint8Array(buf));
+    } catch (e) {
+      return { error: "No se pudo leer el audio del proveedor de voz." };
+    }
+  }
+  const total = parts.reduce(function(a, b){ return a + b.length; }, 0);
+  const out = new Uint8Array(total);
+  let off = 0;
+  for (const p of parts) {
+    out.set(p, off);
+    off += p.length;
+  }
+  return { data: out };
 }

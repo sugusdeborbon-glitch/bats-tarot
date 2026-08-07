@@ -230,5 +230,7 @@ label{display:block;font-size:.82rem;color:var(--gold);margin-bottom:3px;margin-
 .voz-bar .voz-tasa.active{background:var(--gold);border-color:var(--gold);color:var(--bg);font-weight:700}
 .voz-bar .voz-select{flex:1 1 120px;min-width:120px;max-width:220px;padding:5px 8px;font-size:.78rem;border-radius:8px;border:1px solid var(--bg3);background:var(--bg);color:var(--text)}
 .voz-bar .voz-notice{flex-basis:100%;font-size:.78rem;color:var(--danger,#e5484d)}
+.voz-bar .voz-mp3{background:rgba(212,168,71,.12);border-color:rgba(212,168,71,.5);color:var(--gold)}
+.voz-bar .voz-mp3:disabled{opacity:.5;cursor:wait}
 .nov-sep{height:1px;background:var(--bg3);margin:12px 0}
 .novedades-texto h4{color:var(--gold);font-size:.95rem;margin-bottom:6px}
