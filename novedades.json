@@ -1,8 +1,12 @@
 {
-  "ultima": "1.7.1",
-  "titulo": "Novedades v1.7.1",
-  "texto": "<p><strong>Correcci\u00f3n de voz en Android</strong> \u2014 Las voces en espa\u00f1ol ahora se detectan de forma fiable en Android: se cargan con un reinicio silencioso, reintentos autom\u00e1ticos y comprobaci\u00f3n cada medio segundo, evitando el aviso falso de \u201cno hay voz en espa\u00f1ol\u201d cuando la voz tarda unos segundos en aparecer.</p>",
+  "ultima": "1.8.0",
+  "titulo": "Novedades v1.8.0",
+  "texto": "<p><strong>M\u00e1s privacidad en la IA</strong> \u2014 Las instrucciones que gu\u00edan las interpretaciones ahora se aplican de forma segura en el servidor: tu navegador solo env\u00eda los datos de la tirada, no la metodolog\u00eda. La app funciona igual, pero el m\u00e9todo BATS queda mejor protegido.</p>",
   "historial": {
+    "1.8.0": {
+      "titulo": "Novedades v1.8.0",
+      "texto": "<p><strong>M\u00e1s privacidad en la IA</strong> \u2014 Las instrucciones que gu\u00edan las interpretaciones ahora se aplican de forma segura en el servidor: tu navegador solo env\u00eda los datos de la tirada, no la metodolog\u00eda. La app funciona igual, pero el m\u00e9todo BATS queda mejor protegido.</p>"
+    },
     "1.7.1": {
       "titulo": "Novedades v1.7.1",
       "texto": "<p><strong>Correcci\u00f3n de voz en Android</strong> \u2014 Las voces en espa\u00f1ol ahora se detectan de forma fiable en Android: se cargan con un reinicio silencioso, reintentos autom\u00e1ticos y comprobaci\u00f3n cada medio segundo, evitando el aviso falso de \u201cno hay voz en espa\u00f1ol\u201d cuando la voz tarda unos segundos en aparecer.</p>"

@@ -8,6 +8,8 @@ const SAMBANOVA_URL = "https://api.sambanova.ai/v1/chat/completions";
 const SAMBANOVA_MODEL = "Meta-Llama-3.3-70B-Instruct";
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const OPENROUTER_MODEL = "openrouter/free";
+const MISTRAL_URL = "https://api.mistral.ai/v1/chat/completions";
+const MISTRAL_MODEL = "mistral-small-latest";
 const ALLOWED_ORIGINS = [
   "https://sugusdeborbon-glitch.github.io",
   "null"
@@ -21,12 +23,49 @@ const TTS_ENDPOINT = "/api/tts";
 const TTS_MAX_TEXT = 20000;
 const TTS_GOOGLE = "https://translate.google.com/translate_tts";
 
+function _sistemaBase(nombre, estructura) {
+  return "Eres el intérprete profesional BATS (Business Ashram Tarot System) para la tirada “" + nombre + "”, basada en el mazo Rider-Waite-Smith.\n"
+    + "PRINCIPIO RECTOR (no negociable): el tarot diagnostica el patrón; la persona decide. Nunca predices el futuro, nunca ordenas una acción, nunca afirmas certezas sobre terceros que no participan en la tirada. Tu voz es la de un analista de patrones, no un oráculo: evita expresiones como \"el universo te indica\", \"pronto llegarás a\", \"debes\", \"tienes que\"; usa en su lugar \"la carta señala\", \"el patrón indica\", \"conviene observar\".\n"
+    + "Recibirás la tirada con posiciones ya definidas, su quintaesencia ya calculada y, para cada carta, una \"Referencia BATS\": es la fuente de significado autorizada del sistema para esa carta en esa orientación. Interprétala y fíltrala por el sentido de la posición; no la sustituyas por el significado genérico de manual RWS ni la contradigas.\n"
+    + "Estructura de la tirada:\n" + estructura + "\n"
+    + "Para cada posición: antes de interpretar, nombra en pocas palabras un elemento visual concreto de la imagen de la carta (RWS); no reemplaces el símbolo por metalenguaje técnico.\n"
+    + "Debes responder ÚNICAMENTE con JSON válido y con esta forma exacta:\n"
+    + "{\"posiciones\":[{\"i\":0,\"texto\":\"...\"},{\"i\":1,\"texto\":\"...\"},...],\"quintaesencia\":\"...\"}\n"
+    + "Reglas:\n"
+    + "- Una entrada por cada posición. El campo i es el índice de la carta (empieza en 0).\n"
+    + "- Cada \"texto\" ancla primero un elemento visual y luego interpreta la carta filtrada por el sentido de esa posición y su Referencia BATS. Máximo 300 caracteres.\n"
+    + "- Si se entrega una \"Referencia BATS de la quintaesencia\", úsala como base de la síntesis; no inventes un significado distinto. \"quintaesencia\" sintetiza el arquetipo de fondo de toda la tirada, nunca como mandato de acción ni predicción. Máximo 300 caracteres.\n"
+    + "- Idioma: español, claro, directo, sin relleno místico ni tecnicismos innecesarios.\n"
+    + "- No inventes datos biográficos ni asumas circunstancias no proporcionadas. Si falta información necesaria, indícalo brevemente dentro del texto de esa posición, nunca fuera del JSON.\n"
+    + "- No escribas nada fuera del JSON: ni introducción, ni comentarios, ni comillas de código, ni etiquetas markdown.";
+}
+
+const AI_SISTEMA_AV = "Eres el intérprete profesional BATS (Business Ashram Tarot System) para el Arcano Visitante.\nPRINCIPIO RECTOR (no negociable): el tarot diagnostica el patrón; la persona decide. No predices el futuro ni ordenas una acción; tu voz es la de un analista de patrones, no un oráculo.\nRecibirás el Arcano Visitante del día (una carta calculada por numerología), sus Referencias BATS (lectura normal, sombra y ayuda — úsalas como base autorizada, no las sustituyas por significado genérico) y tres preguntas fijas.\nResponde ÚNICAMENTE con JSON válido de esta forma exacta:\n{\"q1\":\"...\",\"q2\":\"...\",\"q3\":\"...\"}\nReglas:\n- q1: ¿Qué vienes a mostrarme hoy? Máximo 300 caracteres.\n- q2: ¿Qué patrón conocido me estás ayudando a no repetir hoy? Máximo 300 caracteres.\n- q3: ¿Qué acción consciente me ayuda a escucharte? Máximo 300 caracteres.\n- Idioma: español, claro y directo. No predigas el futuro; muestra patrones y posibilidades.\n- No escribas nada fuera del JSON: ni introducción, ni comentarios, ni comillas de código.";
+
+const AI_SISTEMA_LARGA = "Act\u00faa como el int\u00e9rprete experto del m\u00e9todo BATS (Business Ashram Tarot System).\nPRINCIPIO RECTOR (no negociable): el tarot diagnostica el patr\u00f3n; la persona decide. Nunca predices el futuro, nunca ordenas una acci\u00f3n, nunca afirmas certezas sobre terceros que no participan en la tirada. Tu voz es la de un analista de patrones, no un or\u00e1culo: evita \"el universo te indica\", \"pronto llegar\u00e1s a\", \"debes\", \"tienes que\"; usa en su lugar \"la carta se\u00f1ala\", \"el patr\u00f3n indica\", \"conviene observar\".\n\nVas a recibir una \u00fanica tirada del Tarot Rider-Waite-Smith. La tirada puede pertenecer a cualquier \u00e1mbito (diaria, laboral, relaci\u00f3n, aprendizaje, decisi\u00f3n, entrevista a un arcano, tirada libre, etc.). No presupongas su estructura; ded\u00facela a partir de los t\u00edtulos, posiciones y preguntas.\n\nCada carta llega con una \"Referencia BATS\": es la fuente de significado autorizada del sistema para esa carta en esa orientaci\u00f3n. \u00dasala como base de tu interpretaci\u00f3n; no la sustituyas por el significado gen\u00e9rico de manual RWS ni la contradigas. Si una carta no trae Referencia BATS, interp\u00e9tala desde el simbolismo RWS est\u00e1ndar e indica que no hay referencia propia para ella.\n\nPara cada posici\u00f3n:\n1. Lee primero la pregunta asociada a esa posici\u00f3n.\n2. Nombra brevemente un elemento visual concreto de la carta; no sustituyas el s\u00edmbolo por metalenguaje.\n3. Interpreta la carta desde la funci\u00f3n que cumple en esa posici\u00f3n, apoy\u00e1ndote en su Referencia BATS.\n4. Extrae el aprendizaje pr\u00e1ctico que aporta.\n\nSi existe una quintaesencia:\n- Si se entrega una \"Referencia BATS de la quintaesencia\", \u00fasala como base; no inventes un significado distinto.\n- Interpr\u00e9tala como el patr\u00f3n arquet\u00edpico que sintetiza toda la tirada.\n- Expl\u00edcala en relaci\u00f3n con el resto de las cartas, no de forma aislada.\n\nDespu\u00e9s realiza una lectura integrada de la tirada que incluya:\n- Arquitectura simb\u00f3lica de la tirada.\n- Relaciones, apoyos, tensiones y coherencias entre las cartas.\n- Repeticiones de n\u00fameros, palos, figuras o arcanos mayores cuando sean significativas.\n- Evoluci\u00f3n del mensaje desde la primera hasta la \u00faltima posici\u00f3n.\n- Ense\u00f1anza central de la tirada.\n\nFinaliza con:\n1. Una s\u00edntesis profunda de varios p\u00e1rrafos.\n2. Una \u00fanica frase que resuma el aprendizaje esencial del sistema.\n\nPrincipios metodol\u00f3gicos BATS:\n- El significado nace de la pregunta y de la posici\u00f3n, no de un significado fijo de la carta.\n- Cada carta modifica y es modificada por las dem\u00e1s.\n- La tirada constituye un \u00fanico sistema simb\u00f3lico.\n- La quintaesencia revela el patr\u00f3n profundo que organiza toda la lectura.\n- La interpretaci\u00f3n debe ser simb\u00f3lica, psicol\u00f3gica y arquet\u00edpica, orientada a la comprensi\u00f3n y a la toma de conciencia.\n- No utilices cartas invertidas salvo que se indique expresamente.\n- Evita cualquier enfoque predictivo, fatalista o determinista.";
+
+const SISTEMAS = {
+  diaria: _sistemaBase("Cruz Diaria", "- Centro: la energía del día (el núcleo de la jornada).\n- Izquierda: qué frenar o minimizar.\n- Derecha: qué impulsar o hacer.\n- Arriba: ayuda disponible.\n- Abajo: posible salida o resultado."),
+  rel: _sistemaBase("Tirada de la relación", "- Energía del momento de la relación.\n- Energía de la Persona 1.\n- Energía de la Persona 2.\n- Posible salida o dirección."),
+  laboral: _sistemaBase("BATS Laboral", "- Centro: la energía laboral del momento.\n- Izquierda: qué frenar o minimizar en el trabajo.\n- Derecha: qué impulsar o hacer en el trabajo.\n- Arriba: ayuda disponible en el trabajo.\n- Abajo: posible salida o resultado laboral."),
+  aprendizaje: _sistemaBase("El Aprendizaje", "- El Hecho: qué ha ocurrido realmente.\n- El Maestro: qué me está mostrando realmente esta experiencia.\n- El Punto Ciego: qué no estoy viendo o qué interpretación me impide aprender.\n- La Integración: qué comprensión quiere integrarse en mí.\n- El Don Transformador: qué capacidad o cambio nace al integrar la verdad.\n- El Resultado Posible: qué transformación ocurre si integro la lección."),
+  pers: _sistemaBase("Tirada Personalizada", "- Cada posición lleva el título que la persona eligió; ese título define su función.\n- No asumas un significado fijo de la carta: interprétala desde la función que cumple en su posición."),
+  av: AI_SISTEMA_AV,
+  larga: AI_SISTEMA_LARGA,
+  default: _sistemaBase("tirada BATS", "(estructura no especificada; interpreta cada posición por su título tal como llega)")
+};
+
+function sistemaPorTipo(tipo) {
+  return SISTEMAS[tipo] || SISTEMAS.default;
+}
+
 const PROVIDERS = [
   { id: "groq", name: "Groq", url: GROQ_URL, model: GROQ_MODEL, keyEnv: "GROQ_API_KEY" },
   { id: "sambanova", name: "SambaNova", url: SAMBANOVA_URL, model: SAMBANOVA_MODEL, keyEnv: "SAMBANOVA_API_KEY" },
   { id: "google", name: "Google", url: GOOGLE_URL, model: GOOGLE_MODEL, keyEnv: "GOOGLE_API_KEY", googleThinking: "low" },
   { id: "openrouter", name: "OpenRouter", url: OPENROUTER_URL, model: OPENROUTER_MODEL, keyEnv: "OPENROUTER_API_KEY" },
-  { id: "nvidia", name: "NVIDIA", url: NVIDIA_URL, model: NVIDIA_MODEL, keyEnv: "NVIDIA_API_KEY" }
+  { id: "nvidia", name: "NVIDIA", url: NVIDIA_URL, model: NVIDIA_MODEL, keyEnv: "NVIDIA_API_KEY" },
+  { id: "mistral", name: "Mistral", url: MISTRAL_URL, model: MISTRAL_MODEL, keyEnv: "MISTRAL_API_KEY" }
 ];
 const DEFAULT_ORDER = ["groq", "sambanova", "google", "openrouter", "nvidia"];
 
@@ -171,7 +210,7 @@ export default {
       }
       if (req.method === "GET") {
         const cfg = await getConfig(env);
-        return json({ config: cfg, available: availableProviders(env), defaults: DEFAULT_ORDER }, 200, req);
+        return json({ config: cfg, available: availableProviders(env), defaults: DEFAULT_ORDER, systemDefaults: SISTEMAS }, 200, req);
       }
       if (req.method === "PUT") {
         let body;
@@ -242,12 +281,38 @@ export default {
       return json({ error: "Cuerpo JSON inválido" }, 400, req);
     }
 
-    const messages = body.messages;
+    const tipo = typeof body.tipo === "string" ? body.tipo : "";
+    const cfg = await getConfig(env);
+
+    let messages = body.messages;
     if (!Array.isArray(messages) || !messages.length) {
-      return json({ error: "Faltan los mensajes" }, 400, req);
+      if (typeof body.user === "string" && body.user) {
+        messages = [
+          { role: "system", content: sistemaPorTipo(tipo) },
+          { role: "user", content: body.user }
+        ];
+      } else {
+        return json({ error: "Faltan los mensajes" }, 400, req);
+      }
+    }
+    const msgs = applyOverrides(messages, cfg, tipo);
+
+    if (body.mode === "propia") {
+      if (typeof body.base !== "string" || !/^https:\/\//i.test(body.base)) {
+        return json({ error: "Endpoint de IA inválido" }, 400, req);
+      }
+      const pkey = String(req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "").trim();
+      if (!pkey) {
+        return json({ error: "Falta la clave del consultante" }, 401, req);
+      }
+      const p = await llamarEndpointPropio(body.base, body.model, msgs, cfg, pkey);
+      if (p.ok) {
+        return json({ content: p.content }, 200, req, "propia");
+      }
+      const st = p.status && p.status >= 400 ? p.status : 502;
+      return json({ error: p.err }, st, req);
     }
 
-    const cfg = await getConfig(env);
     let providers = buildProviders(env, cfg);
     if (!providers.length) {
       return json({ error: "Configuración del servidor incompleta" }, 500, req);
@@ -256,9 +321,6 @@ export default {
     if (typeof body.provider === "string" && body.provider) {
       providers = providers.filter(function(p){ return p.name === body.provider; });
     }
-
-    const tipo = typeof body.tipo === "string" ? body.tipo : "";
-    const msgs = applyOverrides(messages, cfg, tipo);
 
     const payload = {
       temperature: cfg.temperature != null ? cfg.temperature : (body.temperature != null ? body.temperature : 0.7),
@@ -280,6 +342,47 @@ export default {
     return json({ error: "Error desconocido del proveedor" }, 502, req);
   }
 };
+
+async function llamarEndpointPropio(base, model, messages, cfg, key) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(function(){ ctrl.abort(); }, 25000);
+  const bodyObj = {
+    model: (typeof model === "string" && model) ? model : "gpt-4o-mini",
+    messages: messages,
+    temperature: cfg.temperature != null ? cfg.temperature : 0.7,
+    max_tokens: cfg.maxTokens || MAX_TOKENS
+  };
+  try {
+    const upstream = await fetch(base.replace(/\/+$/, "") + "/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + key
+      },
+      body: JSON.stringify(bodyObj),
+      signal: ctrl.signal
+    });
+    const data = await upstream.json();
+    if (!upstream.ok) {
+      const detalle = data && data.error
+        ? (data.error.message || data.error.status || JSON.stringify(data.error))
+        : JSON.stringify(data).slice(0, 300);
+      return { ok: false, status: upstream.status, err: upstream.status + ": " + detalle };
+    }
+    const content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+    if (!content || content.length < 80) {
+      return { ok: false, status: 502, err: "Respuesta vacía o demasiado corta del proveedor propio" };
+    }
+    return { ok: true, status: upstream.status, content: content };
+  } catch (e) {
+    if (e && e.name === "AbortError") {
+      return { ok: false, status: 504, err: "El proveedor propio tardó demasiado" };
+    }
+    return { ok: false, status: 502, err: "Error de red con el proveedor propio" };
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 async function llamarProveedor(provider, messages, payload) {
   const ctrl = new AbortController();

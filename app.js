@@ -1,4 +1,4 @@
-var BATS_VERSION="1.7.1";
+var BATS_VERSION="1.8.0";
 
 var PALOS=[["bastos","Wands"],["copas","Cups"],["espadas","Swords"],["oros","Pentacles"]];
 var NOMPALO={bastos:"Bastos",copas:"Copas",espadas:"Espadas",oros:"Oros"};
@@ -1015,16 +1015,7 @@ function initSW(){
 }
 
 var ADMIN_URL_KEY="b3a2b557191caaaf8e5c246b";
-var _adminState={config:null,defaults:null,available:null,pendingOrder:null,pendingOn:null};
-var ADMIN_SISTEMAS_DEFAULT={
-  diaria:AI_SISTEMA_DIARIA,
-  rel:AI_SISTEMA_REL,
-  laboral:AI_SISTEMA_LABORAL,
-  aprendizaje:AI_SISTEMA_APRENDIZAJE,
-  pers:AI_SISTEMA_PERS,
-  av:AI_SISTEMA_AV,
-  larga:AI_SISTEMA_LARGA
-};
+var _adminState={config:null,defaults:null,available:null,systemDefaults:null,pendingOrder:null,pendingOn:null};
 var ADMIN_SISTEMAS_CFGKEY={
   diaria:"systemDiaria",
   rel:"systemRel",
@@ -1056,6 +1047,7 @@ function adminEntrar(token){
     _adminState.config=data.config||{};
     _adminState.defaults=data.defaults||["groq","sambanova","google","openrouter","nvidia"];
     _adminState.available=data.available||[];
+    _adminState.systemDefaults=data.systemDefaults||{};
     _adminState.pendingOrder=null;
     _adminState.pendingOn=null;
     document.getElementById("admin-box").style.display="none";
@@ -1133,10 +1125,10 @@ function adminPoblar(){
   adminTempVal();
   document.getElementById("admin-len").value=cfg.lenDefault||"media";
   document.getElementById("admin-maxtok").value=cfg.maxTokens||4096;
-  for(var g in ADMIN_SISTEMAS_DEFAULT){
+  for(var g in ADMIN_SISTEMAS_CFGKEY){
     var elS=document.getElementById("admin-sys-"+g);
     if(!elS) continue;
-    elS.value=cfg[ADMIN_SISTEMAS_CFGKEY[g]]!=null?cfg[ADMIN_SISTEMAS_CFGKEY[g]]:ADMIN_SISTEMAS_DEFAULT[g];
+    elS.value=cfg[ADMIN_SISTEMAS_CFGKEY[g]]!=null?cfg[ADMIN_SISTEMAS_CFGKEY[g]]:((_adminState.systemDefaults||{})[g]||"");
   }
 }
 function adminCambio(){
@@ -1157,11 +1149,11 @@ function adminGuardar(){
   cfg.temperature=parseFloat(document.getElementById("admin-temp").value);
   cfg.maxTokens=parseInt(document.getElementById("admin-maxtok").value,10)||4096;
   cfg.lenDefault=document.getElementById("admin-len").value;
-  for(var g in ADMIN_SISTEMAS_DEFAULT){
+  for(var g in ADMIN_SISTEMAS_CFGKEY){
     var elS=document.getElementById("admin-sys-"+g);
     if(!elS) continue;
     var val=elS.value;
-    if(val!==ADMIN_SISTEMAS_DEFAULT[g]) cfg[ADMIN_SISTEMAS_CFGKEY[g]]=val;
+    if(val!==(_adminState.systemDefaults||{})[g]) cfg[ADMIN_SISTEMAS_CFGKEY[g]]=val;
   }
   var tok=adminGetToken();
   adminMsg("Guardando\u2026");
@@ -1177,7 +1169,7 @@ function adminGuardar(){
 }
 function adminRestaurarSistema(g){
   var el=document.getElementById("admin-sys-"+g);
-  if(el){el.value=ADMIN_SISTEMAS_DEFAULT[g]||"";toast("Instrucciones originales restauradas")}
+  if(el){el.value=(_adminState.systemDefaults||{})[g]||"";toast("Instrucciones originales restauradas")}
 }
 function adminRestaurarTodo(){
   if(!confirm("\u00bfVolver a los valores originales de f\u00e1brica para la IA de todos los usuarios?")) return;
