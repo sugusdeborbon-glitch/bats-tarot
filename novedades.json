@@ -1,8 +1,12 @@
 {
-  "ultima": "1.8.0",
-  "titulo": "Novedades v1.8.0",
-  "texto": "<p><strong>M\u00e1s privacidad en la IA</strong> \u2014 Las instrucciones que gu\u00edan las interpretaciones ahora se aplican de forma segura en el servidor: tu navegador solo env\u00eda los datos de la tirada, no la metodolog\u00eda. La app funciona igual, pero el m\u00e9todo BATS queda mejor protegido.</p>",
+  "ultima": "1.9.0",
+  "titulo": "Novedades v1.9.0",
+  "texto": "<p><strong>IA que asiste tu interpretaci\u00f3n</strong> \u2014 Al final de cada lectura con IA aparece una nota discreta indicando qu\u00e9 sistema ha asistido la interpretaci\u00f3n. Se incluye tambi\u00e9n en el historial y en las descargas (MD/HTML), para que siempre sepas el origen de cada lectura.</p>",
   "historial": {
+    "1.9.0": {
+      "titulo": "Novedades v1.9.0",
+      "texto": "<p><strong>IA que asiste tu interpretaci\u00f3n</strong> \u2014 Al final de cada lectura con IA aparece una nota discreta indicando qu\u00e9 sistema ha asistido la interpretaci\u00f3n. Se incluye tambi\u00e9n en el historial y en las descargas (MD/HTML), para que siempre sepas el origen de cada lectura.</p>"
+    },
     "1.8.0": {
       "titulo": "Novedades v1.8.0",
       "texto": "<p><strong>M\u00e1s privacidad en la IA</strong> \u2014 Las instrucciones que gu\u00edan las interpretaciones ahora se aplican de forma segura en el servidor: tu navegador solo env\u00eda los datos de la tirada, no la metodolog\u00eda. La app funciona igual, pero el m\u00e9todo BATS queda mejor protegido.</p>"

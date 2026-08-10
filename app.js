@@ -1,4 +1,4 @@
-var BATS_VERSION="1.8.0";
+var BATS_VERSION="1.9.0";
 
 var PALOS=[["bastos","Wands"],["copas","Cups"],["espadas","Swords"],["oros","Pentacles"]];
 var NOMPALO={bastos:"Bastos",copas:"Copas",espadas:"Espadas",oros:"Oros"};
@@ -181,7 +181,7 @@ function guardarHist(tipo,cartas,descripcion,titulo){
   var tipo_rel=document.getElementById('tipo-'+window._lastPanel)?.value||'';
   var anot=document.getElementById('anotaciones-'+window._lastPanel)?.value||'';
   var obs=document.getElementById('observado-'+window._lastPanel)?.value||'';
-  h.unshift({fecha:new Date().toISOString(),tipo:tipo,descripcion:descripcion||"",titulo:titulo||"",situacion:sit,accion:acc,tipo_rel:tipo_rel,anotaciones:anot,observado:obs,_interp:cartas._interp||"",_qtext:cartas._qtext||"",cartas:cartas.map(function(it){
+  h.unshift({fecha:new Date().toISOString(),tipo:tipo,descripcion:descripcion||"",titulo:titulo||"",situacion:sit,accion:acc,tipo_rel:tipo_rel,anotaciones:anot,observado:obs,_interp:cartas._interp||"",_ia:cartas._ia||"",_qtext:cartas._qtext||"",cartas:cartas.map(function(it){
     return {nombre:it.carta.nombre,img:it.carta.img,valor:it.carta.valor,tipo:it.carta.tipo,nucleo:it.carta.nucleo,letras:it.carta.letras,invertida:it.invertida,posicion:it.posicion,texto:it.texto||txt(it.carta,it.invertida)};
   }),resumen:cartas.map(function(it){return it.carta.nombre+(it.invertida?"(inv)":"")}).join(", ")});
   if(h.length>50) h=h.slice(0,50);
@@ -284,6 +284,7 @@ function descargarMD(titulo,cartas,descripcion,situacion,accion,tipo,anotaciones
   var q=calcQuinta(cartas);
   if(q) md+="### ✦ Quintaesencia\n\n**"+q.nombre+"**\n\n"+(cartas._qtext||textoQuinta(q.nombre)||txt(q,false))+"\n\n";
   if(cartas._interp) md+="### ✦ Interpretación\n\n"+cartas._interp+"\n\n";
+  if(cartas._ia) md+="_IA que ha asistido la interpretación: "+cartas._ia+"_\n\n";
   if(accion) md+="**Acción recomendada:** "+accion+"\n\n";
   if(anotaciones) md+="**Anotaciones:** "+anotaciones+"\n\n";
   if(observado) md+="**Lo observado:** "+observado+"\n\n";
@@ -317,13 +318,14 @@ function descargarHTML(titulo,cartas,descripcion,situacion,accion,tipo,anotacion
   var wrap=esCruz?"cross-container":"cards";
   var extraCSS=esCruz?".cross-container{display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:auto auto auto;gap:12px;max-width:520px;margin:16px auto;justify-items:center;align-items:start}.cross-center{grid-column:2;grid-row:2}.cross-left{grid-column:1;grid-row:2}.cross-right{grid-column:3;grid-row:2}.cross-top{grid-column:2;grid-row:1}.cross-bottom{grid-column:2;grid-row:3}.cross-container .card{width:140px}":"";
   var interpH=cartas._interp?'<div class="interp"><div class="ql">✦ INTERPRETACIÓN</div><div class="ct">'+interpParaHTML(cartas._interp)+'</div></div>':"";
+  var iaH=cartas._ia?'<p class="ia">IA que ha asistido la interpretaci\u00f3n: '+escHTML(cartas._ia)+'</p>':"";
   var html='<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>'+titulo+' - BATS</title>';
-  html+='<style>body{font-family:sans-serif;background:#0d0a13;color:#e8dcc8;padding:20px;max-width:800px;margin:0 auto}h1{color:#d4a847}.cards{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;margin:16px 0}.card{width:160px;text-align:center;background:#1a1225;border-radius:8px;padding:8px;border:1px solid #2a1a3e}.card.inv img,.card.invertida img{transform:rotate(180deg)}.card img,.q img{width:100%;border-radius:6px}.cn{color:#d4a847;font-weight:600;margin-top:4px;font-size:.9rem}.cp{color:#f0d080;font-size:.75rem;margin-top:2px}.ct{color:#b8a898;font-size:.8rem;margin-top:4px;text-align:left}.q{margin:20px auto;padding:12px;background:#1a1225;border:1px solid #d4a847;border-radius:8px;text-align:center;max-width:320px}.ql{color:#f0d080;font-weight:600;margin-bottom:8px}.q img{width:80px}.interp{margin:20px auto;padding:12px;background:#1a1225;border:1px solid #d4a847;border-radius:8px;max-width:620px;text-align:left}.interp .ct{white-space:pre-wrap}.foot{color:#666;font-size:.8rem;text-align:center;margin-top:24px}'+extraCSS+'</style></head><body>';
+  html+='<style>body{font-family:sans-serif;background:#0d0a13;color:#e8dcc8;padding:20px;max-width:800px;margin:0 auto}h1{color:#d4a847}.cards{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;margin:16px 0}.card{width:160px;text-align:center;background:#1a1225;border-radius:8px;padding:8px;border:1px solid #2a1a3e}.card.inv img,.card.invertida img{transform:rotate(180deg)}.card img,.q img{width:100%;border-radius:6px}.cn{color:#d4a847;font-weight:600;margin-top:4px;font-size:.9rem}.cp{color:#f0d080;font-size:.75rem;margin-top:2px}.ct{color:#b8a898;font-size:.8rem;margin-top:4px;text-align:left}.q{margin:20px auto;padding:12px;background:#1a1225;border:1px solid #d4a847;border-radius:8px;text-align:center;max-width:320px}.ql{color:#f0d080;font-weight:600;margin-bottom:8px}.q img{width:80px}.interp{margin:20px auto;padding:12px;background:#1a1225;border:1px solid #d4a847;border-radius:8px;max-width:620px;text-align:left}.interp .ct{white-space:pre-wrap}.ia{color:#8a7f6a;font-size:.72rem;text-align:center;margin:4px auto 0;max-width:620px}.foot{color:#666;font-size:.8rem;text-align:center;margin-top:24px}'+extraCSS+'</style></head><body>';
   html+='<h1>'+titulo+'</h1><p style="color:#b8a898"><em>'+fs+'</em></p>';
   if(descripcion) html+='<p style="font-style:italic;color:#b8a898;margin-bottom:12px">'+descripcion+'</p>';
   if(tipo) html+='<p style="font-style:italic;color:#f0d080;margin-bottom:12px"><strong>Tipo de relación:</strong> '+tipo+'</p>';
   if(situacion) html+='<p style="font-style:italic;color:#f0d080;margin-bottom:12px"><strong>Situación:</strong> '+situacion+'</p>';
-  html+='<div class="'+wrap+'">'+cardsHTML+'</div>'+qH+interpH;
+  html+='<div class="'+wrap+'">'+cardsHTML+'</div>'+qH+interpH+iaH;
   if(accion) html+='<p style="font-style:italic;color:#b8a898;margin-top:12px"><strong>Acción recomendada:</strong> '+accion+'</p>';
   if(anotaciones) html+='<p style="color:#b8a898;margin-top:8px"><strong>Anotaciones:</strong> '+anotaciones+'</p>';
   if(observado) html+='<p style="color:#b8a898;margin-top:8px"><strong>Lo observado:</strong> '+observado+'</p>';
@@ -419,6 +421,7 @@ function verHist(i){
   var hr=h[i];if(!hr)return;
   var cartas=hr.cartas.map(function(it){return{carta:it,invertida:it.invertida,texto:it.texto,posicion:it.posicion}});
   cartas._interp=hr._interp||"";
+  cartas._ia=hr._ia||"";
   cartas._qtext=hr._qtext||"";
   var htm='<div class="result-box"><h3 style="color:var(--gold);margin-bottom:6px">'+(hr.titulo||hr.tipo)+'</h3>';
   var fs=new Date(hr.fecha).toLocaleDateString("es-ES",{year:"numeric",month:"long",day:"numeric",hour:"2-digit",minute:"2-digit"});
@@ -450,6 +453,7 @@ function verHist(i){
   }else{
     htm+='<p style="font-style:italic;color:var(--text-muted);margin-top:10px;font-size:.85rem">Lectura sin interpretación guardada.</p>';
   }
+  if(hr._ia) htm+='<div class="ai-interp-ia">IA que ha asistido la interpretaci\u00f3n: '+escHTML(hr._ia)+'</div>';
   if(typeof vozSoporte==="function"&&vozSoporte()){
     htm+=vozBarHTML("hist-"+i);
     VOZ.textos["hist-"+i]=vozTextoDe(cartas,{guion:/arcano/i.test(hr.tipo||"")?"arcano":null});
@@ -498,6 +502,7 @@ function compartirHist(i){
   if(hr.accion)md+="**Acción recomendada:** "+hr.accion+"\n\n";
   if(hr.anotaciones)md+="**Anotaciones:** "+hr.anotaciones+"\n\n";
   if(hr.observado)md+="**Lo observado:** "+hr.observado+"\n\n";
+  if(hr._ia)md+="_IA que ha asistido la interpretación: "+hr._ia+"_\n\n";
   md+="_Generado por BATS Tarot_";
   if(isCap()&&Capacitor.Plugins.Share){
     Capacitor.Plugins.Share.share({title:hr.titulo||hr.tipo,text:md}).catch(function(){});
@@ -529,6 +534,7 @@ function compartirTirada(){
   var q=calcQuinta(window._ult);
   if(q)md+="### ✦ Quintaesencia\n\n**"+q.nombre+"**\n\n"+(textoQuinta(q.nombre)||txt(q,false))+"\n\n";
   if(window._ult._interp)md+="### ✦ Interpretación\n\n"+window._ult._interp+"\n\n";
+  if(window._ult._ia)md+="_IA que ha asistido la interpretación: "+window._ult._ia+"_\n\n";
   if(acc)md+="**Acción recomendada:** "+acc+"\n\n";
   var anot=document.getElementById('anotaciones-'+panelId)?.value||'';
   var obs=document.getElementById('observado-'+panelId)?.value||'';
@@ -549,12 +555,18 @@ function descargarHistHTML(i){
   var h=JSON.parse(lsGet("bats-hist")||"[]");
   var hr=h[i];if(!hr)return;
   var cartas=hr.cartas.map(function(it){return{carta:it,invertida:it.invertida,texto:it.texto,posicion:it.posicion}});
+  cartas._interp=hr._interp||"";
+  cartas._qtext=hr._qtext||"";
+  cartas._ia=hr._ia||"";
   descargarHTML(hr.titulo||hr.tipo,cartas,hr.descripcion,hr.situacion,hr.accion,hr.tipo_rel,hr.anotaciones,hr.observado);
 }
 function descargarHistMD(i){
   var h=JSON.parse(lsGet("bats-hist")||"[]");
   var hr=h[i];if(!hr)return;
   var cartas=hr.cartas.map(function(it){return{carta:it,invertida:it.invertida,texto:it.texto,posicion:it.posicion}});
+  cartas._interp=hr._interp||"";
+  cartas._qtext=hr._qtext||"";
+  cartas._ia=hr._ia||"";
   descargarMD(hr.titulo||hr.tipo,cartas,hr.descripcion,hr.situacion,hr.accion,hr.tipo_rel,hr.anotaciones,hr.observado);
 }
 function descargarHistAI(i){
@@ -622,7 +634,9 @@ function renderInterpLarga(dest,cartas,ctx){
   function mostrarOK(t){
     limpiar();
     cartas._interp=t;
+    cartas._ia=etiquetaIA()||"";
     body.innerHTML='<div class="ai-interp-texto">'+interpParaHTML(t)+'</div>';
+    if(cartas._ia) body.insertAdjacentHTML("beforeend",'<div class="ai-interp-ia">IA que ha asistido la interpretaci\u00f3n: '+escHTML(cartas._ia)+'</div>');
     if(typeof vozSoporte==="function"&&vozSoporte()){
       var vd=String(dest).replace(/"/g,"");
       body.insertAdjacentHTML("beforeend",vozBarHTML(vd));
@@ -657,6 +671,9 @@ function renderInterpLarga(dest,cartas,ctx){
 }
 function interpParaHTML(t){
   return (t||"").replace(/\*\*/g,"").replace(/^#{1,6}\s*/gm,"").replace(/\*([^*]+)\*/g,"$1").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/\n{3,}/g,"\n\n").replace(/\n/g,"<br>");
+}
+function escHTML(s){
+  return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 }
 function reintentarInterp(dest){
   if(window._ult) renderInterpLarga(dest,window._ult,window._lastCtx||{});
@@ -870,13 +887,14 @@ function descargarAV(fmt){
     md+="### ¿Qué patrón conocido me estás ayudando a no repetir hoy?\n\n"+(ts&&ts.q2?ts.q2:(d?d.sombra||d.normal:"—"))+"\n\n";
     md+="### ¿Qué acción consciente me ayuda a escucharte?\n\n"+(ts&&ts.q3?ts.q3:(d?d.ayuda||d.normal:"—"))+"\n\n";
     if(inAV)md+="### ✦ Interpretación\n\n"+inAV+"\n\n";
+    if(window._ult._ia)md+="_IA que ha asistido la interpretación: "+window._ult._ia+"_\n\n";
     if(anot)md+="**Anotaciones:** "+anot+"\n\n";
     if(obs)md+="**Lo observado:** "+obs+"\n\n";
     md+="_Generado por BATS Tarot_";
     downloadBlob(md,"bats-arcano-visitante.md","text/markdown");
   }else{
     var html='<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>El Arcano Visitante - BATS</title>';
-    html+='<style>body{font-family:sans-serif;background:#0d0a13;color:#e8dcc8;padding:20px;max-width:800px;margin:0 auto}h1{color:#d4a847}h3{color:#d4a847;margin-top:16px}.ct{color:#b8a898;font-size:.9rem;line-height:1.5;margin:4px 0 12px}.foot{color:#666;font-size:.8rem;text-align:center;margin-top:24px}img{width:120px;border-radius:8px;border:2px solid #2a1a3e}</style></head><body>';
+    html+='<style>body{font-family:sans-serif;background:#0d0a13;color:#e8dcc8;padding:20px;max-width:800px;margin:0 auto}h1{color:#d4a847}h3{color:#d4a847;margin-top:16px}.ct{color:#b8a898;font-size:.9rem;line-height:1.5;margin:4px 0 12px}.ia{color:#8a7f6a;font-size:.72rem;margin:4px 0 12px}.foot{color:#666;font-size:.8rem;text-align:center;margin-top:24px}img{width:120px;border-radius:8px;border:2px solid #2a1a3e}</style></head><body>';
     html+='<h1>El Arcano Visitante</h1><p style="color:#b8a898"><em>'+fs+'</em></p>';
     html+='<p><strong>'+num+" — "+c.nombre+'</strong></p><p style="color:#b8a898">Nacimiento: '+fnac+' · Nombre: '+nombre+'</p>';
     html+='<img src="'+BATS_BASE+c.img+'" alt="'+c.nombre+'">';
@@ -885,6 +903,7 @@ function descargarAV(fmt){
     html+='<h3>¿Qué patrón conocido me estás ayudando a no repetir hoy?</h3><div class="ct">'+(ts&&ts.q2?ts.q2:(d?d.sombra||d.normal:"—"))+'</div>';
     html+='<h3>¿Qué acción consciente me ayuda a escucharte?</h3><div class="ct">'+(ts&&ts.q3?ts.q3:(d?d.ayuda||d.normal:"—"))+'</div>';
     if(inAV)html+='<h3>✦ Interpretación</h3><div class="ct">'+interpParaHTML(inAV)+'</div>';
+    if(window._ult._ia)html+='<p class="ia">IA que ha asistido la interpretación: '+escHTML(window._ult._ia)+'</p>';
     if(anot)html+='<h3>Anotaciones</h3><div class="ct">'+anot+'</div>';
     if(obs)html+='<h3>Lo observado</h3><div class="ct">'+obs+'</div>';
     html+='<p class="foot">Generado por BATS Tarot</p></body></html>';
@@ -906,6 +925,7 @@ function compartirAV(){
   md+="### ¿Qué patrón conocido me estás ayudando a no repetir hoy?\n\n"+(c._avtexts&&c._avtexts.q2?c._avtexts.q2:(d?d.sombra||d.normal:"—"))+"\n\n";
   md+="### ¿Qué acción consciente me ayuda a escucharte?\n\n"+(c._avtexts&&c._avtexts.q3?c._avtexts.q3:(d?d.ayuda||d.normal:"—"))+"\n\n";
   if(window._ult._interp)md+="### ✦ Interpretación\n\n"+window._ult._interp+"\n\n";
+  if(window._ult._ia)md+="_IA que ha asistido la interpretación: "+window._ult._ia+"_\n\n";
   if(anot)md+="**Anotaciones:** "+anot+"\n\n";
   if(obs)md+="**Lo observado:** "+obs+"\n\n";
   md+="_Generado por BATS Tarot_";

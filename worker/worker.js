@@ -307,7 +307,7 @@ export default {
       }
       const p = await llamarEndpointPropio(body.base, body.model, msgs, cfg, pkey);
       if (p.ok) {
-        return json({ content: p.content }, 200, req, "propia");
+        return json({ content: p.content, provider: "Mi IA", modelo: (typeof body.model === "string" && body.model) ? body.model : "gpt-4o-mini" }, 200, req, "propia");
       }
       const st = p.status && p.status >= 400 ? p.status : 502;
       return json({ error: p.err }, st, req);
@@ -331,7 +331,7 @@ export default {
     for (const provider of providers) {
       const res = await llamarProveedor(provider, msgs, payload);
       if (res.ok) {
-        return json({ content: res.content }, 200, req, provider.name);
+        return json({ content: res.content, provider: provider.name, modelo: provider.model }, 200, req, provider.name);
       }
       last = res;
     }

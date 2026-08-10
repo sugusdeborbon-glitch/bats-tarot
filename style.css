@@ -220,6 +220,7 @@ label{display:block;font-size:.82rem;color:var(--gold);margin-bottom:3px;margin-
 .ai-interp:empty{display:none}
 .ai-interp-title{color:var(--gold);font-size:.95rem;margin:0 0 10px}
 .ai-interp-texto{color:var(--text);line-height:1.6;font-size:.9rem}
+.ai-interp-ia{color:var(--text2);font-size:.72rem;line-height:1.5;margin-top:10px;text-align:center}
 .ai-interp-btns{margin-top:12px}
 .voz-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:12px;padding:8px 10px;border:1px solid var(--bg3);border-radius:var(--radius);background:var(--bg2)}
 .voz-bar .voz-label{font-size:.75rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.04em}

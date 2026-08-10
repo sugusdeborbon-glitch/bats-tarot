@@ -157,8 +157,18 @@ function parseAIRespuesta(r){
     if(!r.ok) throw new Error(data.error||"Error del servidor IA");
     var content=data.content||(data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content)||"";
     if(!content) throw new Error("Respuesta IA vac\u00eda");
+    _ultimaIA={provider:(data.provider||""),modelo:(data.modelo||"")};
     return content;
   });
+}
+var _ultimaIA={provider:"",modelo:""};
+function esEntornoDev(){
+  return location.pathname.indexOf("/bats-tarot-dev/")!==-1||/bats-tarot-dev/i.test(location.hostname||"");
+}
+function etiquetaIA(){
+  if(getAIMode()==="propia") return _ultimaIA.modelo||_ultimaIA.provider||"";
+  if(esEntornoDev()) return _ultimaIA.modelo||_ultimaIA.provider||"";
+  return _ultimaIA.provider||_ultimaIA.modelo||"";
 }
 function extraerJSON(texto){
   var t=texto.trim();
