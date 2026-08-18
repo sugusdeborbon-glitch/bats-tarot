@@ -110,6 +110,8 @@ label{display:block;font-size:.82rem;color:var(--gold);margin-bottom:3px;margin-
 .q-inner img:hover{transform:scale(1.1)}
 .q-inner .q-name{color:var(--gold);font-weight:600;font-size:.92rem}
 .q-inner .q-text{color:var(--text2);font-size:.82rem;margin-top:2px}
+.q-field{margin-top:6px;padding-top:4px;border-top:1px solid rgba(212,168,71,.15)}
+.q-fl{display:block;color:var(--gold2);font-size:.72rem;font-weight:600;letter-spacing:1px;margin-bottom:2px;text-transform:uppercase}
 
 .back-link{display:inline-block;color:var(--gold);text-decoration:none;font-size:.82rem;margin-bottom:8px;cursor:pointer;transition:color .2s}
 .back-link:hover{color:var(--gold2)}

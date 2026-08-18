@@ -130,12 +130,32 @@ function textoQuinta(nombre){
   if(typeof QUINTA_BATS!=="undefined"&&QUINTA_BATS[nombre]) return QUINTA_BATS[nombre];
   return null;
 }
+function parsearQuinta(texto){
+  if(!texto) return {lectura:"",consejo:"",palabraClave:"",antipatron:""};
+  var parts=texto.split(/\s{2,}/);
+  var r={lectura:"",consejo:"",palabraClave:"",antipatron:""};
+  parts.forEach(function(p){
+    var t=p.trim();
+    if(/^CONSEJO:/i.test(t)) r.consejo=t.replace(/^CONSEJO:\s*/i,"");
+    else if(/^PALABRA CLAVE:/i.test(t)) r.palabraClave=t.replace(/^PALABRA CLAVE:\s*/i,"");
+    else if(/^ANTIPATR[ÓO]N:/i.test(t)) r.antipatron=t.replace(/^ANTIPATR[ÓO]N:\s*/i,"");
+    else r.lectura+=(r.lectura?" ":"")+t;
+  });
+  return r;
+}
 var PROMPT_AI="Eres un intérprete profesional de tarot Rider-Waite-Smith. Recibirás una tirada con posiciones ya definidas y sus cartas asignadas, incluyendo la quintaesencia ya calculada.\nPara cada posición:\n* Describe brevemente la imagen simbólica de la carta (RWS).\n* Interpreta su significado filtrado por el sentido de esa posición específica.\nAl final, interpreta la quintaesencia como síntesis arquetípica de fondo (nunca como mandato de acción ni predicción).\nNo inventes datos biográficos ni asumas circunstancias no proporcionadas. Si falta información necesaria, indícala explícitamente en vez de suponerla.";
 function qHTML(cartas){
   var q=calcQuinta(cartas);
   if(!q) return '<div class="q-box"><div class="q-label">✦ QUINTAESENCIA</div><div class="q-inner"><div style="color:var(--text2)">No calculada</div></div></div>';
-  var tq=cartas._qtext||textoQuinta(q.nombre)||txt(q,false);
-  return '<div class="q-box"><div class="q-label">✦ QUINTAESENCIA: '+q.nombre+'</div><div class="q-inner">'+imgCard(q)+'<div><div class="q-name">'+q.nombre+'</div><div class="q-text">'+tq+'</div></div></div></div>';
+  var raw=cartas._qtext||textoQuinta(q.nombre)||txt(q,false);
+  var p=parsearQuinta(raw);
+  var h='<div class="q-box"><div class="q-label">✦ QUINTAESENCIA: '+q.nombre+'</div><div class="q-inner">'+imgCard(q)+'<div><div class="q-name">'+q.nombre+'</div>';
+  if(p.lectura) h+='<div class="q-text">'+p.lectura+'</div>';
+  if(p.consejo) h+='<div class="q-field"><span class="q-fl">Consejo de acción BATS</span>'+p.consejo+'</div>';
+  if(p.palabraClave) h+='<div class="q-field"><span class="q-fl">Palabra clave</span>'+p.palabraClave+'</div>';
+  if(p.antipatron) h+='<div class="q-field"><span class="q-fl">Antipatrón</span>'+p.antipatron+'</div>';
+  h+='</div></div></div>';
+  return h;
 }
 
 function mostrarCompleto(cartas,dest,opts){
@@ -282,7 +302,7 @@ function descargarMD(titulo,cartas,descripcion,situacion,accion,tipo,anotaciones
     md+=(it.texto||txt(c,inv)||"\u2014")+"\n\n";
   });
   var q=calcQuinta(cartas);
-  if(q) md+="### ✦ Quintaesencia\n\n**"+q.nombre+"**\n\n"+(cartas._qtext||textoQuinta(q.nombre)||txt(q,false))+"\n\n";
+  if(q){var p=parsearQuinta(cartas._qtext||textoQuinta(q.nombre)||txt(q,false));md+="### ✦ Quintaesencia\n\n**"+q.nombre+"**\n\n";if(p.lectura) md+=p.lectura+"\n\n";if(p.consejo) md+="**Consejo de acción BATS:** "+p.consejo+"\n\n";if(p.palabraClave) md+="**Palabra clave:** "+p.palabraClave+"\n\n";if(p.antipatron) md+="**Antipatrón:** "+p.antipatron+"\n\n";}
   if(cartas._interp) md+="### ✦ Interpretación\n\n"+cartas._interp+"\n\n";
   if(cartas._ia) md+="_IA que ha asistido la interpretación: "+cartas._ia+"_\n\n";
   if(accion) md+="**Acción recomendada:** "+accion+"\n\n";
@@ -311,9 +331,15 @@ function descargarHTML(titulo,cartas,descripcion,situacion,accion,tipo,anotacion
   var q=calcQuinta(cartas);
   var qH="";
   if(q){
+    var p=parsearQuinta(cartas._qtext||textoQuinta(q.nombre)||txt(q,false));
     qH='<div class="q"><div class="ql">✦ QUINTAESENCIA: '+q.nombre+'</div>';
     qH+='<img src="'+BATS_BASE+q.img+'" alt="'+q.nombre+'">';
-    qH+='<div class="cn">'+q.nombre+'</div><div class="ct">'+(cartas._qtext||textoQuinta(q.nombre)||txt(q,false))+'</div></div>';
+    qH+='<div class="cn">'+q.nombre+'</div>';
+    if(p.lectura) qH+='<div class="ct">'+p.lectura+'</div>';
+    if(p.consejo) qH+='<div class="ct" style="margin-top:6px"><strong style="color:#f0d080;font-size:.75rem">CONSEJO DE ACCIÓN BATS:</strong> '+p.consejo+'</div>';
+    if(p.palabraClave) qH+='<div class="ct" style="margin-top:4px"><strong style="color:#f0d080;font-size:.75rem">PALABRA CLAVE:</strong> '+p.palabraClave+'</div>';
+    if(p.antipatron) qH+='<div class="ct" style="margin-top:4px"><strong style="color:#f0d080;font-size:.75rem">ANTIPATRÓN:</strong> '+p.antipatron+'</div>';
+    qH+='</div>';
   }
   var wrap=esCruz?"cross-container":"cards";
   var extraCSS=esCruz?".cross-container{display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:auto auto auto;gap:12px;max-width:520px;margin:16px auto;justify-items:center;align-items:start}.cross-center{grid-column:2;grid-row:2}.cross-left{grid-column:1;grid-row:2}.cross-right{grid-column:3;grid-row:2}.cross-top{grid-column:2;grid-row:1}.cross-bottom{grid-column:2;grid-row:3}.cross-container .card{width:140px}":"";
@@ -498,7 +524,7 @@ function compartirHist(i){
     md+="### "+(it.posicion?it.posicion+": ":"")+it.nombre+(it.invertida?" (invertida)":"")+"\n\n"+(it.texto||"—")+"\n\n";
   });
   var q=calcQuinta(cartas);
-  if(q)md+="### ✦ Quintaesencia\n\n**"+q.nombre+"**\n\n"+(textoQuinta(q.nombre)||txt(q,false))+"\n\n";
+  if(q){var p=parsearQuinta(textoQuinta(q.nombre)||txt(q,false));md+="### ✦ Quintaesencia\n\n**"+q.nombre+"**\n\n";if(p.lectura) md+=p.lectura+"\n\n";if(p.consejo) md+="**Consejo de acción BATS:** "+p.consejo+"\n\n";if(p.palabraClave) md+="**Palabra clave:** "+p.palabraClave+"\n\n";if(p.antipatron) md+="**Antipatrón:** "+p.antipatron+"\n\n";}
   if(hr.accion)md+="**Acción recomendada:** "+hr.accion+"\n\n";
   if(hr.anotaciones)md+="**Anotaciones:** "+hr.anotaciones+"\n\n";
   if(hr.observado)md+="**Lo observado:** "+hr.observado+"\n\n";
@@ -532,7 +558,7 @@ function compartirTirada(){
     md+="### "+(it.posicion?it.posicion+": ":"")+it.carta.nombre+(it.invertida?" (invertida)":"")+"\n\n"+(it.texto||txt(it.carta,it.invertida)||"—")+"\n\n";
   });
   var q=calcQuinta(window._ult);
-  if(q)md+="### ✦ Quintaesencia\n\n**"+q.nombre+"**\n\n"+(textoQuinta(q.nombre)||txt(q,false))+"\n\n";
+  if(q){var p=parsearQuinta(textoQuinta(q.nombre)||txt(q,false));md+="### ✦ Quintaesencia\n\n**"+q.nombre+"**\n\n";if(p.lectura) md+=p.lectura+"\n\n";if(p.consejo) md+="**Consejo de acción BATS:** "+p.consejo+"\n\n";if(p.palabraClave) md+="**Palabra clave:** "+p.palabraClave+"\n\n";if(p.antipatron) md+="**Antipatrón:** "+p.antipatron+"\n\n";}
   if(window._ult._interp)md+="### ✦ Interpretación\n\n"+window._ult._interp+"\n\n";
   if(window._ult._ia)md+="_IA que ha asistido la interpretación: "+window._ult._ia+"_\n\n";
   if(acc)md+="**Acción recomendada:** "+acc+"\n\n";
@@ -1263,8 +1289,14 @@ function vozTextoDe(cartas,ctx){
     if(ctx.guion!=="arcano"){
       var q=calcQuinta(cartas);
       if(q){
-        var qt=(cartas._qtext||textoQuinta(q.nombre)||txt(q,false)||"").replace(/\s+/g," ").trim();
-        partes.push("Quintaesencia: "+q.nombre+(qt?". "+qt:""));
+        var raw=(cartas._qtext||textoQuinta(q.nombre)||txt(q,false)||"");
+        var p=parsearQuinta(raw);
+        var qt="Quintaesencia: "+q.nombre;
+        if(p.lectura) qt+=". "+p.lectura;
+        if(p.consejo) qt+=". Consejo: "+p.consejo;
+        if(p.palabraClave) qt+=". Palabra clave: "+p.palabraClave;
+        if(p.antipatron) qt+=". Antipatrón: "+p.antipatron;
+        partes.push(qt);
       }
     }
   }
