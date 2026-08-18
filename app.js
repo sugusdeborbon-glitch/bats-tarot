@@ -462,7 +462,7 @@ function verHist(i){
   htm+='<div class="form-group"><label for="c-anot-'+i+'">Anotaciones</label><div class="char-counter"><textarea id="c-anot-'+i+'" class="input-desc" maxlength="300" oninput="var c=document.getElementById(\'cnt-'+i+'\');if(c)c.textContent=this.length+\'/300\'" placeholder="Escribe lo que consideres sobre esta tirada...">'+(hr.anotaciones||"")+'</textarea><span class="counter-text" id="cnt-'+i+'">'+(hr.anotaciones||"").length+'/300</span></div></div>';
   htm+='<div class="form-group"><label for="c-obs-'+i+'">Lo observado</label><textarea id="c-obs-'+i+'" class="input-desc" maxlength="500" placeholder="Escribe después lo que has visto o vivido respecto a lo que entendiste...">'+(hr.observado||"")+'</textarea></div>';
   htm+='<div class="btn-group"><button class="btn btn-outline btn-sm" onclick="guardarCuaderno('+i+')">Guardar cambios</button></div></div>';
-  htm+='<div class="btn-group mt-8"><button class="btn btn-outline btn-sm" onclick="compartirHist('+i+')">Compartir</button><button class="btn btn-outline btn-sm" onclick="descargarHistMD('+i+')">MD</button><button class="btn btn-outline btn-sm" onclick="descargarHistHTML('+i+')">HTML</button><button class="btn btn-outline btn-sm" onclick="descargarHistAI('+i+')">IA</button><button class="btn btn-outline btn-sm" onclick="cargarHist()">← Volver</button></div></div>';
+  htm+='<div class="btn-group mt-8"><button class="btn btn-outline btn-sm" onclick="compartirHist('+i+')">Compartir</button><button class="btn btn-outline btn-sm" onclick="descargarHistMD('+i+')">MD</button><button class="btn btn-outline btn-sm" onclick="descargarHistHTML('+i+')">HTML</button><button class="btn btn-outline btn-sm" onclick="descargarHistAI('+i+')">IA</button><button class="btn btn-danger btn-sm" onclick="eliminarHist('+i+')">Eliminar</button><button class="btn btn-outline btn-sm" onclick="cargarHist()">← Volver</button></div></div>';
   document.getElementById("r-historial").innerHTML=htm;
   if(typeof vozSoporte==="function"&&vozSoporte()){
     var sel=document.querySelector("#r-historial .voz-select");
@@ -580,6 +580,18 @@ function limpiarHist(){
   lsDel("bats-hist");
   cargarHist();
   toast("Historial eliminado");
+}
+function eliminarHist(i){
+  var h=JSON.parse(lsGet("bats-hist")||"[]");
+  if(!h[i]) return;
+  var hr=h[i];
+  var fs=new Date(hr.fecha).toLocaleDateString("es-ES",{year:"numeric",month:"long",day:"numeric"});
+  var titulo=hr.titulo||hr.tipo||"lectura";
+  if(!confirm("\u00bfEliminar la lectura \u00ab"+titulo+"\u00bb del "+fs+"?\n\nEsta acci\u00f3n no se puede deshacer.")) return;
+  h.splice(i,1);
+  lsSet("bats-hist",JSON.stringify(h));
+  toast("Lectura eliminada");
+  cargarHist();
 }
 
 function renderConIA(cartas,dest,renderFn,ctx){
