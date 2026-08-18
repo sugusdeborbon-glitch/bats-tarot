@@ -17,7 +17,7 @@
 <header>
   <button id="btn-menu" onclick="toggleMenu()" aria-label="Menú">☰</button>
   <div style="display:flex;align-items:center;gap:8px">
-    <img id="logo-bats" src="icono-512.png" alt="BATS" style="height:32px;width:32px;border-radius:6px" onerror="this.style.display='none'">
+    <img id="logo-bats" src="icono-512.png" alt="BATS" style="height:32px;width:32px;border-radius:6px;cursor:pointer" role="button" tabindex="0" onclick="irA('inicio')" onkeydown="if(event.key==='Enter')irA('inicio')" onerror="this.style.display='none'">
     <h1>BATS Tarot</h1>
   </div>
   <div style="width:40px"></div>
