@@ -300,6 +300,7 @@ function renderExtensionHTML(cartas){
 }
 function mostrarCompleto(cartas,dest,opts){
   opts=opts||{};
+  window._lastPanelDest=dest;window._lastRenderOpts=opts;
   var html='<div class="card-container">';
   cartas.forEach(function(it,i){
     var c=it.carta,inv=it.invertida;
@@ -328,6 +329,7 @@ function mostrarCompleto(cartas,dest,opts){
 
 function mostrarCruz(cartas,dest,opts){
   opts=opts||{};
+  window._lastPanelDest=dest;window._lastRenderOpts=opts;
   var cls=["cross-center","cross-left","cross-right","cross-top","cross-bottom"];
   var html='<div class="cross-container">';
   cartas.forEach(function(it,i){
