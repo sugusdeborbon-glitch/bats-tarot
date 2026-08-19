@@ -209,8 +209,12 @@ function construirUserContent(cartas,ctx){
 }
 function generarTextosIA(cartas,ctx){
   ctx=ctx||{};
-  var q=calcQuinta(cartas);
-  if(q) cartas._q=q;
+  if(typeof comodinPendiente==="function"&&comodinPendiente(cartas)){
+    cartas._q=null;cartas._qtext="";
+  } else {
+    var q=calcQuinta(cartas);
+    if(q) cartas._q=q;
+  }
   return llamarIA({user:construirUserContent(cartas,ctx)},ctx.guion||"corta").then(extraerJSON).then(function(data){
     var pos=data.posiciones||[],map={};
     pos.forEach(function(p){if(p&&p.i!=null) map[p.i]=p.texto});

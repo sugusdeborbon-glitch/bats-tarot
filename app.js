@@ -161,7 +161,7 @@ function abrirExtension(i){
   for(var e=0;e<3;e++){
     var cr=pool[e];
     var invC=inv?Math.random()<.5:false;
-    ext.push({carta:cr,invertida:invC,posicion:COMODIN_POS[e],texto:txt(cr,invC)});
+    ext.push({carta:cr,invertida:invC,posicion:COMODIN_POS[e],texto:txt(cr,invC,e===0)});
   }
   it.extension=ext;
   it.extensionResuelta=true;
@@ -269,7 +269,42 @@ function reconstruirCartasHist(hr){
   });
 }
 var PROMPT_AI="Eres un intérprete profesional de tarot Rider-Waite-Smith. Recibirás una tirada con posiciones ya definidas y sus cartas asignadas, incluyendo la quintaesencia ya calculada.\nPara cada posición:\n* Describe brevemente la imagen simbólica de la carta (RWS).\n* Interpreta su significado filtrado por el sentido de esa posición específica.\nAl final, interpreta la quintaesencia como síntesis arquetípica de fondo (nunca como mandato de acción ni predicción).\nNo inventes datos biográficos ni asumas circunstancias no proporcionadas. Si falta información necesaria, indícala explícitamente en vez de suponerla.";
+function comodinPendiente(cartas){
+  var pend=false;
+  cartas.forEach(function(it){if(esComodin(it.carta)&&!it.extensionResuelta) pend=true;});
+  return pend;
+}
+function comodinResuelto(cartas){
+  var r=null;
+  cartas.forEach(function(it){if(esComodin(it.carta)&&it.extensionResuelta&&it.extension) r=it;});
+  return r;
+}
+function cartasParaAI(cartas){
+  var ci=comodinResuelto(cartas);
+  if(!ci) return cartas;
+  var nueva=[];
+  cartas.forEach(function(it){
+    if(esComodin(it.carta)){
+      var laSalida=ci.extension[2];
+      nueva.push({carta:laSalida.carta,invertida:laSalida.invertida,posicion:it.posicion,texto:laSalida.texto||txt(laSalida.carta,laSalida.invertida)});
+    } else {
+      nueva.push(it);
+    }
+  });
+  nueva._interp=cartas._interp; nueva._ia=cartas._ia; nueva._qtext=cartas._qtext; nueva._q=cartas._q;
+  return nueva;
+}
+function cartasExtensionParaAI(cartas){
+  var ci=comodinResuelto(cartas);
+  if(!ci) return null;
+  return ci.extension.map(function(it,i){
+    return {carta:it.carta,invertida:it.invertida,posicion:it.posicion,texto:it.texto};
+  });
+}
 function qHTML(cartas){
+  if(comodinPendiente(cartas)){
+    return '<div class="q-box"><div class="q-label">✦ QUINTAESENCIA</div><div class="q-inner"><div style="color:var(--text2)">Pendiente de resolución del Comodín</div></div></div>';
+  }
   var q=calcQuinta(cartas);
   if(!q) return '<div class="q-box"><div class="q-label">✦ QUINTAESENCIA</div><div class="q-inner"><div style="color:var(--text2)">No calculada</div></div></div>';
   var raw=cartas._qtext||textoQuinta(q.nombre)||txt(q,false);
@@ -841,6 +876,11 @@ function renderInterpLarga(dest,cartas,ctx){
     el.appendChild(cont);
   }
   cont.style.display="";
+  var ci=comodinResuelto(cartas);
+  if(ci&&ci.extension&&ci.extensionResuelta){
+    renderInterpLargaComodin(dest,cartas,ctx,cont,ci);
+    return;
+  }
   cont.innerHTML='<h4 class="ai-interp-title">\u2726 Interpretaci\u00f3n</h4><div class="ai-interp-body"><div class="ai-cargando"><span class="ai-spinner"></span>Generando interpretaci\u00f3n<span class="ai-interp-t"></span>\u2026 <span class="ai-interp-v" style="font-size:.75em;opacity:.6">v'+BATS_VERSION+'</span><span class="ai-interp-status" style="display:block;font-size:.72em;opacity:.75;margin-top:4px"></span></div></div>';
   var body=cont.querySelector(".ai-interp-body")||cont;
   var tEl=body.querySelector(".ai-interp-t");
@@ -888,6 +928,83 @@ function renderInterpLarga(dest,cartas,ctx){
     });
   }catch(e){
     mostrarError(e);
+  }
+}
+function renderInterpLargaComodin(dest,cartas,ctx,cont,ci){
+  var extCartas=cartasExtensionParaAI(cartas);
+  var cartasAI=cartasParaAI(cartas);
+  var iaLabel=etiquetaIA()||"";
+  cont.innerHTML='<h4 class="ai-interp-title">\u2726 Interpretaci\u00f3n (Comod\u00edn \u221e)</h4>';
+  function tickS2(el2,ini2){
+    return function(){
+      var tE=el2.querySelector(".ai-interp-t");
+      if(tE) tE.textContent=" ("+Math.round((Date.now()-ini2)/1000)+" s)";
+    };
+  }
+  var extBody=document.createElement("div");
+  extBody.className="ai-interp-body";
+  extBody.innerHTML='<div style="color:var(--gold2);font-size:.85rem;margin-bottom:6px">\u2726 Lectura de las 3 cartas del Comod\u00edn</div><div class="ai-cargando"><span class="ai-spinner"></span>Interpretando extensi\u00f3n del Comod\u00edn<span class="ai-interp-t"></span>\u2026</div>';
+  cont.appendChild(extBody);
+  var mainBody=document.createElement("div");
+  mainBody.className="ai-interp-body";
+  mainBody.style.display="none";
+  cont.appendChild(mainBody);
+  var ini1=Date.now(),tick1=null,failsafe1=null,acabado1=false;
+  function limpiar1(){acabado1=true;if(tick1){clearInterval(tick1);tick1=null}if(failsafe1){clearTimeout(failsafe1);failsafe1=null}}
+  function error1(e){
+    limpiar1();
+    try{console.error("Error extension Comodin:",e)}catch(_){}
+    extBody.innerHTML='<p class="subtle">No se pudo generar la lectura del Comod\u00edn'+(e&&e.message?": "+e.message:"")+'</p>';
+    mainBody.style.display="";
+    iniciarLecturaIntegrada();
+  }
+  function ok1(t){
+    limpiar1();
+    extBody.innerHTML='<div class="ai-interp-texto">'+interpParaHTML(t)+'</div>';
+    if(iaLabel) extBody.insertAdjacentHTML("beforeend",'<div class="ai-interp-ia">IA: '+escHTML(iaLabel)+'</div>');
+    mainBody.style.display="";
+    iniciarLecturaIntegrada();
+  }
+  tick1=setInterval(tickS2(extBody,ini1),1000);
+  failsafe1=setTimeout(function(){
+    if(acabado1) return;
+    if(extBody.querySelector(".ai-spinner")) error1(new Error("La IA tard\u00f3 demasiado."));
+  },30000);
+  var extCtx={titulo:"Extensi\u00f3n del Comod\u00edn \u2192 3 cartas",fecha:ctx.fecha,descripcion:ctx.descripcion,situacion:ctx.situacion};
+  try{
+    generarInterpretacionLarga(extCartas,extCtx).then(ok1).catch(error1);
+  }catch(e){error1(e);}
+  function iniciarLecturaIntegrada(){
+    var ini2=Date.now(),tick2=null,failsafe2=null,acabado2=false;
+    function limpiar2(){acabado2=true;if(tick2){clearInterval(tick2);tick2=null}if(failsafe2){clearTimeout(failsafe2);failsafe2=null}}
+    mainBody.innerHTML='<div style="color:var(--gold2);font-size:.85rem;margin-bottom:6px">\u2726 Lectura integrada (Comod\u00edn \u2192 La Salida)</div><div class="ai-cargando"><span class="ai-spinner"></span>Generando interpretaci\u00f3n integrada<span class="ai-interp-t"></span>\u2026</div>';
+    function error2(e){
+      limpiar2();
+      try{console.error("Error interpretacion integrada:",e)}catch(_){}
+      mainBody.innerHTML='<p class="subtle">No se pudo generar la interpretaci\u00f3n integrada'+(e&&e.message?": "+e.message:"")+'</p><div class="ai-interp-btns"><button class="btn btn-outline btn-sm" onclick="reintentarInterp(\''+dest+'\')">Reintentar</button></div>';
+    }
+    function ok2(t){
+      limpiar2();
+      cartas._interp=t;
+      cartas._ia=iaLabel;
+      mainBody.innerHTML='<div class="ai-interp-texto">'+interpParaHTML(t)+'</div>';
+      if(iaLabel) mainBody.insertAdjacentHTML("beforeend",'<div class="ai-interp-ia">IA que ha asistido la interpretaci\u00f3n: '+escHTML(iaLabel)+'</div>');
+      if(typeof vozSoporte==="function"&&vozSoporte()){
+        var vd=String(dest).replace(/"/g,"");
+        cont.insertAdjacentHTML("beforeend",vozBarHTML(vd));
+        VOZ.textos[vd]=vozTextoDe(cartas,ctx);
+        vozPoblarSelect(cont.querySelector(".voz-select"));
+        vozActualizarBarras();
+      }
+    }
+    tick2=setInterval(tickS2(mainBody,ini2),1000);
+    failsafe2=setTimeout(function(){
+      if(acabado2) return;
+      if(mainBody.querySelector(".ai-spinner")) error2(new Error("La IA tard\u00f3 demasiado."));
+    },30000);
+    try{
+      generarInterpretacionLarga(cartasAI,ctx).then(ok2).catch(error2);
+    }catch(e){error2(e);}
   }
 }
 function interpParaHTML(t){
