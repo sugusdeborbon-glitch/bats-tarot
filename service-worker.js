@@ -1,4 +1,4 @@
-var CACHE = "bats-v25";
+var CACHE = "bats-v26";
 var STATIC_CACHE = CACHE + "-static";
 var IMG_CACHE = CACHE + "-img";
 
@@ -51,7 +51,8 @@ var ARCHIVOS = [
   "cartas/Wands01.jpg","cartas/Wands02.jpg","cartas/Wands03.jpg","cartas/Wands04.jpg",
   "cartas/Wands05.jpg","cartas/Wands06.jpg","cartas/Wands07.jpg","cartas/Wands08.jpg",
   "cartas/Wands09.jpg","cartas/Wands10.jpg","cartas/Wands11.jpg","cartas/Wands12.jpg",
-  "cartas/Wands13.jpg","cartas/Wands14.jpg"
+  "cartas/Wands13.jpg","cartas/Wands14.jpg",
+  "comodin_reverso.png","comodin_anverso_umbral_cerrado.png","comodin_anverso_umbral_abierto.png"
 ];
 
 self.addEventListener("install", function(e){

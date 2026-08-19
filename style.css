@@ -112,6 +112,17 @@ label{display:block;font-size:.82rem;color:var(--gold);margin-bottom:3px;margin-
 .q-inner .q-text{color:var(--text2);font-size:.82rem;margin-top:2px}
 .q-field{margin-top:6px;padding-top:4px;border-top:1px solid rgba(212,168,71,.15)}
 .q-fl{display:block;color:var(--gold2);font-size:.72rem;font-weight:600;letter-spacing:1px;margin-bottom:2px;text-transform:uppercase}
+.comodin-slot{position:relative;border:1px dashed var(--gold);border-radius:var(--radius);padding:4px}
+.comodin-card{cursor:pointer;transition:transform .3s}
+.comodin-card:hover{transform:scale(1.05)}
+.comodin-card.invertida{transform:rotate(180deg)}
+.extension-box{background:var(--bg2);border:1px solid var(--gold);border-radius:var(--radius);padding:12px;margin:10px 0;text-align:center}
+.extension-box .ext-label{color:var(--gold2);font-weight:600;font-size:.82rem;letter-spacing:2px;margin-bottom:8px}
+.ext-cards{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
+.ext-card{width:110px;text-align:center}
+.ext-card .card-name{font-size:.78rem}
+.ext-pos{color:var(--gold);font-size:.7rem;font-weight:600;text-transform:uppercase;margin:4px 0 2px}
+.checkbox-inline{display:inline-block;margin-left:8px;font-size:.82rem;color:var(--text2)}
 
 .back-link{display:inline-block;color:var(--gold);text-decoration:none;font-size:.82rem;margin-bottom:8px;cursor:pointer;transition:color .2s}
 .back-link:hover{color:var(--gold2)}

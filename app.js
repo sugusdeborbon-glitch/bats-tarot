@@ -25,6 +25,21 @@ PALOS.forEach(function(p){
   }
 });
 
+var COMODIN={nombre:"Comodín",valor:0,tipo:"comodin",img:"comodin_reverso.png",letras:"∞",nucleo:"Comodín"};
+var COMODIN_INV_TEXT="El conocimiento no es apropiado en este momento; se recomienda avanzar con confianza.";
+var COMODIN_POS=["¿De qué te quiere avisar?","¿En qué te quiere ayudar?","La Salida"];
+function esComodin(c){return c&&c.tipo==="comodin"}
+function añadirComodin(mazo,activo){if(!activo)return mazo;mazo.push(Object.assign({},COMODIN));return mazo}
+function comodinImg(estado,invertida){
+  if(estado==="cerrado") return "comodin_anverso_umbral_cerrado.png";
+  if(estado==="abierto") return "comodin_anverso_umbral_abierto.png";
+  return "comodin_reverso.png";
+}
+function comodinEnCartas(cartas){
+  if(!cartas) return null;
+  for(var i=0;i<cartas.length;i++){if(esComodin(cartas[i].carta)) return cartas[i];}
+  return null;
+}
 var TABLA_78=[];
 (function(){
   for(var i=1;i<=21;i++)TABLA_78.push(BARAJA[i]);
@@ -104,7 +119,13 @@ function toast(msg,isError){
   setTimeout(function(){t.remove()},2500);
 }
 
-function imgCard(c){
+function imgCard(c,comodinEstado,comodinInv,idx){
+  if(esComodin(c)){
+    var src=comodinImg(comodinEstado||"reverso",comodinInv);
+    var cls="comodin-card"+(comodinInv&&comodinEstado!=="reverso"?" invertida":"");
+    var onclick=typeof idx==="number"?'onclick="revelarComodin('+idx+')"':('onclick="abrirLightbox(\''+src+'\',\'Comodín\')"');
+    return '<img src="'+src+'" alt="Comodín" class="'+cls+'" '+onclick+'>';
+  }
   return '<img src="'+c.img+'" alt="'+c.nombre+'" loading="lazy" onclick="abrirLightbox(this.src,this.alt)" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"><div class="card-placeholder" style="display:none"><div class="cp-name">'+c.letras+'</div><div class="cp-suit">'+(c.tipo==="arcano"?"AM":c.nucleo)+'</div></div>';
 }
 function abrirLightbox(src,alt){
@@ -114,9 +135,69 @@ function abrirLightbox(src,alt){
   document.body.appendChild(o);
 }
 
+function revelarComodin(i){
+  var cartas=window._ult;if(!cartas) return;
+  var it=cartas[i];if(!it||!esComodin(it.carta)) return;
+  if(it.comodinEstado==="reverso"){
+    it.comodinEstado="cerrado";
+    it.comodinImg=comodinImg("cerrado",it.comodinInvertido);
+    renderCartasActuales();
+    return;
+  }
+  if(it.comodinEstado==="cerrado"){
+    if(it.comodinInvertido){toast(COMODIN_INV_TEXT);return;}
+    if(it.extensionResuelta) return;
+    abrirExtension(i);
+    return;
+  }
+}
+function abrirExtension(i){
+  var cartas=window._ult;if(!cartas) return;
+  var it=cartas[i];if(!it||!esComodin(it.carta)||it.extensionResuelta) return;
+  var pool=window._mazoRestante||[];
+  if(pool.length<3){toast("No hay suficientes cartas para la extensión",true);return;}
+  var inv=it.comodinInvertido;
+  var ext=[];
+  for(var e=0;e<3;e++){
+    var cr=pool[e];
+    var invC=inv?Math.random()<.5:false;
+    ext.push({carta:cr,invertida:invC,posicion:COMODIN_POS[e],texto:txt(cr,invC)});
+  }
+  it.extension=ext;
+  it.extensionResuelta=true;
+  it.comodinEstado="abierto";
+  it.comodinImg=comodinImg("abierto",false);
+  window._mazoRestante=pool.slice(3);
+  recalcularQuintaYRenderizar();
+}
+function renderCartasActuales(){
+  var cartas=window._ult;if(!cartas) return;
+  var dest=window._lastPanelDest;
+  if(!dest) return;
+  var opts=window._lastRenderOpts||{};
+  if(cartas.length===5&&!opts.posiciones) mostrarCruz(cartas,dest,opts);
+  else mostrarCompleto(cartas,dest,opts);
+  ponerBotones(dest,window._lastPanelTitle||"",window._lastPanel||"");
+  var qEl=document.getElementById("q-result");
+  if(qEl) qEl.innerHTML=qHTML(cartas);
+}
+function recalcularQuintaYRenderizar(){
+  renderCartasActuales();
+}
+function extraerExtensionDelMazo(n,mazo){
+  var r=[];for(var i=0;i<n&&i<mazo.length;i++) r.push(mazo[i]);
+  return r;
+}
+
 function calcQuinta(cartas){
   var suma=0;
-  cartas.forEach(function(it){suma+=it.carta.valor});
+  cartas.forEach(function(it){
+    if(esComodin(it.carta)){
+      if(it.extensionResuelta&&it.extension&&it.extension[2]) suma+=it.extension[2].carta.valor;
+    } else {
+      suma+=it.carta.valor;
+    }
+  });
   while(suma>22){
     var s=0,t=suma;
     while(t>0){s+=t%10;t=Math.floor(t/10)}
@@ -143,6 +224,50 @@ function parsearQuinta(texto){
   });
   return r;
 }
+function extensionMd(cartas){
+  var ci=comodinEnCartas(cartas);
+  if(!ci||!ci.extensionResuelta||!ci.extension) return "";
+  var md="### ✦ Comodín ∞\n\n";
+  ci.extension.forEach(function(it){
+    md+="**"+it.posicion+":** "+it.carta.nombre+(it.invertida?" (invertida)":"")+"\n\n";
+    md+=(it.texto||txt(it.carta,it.invertida)||"\u2014")+"\n\n";
+  });
+  return md;
+}
+function extensionHtml(cartas){
+  var ci=comodinEnCartas(cartas);
+  if(!ci||!ci.extensionResuelta||!ci.extension) return "";
+  var h='<div style="margin:16px auto;padding:12px;background:#1a1225;border:1px solid #d4a847;border-radius:8px;text-align:center;max-width:620px"><div style="color:#f0d080;font-weight:600;margin-bottom:8px">✦ COMODÍN ∞ → EXTENSIÓN BATS</div>';
+  ci.extension.forEach(function(it){
+    h+='<div style="margin:8px 0"><strong style="color:#f0d080;font-size:.75rem">'+it.posicion+':</strong> '+it.carta.nombre+(it.invertida?" (inv)":"")+'</div>';
+    h+='<div style="color:#b8a898;font-size:.8rem">'+(it.texto||txt(it.carta,it.invertida)||"\u2014")+'</div>';
+  });
+  h+='</div>';
+  return h;
+}
+function extensionVoz(cartas){
+  var ci=comodinEnCartas(cartas);
+  if(!ci||!ci.extensionResuelta||!ci.extension) return "";
+  var parts=[];
+  parts.push("Comodín extendido");
+  ci.extension.forEach(function(it){
+    parts.push(it.posicion+": "+it.carta.nombre+(it.invertida?" invertida":"")+". "+(it.texto||txt(it.carta,it.invertida)||""));
+  });
+  return parts.join(". ");
+}
+function reconstruirCartasHist(hr){
+  return hr.cartas.map(function(it){
+    var obj={carta:{nombre:it.nombre,img:it.img,valor:it.valor,tipo:it.tipo,nucleo:it.nucleo,letras:it.letras},invertida:it.invertida,texto:it.texto,posicion:it.posicion};
+    if(it.comodin){
+      obj.comodinInvertido=it.comodinInvertido;obj.comodinEstado=it.comodinEstado;
+      if(it.extensionResuelta&&it.extension){
+        obj.extensionResuelta=true;
+        obj.extension=it.extension.map(function(ex){return{carta:{nombre:ex.nombre,img:ex.img,valor:ex.valor,tipo:ex.tipo,nucleo:ex.nucleo,letras:ex.letras},invertida:ex.invertida,posicion:ex.posicion,texto:ex.texto};});
+      }
+    }
+    return obj;
+  });
+}
 var PROMPT_AI="Eres un intérprete profesional de tarot Rider-Waite-Smith. Recibirás una tirada con posiciones ya definidas y sus cartas asignadas, incluyendo la quintaesencia ya calculada.\nPara cada posición:\n* Describe brevemente la imagen simbólica de la carta (RWS).\n* Interpreta su significado filtrado por el sentido de esa posición específica.\nAl final, interpreta la quintaesencia como síntesis arquetípica de fondo (nunca como mandato de acción ni predicción).\nNo inventes datos biográficos ni asumas circunstancias no proporcionadas. Si falta información necesaria, indícala explícitamente en vez de suponerla.";
 function qHTML(cartas){
   var q=calcQuinta(cartas);
@@ -158,6 +283,21 @@ function qHTML(cartas){
   return h;
 }
 
+function renderExtensionHTML(cartas){
+  var ci=comodinEnCartas(cartas);
+  if(!ci||!ci.extensionResuelta||!ci.extension) return "";
+  var h='<div class="extension-box"><div class="ext-label">✦ COMODÍN ∞ → EXTENSIÓN BATS</div><div class="ext-cards">';
+  ci.extension.forEach(function(it){
+    var c=it.carta,inv=it.invertida;
+    h+='<div class="card-view ext-card'+(inv?" invertida":"")+'">'+imgCard(c);
+    h+='<div class="card-name">'+c.nombre+(inv?" (inv)":"")+'</div>';
+    h+='<div class="ext-pos">'+it.posicion+'</div>';
+    h+='<div class="card-field">'+(it.texto||txt(c,inv))+'</div>';
+    h+='</div>';
+  });
+  h+='</div></div>';
+  return h;
+}
 function mostrarCompleto(cartas,dest,opts){
   opts=opts||{};
   var html='<div class="card-container">';
@@ -165,13 +305,23 @@ function mostrarCompleto(cartas,dest,opts){
     var c=it.carta,inv=it.invertida;
     var pos=it.posicion||(opts.posiciones?opts.posiciones[i]:null);
     var texto=it.texto||txt(c,inv);
-    html+='<div class="card-view'+(inv?" invertida":"")+'">'+imgCard(c);
+    var comodinC=esComodin(c);
+    html+='<div class="card-view'+(inv?" invertida":"")+(comodinC?" comodin-slot":"")+'">';
+    if(comodinC) html+=imgCard(c,it.comodinEstado||"reverso",it.comodinInvertido,i);
+    else html+=imgCard(c);
     html+='<div class="card-name">'+c.nombre+'</div>';
     if(pos) html+='<div style="font-size:.72rem;color:var(--gold2);margin-top:2px">'+pos+'</div>';
-    if(texto&&opts.mostrarTexto!==false) html+='<div class="card-field">'+texto+'</div>';
+    if(comodinC&&it.comodinEstado==="cerrado"&&!it.comodinInvertido&&!it.extensionResuelta){
+      html+='<div style="margin-top:6px"><button class="btn btn-gold btn-sm" onclick="abrirExtension('+i+')">✦ Abrir Extensión</button></div>';
+    }
+    if(comodinC&&it.comodinInvertido&&it.comodinEstado!=="reverso"){
+      html+='<div class="card-field" style="color:var(--gold2);font-style:italic">'+COMODIN_INV_TEXT+'</div>';
+    }
+    if(texto&&opts.mostrarTexto!==false&&!comodinC) html+='<div class="card-field">'+texto+'</div>';
     html+='</div>';
   });
   html+='</div>';
+  html+=renderExtensionHTML(cartas);
   if(opts.mostrarQ!==false) html+=qHTML(cartas);
   document.getElementById(dest).innerHTML=html;
 }
@@ -183,13 +333,23 @@ function mostrarCruz(cartas,dest,opts){
   cartas.forEach(function(it,i){
     var c=it.carta,inv=it.invertida,pos=it.posicion;
     var texto=it.texto||txt(c,inv);
-    html+='<div class="card-view'+(inv?" invertida":"")+' '+cls[i]+'">'+imgCard(c);
+    var comodinC=esComodin(c);
+    html+='<div class="card-view'+(inv?" invertida":"")+(comodinC?" comodin-slot":"")+' '+cls[i]+'">';
+    if(comodinC) html+=imgCard(c,it.comodinEstado||"reverso",it.comodinInvertido,i);
+    else html+=imgCard(c);
     html+='<div class="card-name">'+c.nombre+'</div>';
     if(pos) html+='<div style="font-size:.65rem;color:var(--gold2);margin-top:1px;line-height:1.2">'+pos+'</div>';
-    if(texto&&opts.mostrarTexto!==false) html+='<div class="card-field" style="font-size:.7rem">'+texto+'</div>';
+    if(comodinC&&it.comodinEstado==="cerrado"&&!it.comodinInvertido&&!it.extensionResuelta){
+      html+='<div style="margin-top:6px"><button class="btn btn-gold btn-sm" onclick="abrirExtension('+i+')">✦ Abrir Extensión</button></div>';
+    }
+    if(comodinC&&it.comodinInvertido&&it.comodinEstado!=="reverso"){
+      html+='<div class="card-field" style="color:var(--gold2);font-style:italic;font-size:.7rem">'+COMODIN_INV_TEXT+'</div>';
+    }
+    if(texto&&opts.mostrarTexto!==false&&!comodinC) html+='<div class="card-field" style="font-size:.7rem">'+texto+'</div>';
     html+='</div>';
   });
   html+='</div>';
+  html+=renderExtensionHTML(cartas);
   if(opts.mostrarQ!==false) html+=qHTML(cartas);
   document.getElementById(dest).innerHTML=html;
 }
@@ -202,7 +362,15 @@ function guardarHist(tipo,cartas,descripcion,titulo){
   var anot=document.getElementById('anotaciones-'+window._lastPanel)?.value||'';
   var obs=document.getElementById('observado-'+window._lastPanel)?.value||'';
   h.unshift({fecha:new Date().toISOString(),tipo:tipo,descripcion:descripcion||"",titulo:titulo||"",situacion:sit,accion:acc,tipo_rel:tipo_rel,anotaciones:anot,observado:obs,_interp:cartas._interp||"",_ia:cartas._ia||"",_qtext:cartas._qtext||"",cartas:cartas.map(function(it){
-    return {nombre:it.carta.nombre,img:it.carta.img,valor:it.carta.valor,tipo:it.carta.tipo,nucleo:it.carta.nucleo,letras:it.carta.letras,invertida:it.invertida,posicion:it.posicion,texto:it.texto||txt(it.carta,it.invertida)};
+    var obj={nombre:it.carta.nombre,img:it.carta.img,valor:it.carta.valor,tipo:it.carta.tipo,nucleo:it.carta.nucleo,letras:it.carta.letras,invertida:it.invertida,posicion:it.posicion,texto:it.texto||txt(it.carta,it.invertida)};
+    if(esComodin(it.carta)){
+      obj.comodin=true;obj.comodinInvertido=it.comodinInvertido;obj.comodinEstado=it.comodinEstado;
+      if(it.extensionResuelta&&it.extension){
+        obj.extensionResuelta=true;
+        obj.extension=it.extension.map(function(ex){return {nombre:ex.carta.nombre,img:ex.carta.img,valor:ex.carta.valor,tipo:ex.carta.tipo,nucleo:ex.carta.nucleo,letras:ex.carta.letras,invertida:ex.invertida,posicion:ex.posicion,texto:ex.texto};});
+      }
+    }
+    return obj;
   }),resumen:cartas.map(function(it){return it.carta.nombre+(it.invertida?"(inv)":"")}).join(", ")});
   if(h.length>50) h=h.slice(0,50);
   lsSet("bats-hist",JSON.stringify(h));
@@ -301,6 +469,7 @@ function descargarMD(titulo,cartas,descripcion,situacion,accion,tipo,anotaciones
     md+="### "+(pos?pos+": ":"")+c.nombre+(inv?" (invertida)":"")+"\n\n";
     md+=(it.texto||txt(c,inv)||"\u2014")+"\n\n";
   });
+  md+=extensionMd(cartas);
   var q=calcQuinta(cartas);
   if(q){var p=parsearQuinta(cartas._qtext||textoQuinta(q.nombre)||txt(q,false));md+="### ✦ Quintaesencia\n\n**"+q.nombre+"**\n\n";if(p.lectura) md+=p.lectura+"\n\n";if(p.consejo) md+="**Consejo de acción BATS:** "+p.consejo+"\n\n";if(p.palabraClave) md+="**Palabra clave:** "+p.palabraClave+"\n\n";if(p.antipatron) md+="**Antipatrón:** "+p.antipatron+"\n\n";}
   if(cartas._interp) md+="### ✦ Interpretación\n\n"+cartas._interp+"\n\n";
@@ -351,7 +520,7 @@ function descargarHTML(titulo,cartas,descripcion,situacion,accion,tipo,anotacion
   if(descripcion) html+='<p style="font-style:italic;color:#b8a898;margin-bottom:12px">'+descripcion+'</p>';
   if(tipo) html+='<p style="font-style:italic;color:#f0d080;margin-bottom:12px"><strong>Tipo de relación:</strong> '+tipo+'</p>';
   if(situacion) html+='<p style="font-style:italic;color:#f0d080;margin-bottom:12px"><strong>Situación:</strong> '+situacion+'</p>';
-  html+='<div class="'+wrap+'">'+cardsHTML+'</div>'+qH+interpH+iaH;
+  html+='<div class="'+wrap+'">'+cardsHTML+'</div>'+extensionHtml(cartas)+qH+interpH+iaH;
   if(accion) html+='<p style="font-style:italic;color:#b8a898;margin-top:12px"><strong>Acción recomendada:</strong> '+accion+'</p>';
   if(anotaciones) html+='<p style="color:#b8a898;margin-top:8px"><strong>Anotaciones:</strong> '+anotaciones+'</p>';
   if(observado) html+='<p style="color:#b8a898;margin-top:8px"><strong>Lo observado:</strong> '+observado+'</p>';
@@ -378,6 +547,11 @@ function descargarAI(titulo,cartas){
   cartas.forEach(function(it,i){
     md+=(i+1)+". "+(it.posicion||"")+": "+it.carta.nombre+(it.invertida?" (invertida)":"")+"\n";
   });
+  var ci=comodinEnCartas(cartas);
+  if(ci&&ci.extensionResuelta&&ci.extension){
+    md+="\nComodín extendido:\n";
+    ci.extension.forEach(function(it){md+="  "+it.posicion+": "+it.carta.nombre+(it.invertida?" (invertida)":"")+"\n";});
+  }
   var q=calcQuinta(cartas);
   if(q) md+="\nQuintaesencia: "+q.nombre+"\n";
   if(acc) md+="\nAcción recomendada: "+acc+"\n";
@@ -445,7 +619,7 @@ function limpiarFiltros(){
 function verHist(i){
   var h=JSON.parse(lsGet("bats-hist")||"[]");
   var hr=h[i];if(!hr)return;
-  var cartas=hr.cartas.map(function(it){return{carta:it,invertida:it.invertida,texto:it.texto,posicion:it.posicion}});
+  var cartas=reconstruirCartasHist(hr);
   cartas._interp=hr._interp||"";
   cartas._ia=hr._ia||"";
   cartas._qtext=hr._qtext||"";
@@ -467,12 +641,14 @@ function verHist(i){
     htm+='<div class="card-container">';
     cartas.forEach(function(it){
       var c=it.carta,inv=it.invertida?" invertida":"";
-      htm+='<div class="card-view'+inv+'">'+imgCard(c)+'<div class="card-name">'+c.nombre+(it.invertida?' <span style="color:var(--danger);font-size:.7rem">(inv)</span>':'')+'</div>';
+      var ci=imgCard(c,esComodin(c)?it.comodinEstado:undefined,esComodin(c)?it.comodinInvertido:undefined);
+      htm+='<div class="card-view'+inv+'">'+ci+'<div class="card-name">'+c.nombre+(it.invertida?' <span style="color:var(--danger);font-size:.7rem">(inv)</span>':'')+'</div>';
       if(it.texto) htm+='<div class="card-field">'+it.texto+'</div>';
       htm+='</div>';
     });
     htm+='</div>';
   }
+  htm+=extensionHtml(cartas);
   htm+=qHTML(cartas);
   if(hr._interp){
     htm+='<div class="ai-interp-texto" style="margin-top:10px">'+interpParaHTML(hr._interp)+'</div>';
@@ -522,6 +698,10 @@ function compartirHist(i){
   md+="\n\n";
   cartas.forEach(function(it,idx){
     md+="### "+(it.posicion?it.posicion+": ":"")+it.nombre+(it.invertida?" (invertida)":"")+"\n\n"+(it.texto||"—")+"\n\n";
+    if(it.comodin&&it.extensionResuelta&&it.extension){
+      md+="### ✦ Comodín ∞ → Extensión\n\n";
+      it.extension.forEach(function(ex){md+="**"+ex.posicion+":** "+ex.nombre+(ex.invertida?" (invertida)":"")+"\n\n"+(ex.texto||"—")+"\n\n";});
+    }
   });
   var q=calcQuinta(cartas);
   if(q){var p=parsearQuinta(textoQuinta(q.nombre)||txt(q,false));md+="### ✦ Quintaesencia\n\n**"+q.nombre+"**\n\n";if(p.lectura) md+=p.lectura+"\n\n";if(p.consejo) md+="**Consejo de acción BATS:** "+p.consejo+"\n\n";if(p.palabraClave) md+="**Palabra clave:** "+p.palabraClave+"\n\n";if(p.antipatron) md+="**Antipatrón:** "+p.antipatron+"\n\n";}
@@ -557,6 +737,7 @@ function compartirTirada(){
   window._ult.forEach(function(it,i){
     md+="### "+(it.posicion?it.posicion+": ":"")+it.carta.nombre+(it.invertida?" (invertida)":"")+"\n\n"+(it.texto||txt(it.carta,it.invertida)||"—")+"\n\n";
   });
+  md+=extensionMd(window._ult);
   var q=calcQuinta(window._ult);
   if(q){var p=parsearQuinta(textoQuinta(q.nombre)||txt(q,false));md+="### ✦ Quintaesencia\n\n**"+q.nombre+"**\n\n";if(p.lectura) md+=p.lectura+"\n\n";if(p.consejo) md+="**Consejo de acción BATS:** "+p.consejo+"\n\n";if(p.palabraClave) md+="**Palabra clave:** "+p.palabraClave+"\n\n";if(p.antipatron) md+="**Antipatrón:** "+p.antipatron+"\n\n";}
   if(window._ult._interp)md+="### ✦ Interpretación\n\n"+window._ult._interp+"\n\n";
@@ -580,7 +761,7 @@ function compartirTirada(){
 function descargarHistHTML(i){
   var h=JSON.parse(lsGet("bats-hist")||"[]");
   var hr=h[i];if(!hr)return;
-  var cartas=hr.cartas.map(function(it){return{carta:it,invertida:it.invertida,texto:it.texto,posicion:it.posicion}});
+  var cartas=reconstruirCartasHist(hr);
   cartas._interp=hr._interp||"";
   cartas._qtext=hr._qtext||"";
   cartas._ia=hr._ia||"";
@@ -589,7 +770,7 @@ function descargarHistHTML(i){
 function descargarHistMD(i){
   var h=JSON.parse(lsGet("bats-hist")||"[]");
   var hr=h[i];if(!hr)return;
-  var cartas=hr.cartas.map(function(it){return{carta:it,invertida:it.invertida,texto:it.texto,posicion:it.posicion}});
+  var cartas=reconstruirCartasHist(hr);
   cartas._interp=hr._interp||"";
   cartas._qtext=hr._qtext||"";
   cartas._ia=hr._ia||"";
@@ -598,7 +779,7 @@ function descargarHistMD(i){
 function descargarHistAI(i){
   var h=JSON.parse(lsGet("bats-hist")||"[]");
   var hr=h[i];if(!hr)return;
-  var cartas=hr.cartas.map(function(it){return{carta:it,invertida:it.invertida,texto:it.texto,posicion:it.posicion}});
+  var cartas=reconstruirCartasHist(hr);
   descargarAI(hr.titulo||hr.tipo,cartas);
 }
 function limpiarHist(){
@@ -724,12 +905,19 @@ function valPanel(id){
 function tirarDiaria(){hacerDiaria(false)}
 function tirarDiariaInv(){hacerDiaria(true)}
 function hacerDiaria(inv){
+  var comodin=document.getElementById("diaria-comodin")&&document.getElementById("diaria-comodin").checked;
   var pos=["Centro: energ\u00eda del d\u00eda","Izquierda: qu\u00e9 frenar o minimizar","Derecha: qu\u00e9 impulsar o hacer","Arriba: ayuda disponible","Abajo: posible salida o resultado"];
   var esSombra=[false,true,false,false,false];
-  var m=barajar(BARAJA.slice());
+  var m=barajar(añadirComodin(BARAJA.slice(),comodin));
   if(m.length<5) return;
   var c=[];
-  for(var i=0;i<5;i++){var invC=inv?Math.random()<.5:false;c.push({carta:m[i],invertida:invC,posicion:pos[i],texto:txt(m[i],invC,esSombra[i])});}
+  for(var i=0;i<5;i++){
+    var invC=inv?Math.random()<.5:false;
+    var it={carta:m[i],invertida:invC,posicion:pos[i],texto:txt(m[i],invC,esSombra[i])};
+    if(esComodin(m[i])){it.comodinEstado="reverso";it.comodinInvertido=invC;it.comodinImg="comodin_reverso.png";if(invC){it.texto=COMODIN_INV_TEXT;}}
+    c.push(it);
+  }
+  window._mazoRestante=m.slice(5);
   window._ult=c;
   window._lastPanel="diaria";
   window._lastPanelTitle="Cruz Diaria";
@@ -745,11 +933,18 @@ function tirarRelacion(){
   var tipoRel=document.getElementById("tipo-rel").value||"";
   lsSet("bats-rel-tipo",tipoRel);
   var inv=document.getElementById("rel-inv").checked;
-  var m=barajar(BARAJA.slice());
+  var comodin=document.getElementById("rel-comodin")&&document.getElementById("rel-comodin").checked;
+  var m=barajar(añadirComodin(BARAJA.slice(),comodin));
   if(m.length<4) return;
   var pos=["Energ\u00eda del momento de la relaci\u00f3n","Energ\u00eda de "+p1,"Energ\u00eda de "+p2,"Posible salida o direcci\u00f3n"];
   var c=[];
-  for(var i=0;i<4;i++){var invC=inv?Math.random()<.5:false;c.push({carta:m[i],invertida:invC,posicion:pos[i],texto:txt(m[i],invC,false)});}
+  for(var i=0;i<4;i++){
+    var invC=inv?Math.random()<.5:false;
+    var it={carta:m[i],invertida:invC,posicion:pos[i],texto:txt(m[i],invC,false)};
+    if(esComodin(m[i])){it.comodinEstado="reverso";it.comodinInvertido=invC;it.comodinImg="comodin_reverso.png";if(invC){it.texto=COMODIN_INV_TEXT;}}
+    c.push(it);
+  }
+  window._mazoRestante=m.slice(4);
   window._ult=c;
   window._lastPanel="rel";
   window._lastPanelTitle="Tirada de la relación";
@@ -760,12 +955,19 @@ function tirarRelacion(){
 function tirarLaboral(){hacerLaboral(false)}
 function tirarLaboralInv(){hacerLaboral(true)}
 function hacerLaboral(inv){
+  var comodin=document.getElementById("laboral-comodin")&&document.getElementById("laboral-comodin").checked;
   var pos=["Centro: energ\u00eda laboral del momento","Izquierda: qu\u00e9 frenar o minimizar en el trabajo","Derecha: qu\u00e9 impulsar o hacer en el trabajo","Arriba: ayuda disponible en el trabajo","Abajo: posible salida o resultado laboral"];
   var esSombra=[false,true,false,false,false];
-  var m=barajar(BARAJA.slice());
+  var m=barajar(añadirComodin(BARAJA.slice(),comodin));
   if(m.length<5) return;
   var c=[];
-  for(var i=0;i<5;i++){var invC=inv?Math.random()<.5:false;c.push({carta:m[i],invertida:invC,posicion:pos[i],texto:txt(m[i],invC,esSombra[i])});}
+  for(var i=0;i<5;i++){
+    var invC=inv?Math.random()<.5:false;
+    var it={carta:m[i],invertida:invC,posicion:pos[i],texto:txt(m[i],invC,esSombra[i])};
+    if(esComodin(m[i])){it.comodinEstado="reverso";it.comodinInvertido=invC;it.comodinImg="comodin_reverso.png";if(invC){it.texto=COMODIN_INV_TEXT;}}
+    c.push(it);
+  }
+  window._mazoRestante=m.slice(5);
   window._ult=c;
   window._lastPanel="laboral";
   window._lastPanelTitle="BATS Laboral";
@@ -782,19 +984,36 @@ function actPos(){
   cont.innerHTML=h;
 }
 actPos();
+function configurarComodinCorte(subsetId,comodinId){
+  var radios=document.querySelectorAll('input[name="'+subsetId+'"]');
+  var chk=document.getElementById(comodinId);
+  if(!chk) return;
+  radios.forEach(function(r){r.addEventListener("change",function(){
+    if(r.value==="corte"&&r.checked){chk.checked=false;chk.disabled=true;}
+    else chk.disabled=false;
+  });});
+}
+configurarComodinCorte("aprendizaje-subset","aprendizaje-comodin");
+configurarComodinCorte("pers-subset","pers-comodin");
 function tirarPers(){
   var n=parseInt(document.getElementById("pers-cant").value);
   var sub=document.querySelector('input[name="pers-subset"]:checked');
   var modo=sub?sub.value:"completo";
   var inv=document.getElementById("pers-inv").checked;
+  var comodin=document.getElementById("pers-comodin")&&document.getElementById("pers-comodin").checked;
   var titulo=document.getElementById("pers-titulo").value.trim()||"Tirada Personalizada";
   var mazo=crearSub(modo);
-  var c=repartir(n,inv,mazo);
-  for(var i=1;i<=n;i++){
-    var el=document.getElementById("pers-pos-"+i);
-    c[i-1].posicion=el?el.value:"Posici\u00f3n "+i;
-    c[i-1].texto=txt(c[i-1].carta,c[i-1].invertida,false);
+  mazo=barajar(añadirComodin(mazo,comodin));
+  var c=[];
+  var dealt=mazo.slice(0,n);
+  for(var i=0;i<n;i++){
+    var invC=inv?Math.random()<.5:false;
+    var el=document.getElementById("pers-pos-"+(i+1));
+    var it={carta:dealt[i],invertida:invC,posicion:el?el.value:"Posici\u00f3n "+(i+1),texto:txt(dealt[i],invC,false)};
+    if(esComodin(dealt[i])){it.comodinEstado="reverso";it.comodinInvertido=invC;it.comodinImg="comodin_reverso.png";if(invC){it.texto=COMODIN_INV_TEXT;}}
+    c.push(it);
   }
+  window._mazoRestante=mazo.slice(n);
   window._ult=c;
   window._lastPanel="pers";
   window._lastPanelTitle=titulo;
@@ -807,10 +1026,11 @@ function tirarAprendizaje(){hacerAprendizaje(document.getElementById("aprendizaj
 function hacerAprendizaje(inv){
   var sub=document.querySelector('input[name="aprendizaje-subset"]:checked');
   var modo=sub?sub.value:"completo";
+  var comodin=document.getElementById("aprendizaje-comodin")&&document.getElementById("aprendizaje-comodin").checked;
   var mazo=crearSub(modo);
   var sit=document.getElementById("situacion-aprendizaje").value.trim();
   if(!sit){toast("Describe la situación que quieres comprender",true);return}
-  var m=barajar(mazo.slice());
+  var m=barajar(añadirComodin(mazo,comodin));
   if(m.length<6) return;
   var pos=[
     "El Hecho — ¿Qué ha ocurrido realmente?",
@@ -822,7 +1042,13 @@ function hacerAprendizaje(inv){
   ];
   var esSom=[false,false,true,false,false,false];
   var c=[];
-  for(var i=0;i<6;i++){var invC=inv?Math.random()<.5:false;c.push({carta:m[i],invertida:invC,posicion:pos[i],texto:txt(m[i],invC,esSom[i])});}
+  for(var i=0;i<6;i++){
+    var invC=inv?Math.random()<.5:false;
+    var it={carta:m[i],invertida:invC,posicion:pos[i],texto:txt(m[i],invC,esSom[i])};
+    if(esComodin(m[i])){it.comodinEstado="reverso";it.comodinInvertido=invC;it.comodinImg="comodin_reverso.png";if(invC){it.texto=COMODIN_INV_TEXT;}}
+    c.push(it);
+  }
+  window._mazoRestante=m.slice(6);
   window._ult=c;
   window._lastPanel="aprendizaje";
   window._lastPanelTitle="El Aprendizaje";
@@ -1286,6 +1512,8 @@ function vozTextoDe(cartas,ctx){
       if(t) seg+=". "+t;
       if(seg) partes.push(seg);
     });
+    var extVoz=extensionVoz(cartas);
+    if(extVoz) partes.push(extVoz);
     if(ctx.guion!=="arcano"){
       var q=calcQuinta(cartas);
       if(q){

@@ -73,6 +73,7 @@
   <div class="btn-group">
     <button class="btn btn-gold" onclick="tirarDiaria()">✦ Tirar Cruz Diaria</button>
     <button class="btn btn-outline btn-sm" onclick="tirarDiariaInv()">Con Invertidas</button>
+    <label class="checkbox-inline"><input type="checkbox" id="diaria-comodin"> Incluir Comodín</label>
   </div>
   <div id="r-diaria"></div>
   <a class="back-link" onclick="irA('inicio')" style="display:block;text-align:center;margin-top:16px">← Inicio</a>
@@ -98,6 +99,7 @@
   </div>
   <div class="form-group">
     <label><input type="checkbox" id="rel-inv"> Con Invertidas</label>
+    <label><input type="checkbox" id="rel-comodin"> Incluir Comodín</label>
   </div>
   <div class="btn-group"><button class="btn btn-gold" onclick="tirarRelacion()">✦ Tirar</button></div>
   <div id="r-relacion"></div>
@@ -115,6 +117,7 @@
   <div class="btn-group">
     <button class="btn btn-gold" onclick="tirarLaboral()">✦ Tirar BATS Laboral</button>
     <button class="btn btn-outline btn-sm" onclick="tirarLaboralInv()">Con Invertidas</button>
+    <label class="checkbox-inline"><input type="checkbox" id="laboral-comodin"> Incluir Comodín</label>
   </div>
   <div id="r-laboral"></div>
   <a class="back-link" onclick="irA('inicio')" style="display:block;text-align:center;margin-top:16px">← Inicio</a>
@@ -144,6 +147,7 @@
   </div>
   <div class="form-group">
     <label><input type="checkbox" id="aprendizaje-inv"> Con Invertidas</label>
+    <label><input type="checkbox" id="aprendizaje-comodin"> Incluir Comodín</label>
   </div>
   <div class="btn-group"><button class="btn btn-gold" onclick="tirarAprendizaje()">✦ Tirar</button></div>
   <div id="r-aprendizaje"></div>
@@ -188,6 +192,7 @@
   </div>
   <div class="form-group">
     <label><input type="checkbox" id="pers-inv"> Incluir invertidas</label>
+    <label><input type="checkbox" id="pers-comodin"> Incluir Comodín</label>
   </div>
   <div class="btn-group"><button class="btn btn-gold" onclick="tirarPers()">✦ Tirar</button></div>
   <div id="r-pers"></div>
