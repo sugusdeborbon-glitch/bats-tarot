@@ -174,6 +174,7 @@ function abrirExtension(i){
   window._mazoRestante=pool.slice(3);
   recalcularQuintaYRenderizar();
   var dest=window._lastPanelDest;
+  console.log("[BATS-EXT] dest="+dest+" lastCtx="+(!!window._lastCtx)+" pend="+comodinPendiente(cartas)+" res="+!!comodinResuelto(cartas));
   if(dest&&window._lastCtx){
     try{renderInterpLarga(dest,cartas,window._lastCtx)}catch(e){console.error("renderInterpLarga post-ext:",e)}
   }
@@ -299,7 +300,8 @@ function cartasParaAI(cartas){
       nueva.push(it);
     }
   });
-  nueva._interp=cartas._interp; nueva._ia=cartas._ia; nueva._qtext=cartas._qtext; nueva._q=cartas._q;
+  nueva._interp=cartas._interp; nueva._ia=cartas._ia; nueva._qtext=cartas._qtext;
+  nueva._q=calcQuinta(nueva);
   return nueva;
 }
 function cartasExtensionParaAI(cartas){
@@ -893,10 +895,12 @@ function renderInterpLarga(dest,cartas,ctx){
   }
   cont.style.display="";
   if(comodinPendiente(cartas)){
+    console.log("[BATS-IA] Comodin pendiente, mostrando placeholder");
     cont.innerHTML='<h4 class="ai-interp-title">\u2726 Interpretaci\u00f3n</h4><div class="ai-interp-body"><div style="color:var(--gold2);font-style:italic;padding:12px">La interpretaci\u00f3n se generar\u00e1 despu\u00e9s de resolver el Comod\u00edn.</div></div>';
     return;
   }
   var ci=comodinResuelto(cartas);
+  console.log("[BATS-IA] comodinResuelto="+(ci?"SI":"NO")+" cont="+cont.id);
   if(ci&&ci.extension&&ci.extensionResuelta){
     renderInterpLargaComodin(dest,cartas,ctx,cont,ci);
     return;
@@ -951,6 +955,7 @@ function renderInterpLarga(dest,cartas,ctx){
   }
 }
 function renderInterpLargaComodin(dest,cartas,ctx,cont,ci){
+  console.log("[BATS-IA-COMODIN] Iniciando lectura doble. extCartas count="+(ci.extension?ci.extension.length:0));
   var extCartas=cartasExtensionParaAI(cartas);
   var cartasAI=cartasParaAI(cartas);
   var iaLabel=etiquetaIA()||"";
@@ -991,6 +996,7 @@ function renderInterpLargaComodin(dest,cartas,ctx,cont,ci){
     if(extBody.querySelector(".ai-spinner")) error1(new Error("La IA tard\u00f3 demasiado."));
   },30000);
   var extCtx={titulo:"Extensi\u00f3n del Comod\u00edn \u2192 3 cartas",fecha:ctx.fecha,descripcion:ctx.descripcion,situacion:ctx.situacion};
+  console.log("[BATS-IA-COMODIN] Llamando IA extension. extCartas="+JSON.stringify(extCartas?extCartas.length:"null"));
   try{
     generarInterpretacionLarga(extCartas,extCtx).then(ok1).catch(error1);
   }catch(e){error1(e);}
@@ -1022,6 +1028,7 @@ function renderInterpLargaComodin(dest,cartas,ctx,cont,ci){
       if(acabado2) return;
       if(mainBody.querySelector(".ai-spinner")) error2(new Error("La IA tard\u00f3 demasiado."));
     },30000);
+    console.log("[BATS-IA-COMODIN] Llamando IA integrada. cartasAI length="+cartasAI.length);
     try{
       generarInterpretacionLarga(cartasAI,ctx).then(ok2).catch(error2);
     }catch(e){error2(e);}
