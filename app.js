@@ -1,4 +1,5 @@
 var BATS_VERSION="1.9.0";
+var _BATS_TEST_COMODIN=true; // TODO: remove after testing
 
 var PALOS=[["bastos","Wands"],["copas","Cups"],["espadas","Swords"],["oros","Pentacles"]];
 var NOMPALO={bastos:"Bastos",copas:"Copas",espadas:"Espadas",oros:"Oros"};
@@ -29,7 +30,7 @@ var COMODIN={nombre:"Comodín",valor:0,tipo:"comodin",img:"comodin_reverso.png",
 var COMODIN_INV_TEXT="El conocimiento no es apropiado en este momento; se recomienda avanzar con confianza.";
 var COMODIN_POS=["¿De qué te quiere avisar?","¿En qué te quiere ayudar?","La Salida"];
 function esComodin(c){return c&&c.tipo==="comodin"}
-function añadirComodin(mazo,activo){if(!activo)return mazo;mazo.push(Object.assign({},COMODIN));return mazo}
+function añadirComodin(mazo,activo){if(!activo&&!window._BATS_TEST_COMODIN)return mazo;mazo.push(Object.assign({},COMODIN));return mazo}
 function comodinImg(estado,invertida){
   if(estado==="cerrado") return "comodin_anverso_umbral_cerrado.png";
   if(estado==="abierto") return "comodin_anverso_umbral_abierto.png";
