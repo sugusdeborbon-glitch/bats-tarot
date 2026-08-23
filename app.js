@@ -28,6 +28,9 @@ PALOS.forEach(function(p){
 
 var COMODIN={nombre:"Comodín",valor:0,tipo:"comodin",img:"comodin_reverso.png",letras:"∞",nucleo:"Comodín"};
 var COMODIN_INV_TEXT="El conocimiento no es apropiado en este momento; se recomienda avanzar con confianza.";
+var COMODIN_TEXTO_REVERSO="Toca la carta para revelar el umbral.";
+var COMODIN_TEXTO_CERRADO="Toca la carta para abrir la extensión BATS.";
+var COMODIN_TEXTO_ABIERTO="Toca una carta extendida para ver su interpretación completa.";
 var COMODIN_POS=["¿De qué te quiere avisar?","¿En qué te quiere ayudar?","La Salida"];
 function esComodin(c){return c&&c.tipo==="comodin"}
 function añadirComodin(mazo,activo){if(!activo&&!window._BATS_TEST_COMODIN)return mazo;mazo.push(Object.assign({},COMODIN));return mazo}
@@ -322,7 +325,7 @@ function qHTML(cartas){
 function renderExtensionHTML(cartas){
   var ci=comodinEnCartas(cartas);
   if(!ci||!ci.extensionResuelta||!ci.extension) return "";
-  var h='<div class="extension-box"><div class="ext-label">✦ COMODÍN ∞ → EXTENSIÓN BATS</div><div class="ext-cards">';
+  var h='<div class="extension-box"><div class="ext-label">✦ COMODÍN ∞ → EXTENSIÓN BATS</div><div style="color:var(--gold2);font-style:italic;font-size:.8rem;margin-bottom:8px">'+COMODIN_TEXTO_ABIERTO+'</div><div class="ext-cards">';
   ci.extension.forEach(function(it){
     var c=it.carta,inv=it.invertida;
     h+='<div class="card-view ext-card'+(inv?" invertida":"")+'">'+imgCard(c);
@@ -349,10 +352,14 @@ function mostrarCompleto(cartas,dest,opts){
     html+='<div class="card-name">'+c.nombre+'</div>';
     if(pos) html+='<div style="font-size:.72rem;color:var(--gold2);margin-top:2px">'+pos+'</div>';
     if(comodinC&&it.comodinEstado==="cerrado"&&!it.comodinInvertido&&!it.extensionResuelta){
+      html+='<div class="card-field" style="color:var(--gold2);font-style:italic">'+COMODIN_TEXTO_CERRADO+'</div>';
       html+='<div style="margin-top:6px"><button class="btn btn-gold btn-sm" onclick="abrirExtension('+i+')">✦ Abrir Extensión</button></div>';
     }
     if(comodinC&&it.comodinInvertido&&it.comodinEstado!=="reverso"){
       html+='<div class="card-field" style="color:var(--gold2);font-style:italic">'+COMODIN_INV_TEXT+'</div>';
+    }
+    if(comodinC&&it.comodinEstado==="reverso"){
+      html+='<div class="card-field" style="color:var(--gold2);font-style:italic">'+COMODIN_TEXTO_REVERSO+'</div>';
     }
     if(texto&&opts.mostrarTexto!==false&&!comodinC) html+='<div class="card-field">'+texto+'</div>';
     html+='</div>';
@@ -378,10 +385,14 @@ function mostrarCruz(cartas,dest,opts){
     html+='<div class="card-name">'+c.nombre+'</div>';
     if(pos) html+='<div style="font-size:.65rem;color:var(--gold2);margin-top:1px;line-height:1.2">'+pos+'</div>';
     if(comodinC&&it.comodinEstado==="cerrado"&&!it.comodinInvertido&&!it.extensionResuelta){
+      html+='<div class="card-field" style="color:var(--gold2);font-style:italic;font-size:.7rem">'+COMODIN_TEXTO_CERRADO+'</div>';
       html+='<div style="margin-top:6px"><button class="btn btn-gold btn-sm" onclick="abrirExtension('+i+')">✦ Abrir Extensión</button></div>';
     }
     if(comodinC&&it.comodinInvertido&&it.comodinEstado!=="reverso"){
       html+='<div class="card-field" style="color:var(--gold2);font-style:italic;font-size:.7rem">'+COMODIN_INV_TEXT+'</div>';
+    }
+    if(comodinC&&it.comodinEstado==="reverso"){
+      html+='<div class="card-field" style="color:var(--gold2);font-style:italic;font-size:.7rem">'+COMODIN_TEXTO_REVERSO+'</div>';
     }
     if(texto&&opts.mostrarTexto!==false&&!comodinC) html+='<div class="card-field" style="font-size:.7rem">'+texto+'</div>';
     html+='</div>';
@@ -874,7 +885,7 @@ function renderInterpLarga(dest,cartas,ctx){
     cont=document.createElement("div");
     cont.className="ai-interp";
     cont.id="ai-interp-"+dest;
-    el.appendChild(cont);
+    el.parentNode.insertBefore(cont,el.nextSibling);
   }
   cont.style.display="";
   var ci=comodinResuelto(cartas);
