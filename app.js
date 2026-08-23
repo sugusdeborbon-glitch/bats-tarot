@@ -173,6 +173,10 @@ function abrirExtension(i){
   it.comodinImg=comodinImg("abierto",false);
   window._mazoRestante=pool.slice(3);
   recalcularQuintaYRenderizar();
+  var dest=window._lastPanelDest;
+  if(dest&&window._lastCtx){
+    try{renderInterpLarga(dest,cartas,window._lastCtx)}catch(e){console.error("renderInterpLarga post-ext:",e)}
+  }
 }
 function renderCartasActuales(){
   var cartas=window._ult;if(!cartas) return;
@@ -888,6 +892,10 @@ function renderInterpLarga(dest,cartas,ctx){
     el.parentNode.insertBefore(cont,el.nextSibling);
   }
   cont.style.display="";
+  if(comodinPendiente(cartas)){
+    cont.innerHTML='<h4 class="ai-interp-title">\u2726 Interpretaci\u00f3n</h4><div class="ai-interp-body"><div style="color:var(--gold2);font-style:italic;padding:12px">La interpretaci\u00f3n se generar\u00e1 despu\u00e9s de resolver el Comod\u00edn.</div></div>';
+    return;
+  }
   var ci=comodinResuelto(cartas);
   if(ci&&ci.extension&&ci.extensionResuelta){
     renderInterpLargaComodin(dest,cartas,ctx,cont,ci);
