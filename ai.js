@@ -109,10 +109,11 @@ function llamarIA(payload,tipo){
   var mode=getAIMode();
   var esMensajes=Array.isArray(payload);
   var body=esMensajes?{messages:payload,tipo:tipo||""}:{tipo:tipo||"",user:payload.user};
+  var timeoutMs=(tipo==="larga")?90000:60000;
   if(mode==="estandar"){
     var url=getWorkerURL();
     if(!url||!/^https:\/\//i.test(url)) return Promise.reject(new Error("URL del Worker de IA inv\u00e1lida o vac\u00eda. Rev\u00edsala en Configuraci\u00f3n."));
-    return fetchConTimeout(url,body,{token:AI_WORKER_TOKEN});
+    return fetchConTimeout(url,body,{token:AI_WORKER_TOKEN,timeoutMs:timeoutMs});
   }
   if(mode==="propia"){
     var cfg=getAIPropia();
@@ -122,13 +123,14 @@ function llamarIA(payload,tipo){
     body.mode="propia";
     body.base=cfg.base;
     body.model=cfg.modelo;
-    return fetchConTimeout(url2,body,{token:AI_WORKER_TOKEN,key:cfg.key});
+    return fetchConTimeout(url2,body,{token:AI_WORKER_TOKEN,key:cfg.key,timeoutMs:timeoutMs});
   }
   return Promise.reject(new Error("Modo IA desactivado"));
 }
 function fetchConTimeout(url,body,extra){
+  var timeoutMs=(extra&&extra.timeoutMs)||60000;
   var ctrl=("AbortController" in window)?new AbortController():null;
-  var timer=ctrl?setTimeout(function(){ctrl.abort()},60000):null;
+  var timer=ctrl?setTimeout(function(){ctrl.abort()},timeoutMs):null;
   function limpiar(){if(timer) clearTimeout(timer)}
   function status(s){try{if(window._iaStatus) window._iaStatus(s)}catch(e){}}
   var opts={
