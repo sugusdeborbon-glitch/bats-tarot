@@ -16,7 +16,7 @@ const ALLOWED_ORIGINS = [
 ];
 const RATE_LIMIT_MAX = 5;
 const RATE_LIMIT_WINDOW_MS = 60000;
-const MAX_TOKENS = 4096;
+const MAX_TOKENS = 8192;
 const ADMIN_ENDPOINT = "/api/config";
 const CONFIG_KEY = "ai_config";
 const TTS_ENDPOINT = "/api/tts";
@@ -345,7 +345,7 @@ export default {
 
 async function llamarEndpointPropio(base, model, messages, cfg, key) {
   const ctrl = new AbortController();
-  const timer = setTimeout(function(){ ctrl.abort(); }, 25000);
+  const timer = setTimeout(function(){ ctrl.abort(); }, 40000);
   const bodyObj = {
     model: (typeof model === "string" && model) ? model : "gpt-4o-mini",
     messages: messages,
@@ -386,7 +386,7 @@ async function llamarEndpointPropio(base, model, messages, cfg, key) {
 
 async function llamarProveedor(provider, messages, payload) {
   const ctrl = new AbortController();
-  const timer = setTimeout(function(){ ctrl.abort(); }, 25000);
+  const timer = setTimeout(function(){ ctrl.abort(); }, 40000);
   const bodyObj = {
     model: provider.model,
     messages: messages,
