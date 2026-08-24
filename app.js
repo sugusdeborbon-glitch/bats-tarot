@@ -174,7 +174,6 @@ function abrirExtension(i){
   window._mazoRestante=pool.slice(3);
   recalcularQuintaYRenderizar();
   var dest=window._lastPanelDest;
-  console.log("[BATS-EXT] dest="+dest+" lastCtx="+(!!window._lastCtx)+" pend="+comodinPendiente(cartas)+" res="+!!comodinResuelto(cartas));
   if(dest&&window._lastCtx){
     try{renderInterpLarga(dest,cartas,window._lastCtx)}catch(e){console.error("renderInterpLarga post-ext:",e)}
   }
@@ -895,12 +894,10 @@ function renderInterpLarga(dest,cartas,ctx){
   }
   cont.style.display="";
   if(comodinPendiente(cartas)){
-    console.log("[BATS-IA] Comodin pendiente, mostrando placeholder");
     cont.innerHTML='<h4 class="ai-interp-title">\u2726 Interpretaci\u00f3n</h4><div class="ai-interp-body"><div style="color:var(--gold2);font-style:italic;padding:12px">La interpretaci\u00f3n se generar\u00e1 despu\u00e9s de resolver el Comod\u00edn.</div></div>';
     return;
   }
   var ci=comodinResuelto(cartas);
-  console.log("[BATS-IA] comodinResuelto="+(ci?"SI":"NO")+" cont="+cont.id);
   if(ci&&ci.extension&&ci.extensionResuelta){
     renderInterpLargaComodin(dest,cartas,ctx,cont,ci);
     return;
@@ -955,7 +952,6 @@ function renderInterpLarga(dest,cartas,ctx){
   }
 }
 function renderInterpLargaComodin(dest,cartas,ctx,cont,ci){
-  console.log("[BATS-IA-COMODIN] Iniciando lectura doble. extCartas count="+(ci.extension?ci.extension.length:0));
   var extCartas=cartasExtensionParaAI(cartas);
   var cartasAI=cartasParaAI(cartas);
   var iaLabel=etiquetaIA()||"";
@@ -966,73 +962,49 @@ function renderInterpLargaComodin(dest,cartas,ctx,cont,ci){
       if(tE) tE.textContent=" ("+Math.round((Date.now()-ini2)/1000)+" s)";
     };
   }
-  var extBody=document.createElement("div");
-  extBody.className="ai-interp-body";
-  extBody.innerHTML='<div style="color:var(--gold2);font-size:.85rem;margin-bottom:6px">\u2726 Lectura de las 3 cartas del Comod\u00edn</div><div class="ai-cargando"><span class="ai-spinner"></span>Interpretando extensi\u00f3n del Comod\u00edn<span class="ai-interp-t"></span>\u2026</div>';
-  cont.appendChild(extBody);
-  var mainBody=document.createElement("div");
-  mainBody.className="ai-interp-body";
-  mainBody.style.display="none";
-  cont.appendChild(mainBody);
-  var ini1=Date.now(),tick1=null,failsafe1=null,acabado1=false;
-  function limpiar1(){acabado1=true;if(tick1){clearInterval(tick1);tick1=null}if(failsafe1){clearTimeout(failsafe1);failsafe1=null}}
-  function error1(e){
-    limpiar1();
-    try{console.error("Error extension Comodin:",e)}catch(_){}
-    extBody.innerHTML='<p class="subtle">No se pudo generar la lectura del Comod\u00edn'+(e&&e.message?": "+e.message:"")+'</p>';
-    mainBody.style.display="";
-    iniciarLecturaIntegrada();
+  var body=document.createElement("div");
+  body.className="ai-interp-body";
+  body.innerHTML='<div class="ai-cargando"><span class="ai-spinner"></span>Generando interpretaci\u00f3n<span class="ai-interp-t"></span>\u2026 <span class="ai-interp-v" style="font-size:.75em;opacity:.6">v'+BATS_VERSION+'</span><span class="ai-interp-status" style="display:block;font-size:.72em;opacity:.75;margin-top:4px"></span></div>';
+  cont.appendChild(body);
+  var ini=Date.now(),tick=null,failsafe=null,acabado=false;
+  function limpiar(){acabado=true;if(tick){clearInterval(tick);tick=null}if(failsafe){clearTimeout(failsafe);failsafe=null}}
+  function mostrarError(e){
+    limpiar();
+    try{console.error("Error interpretacion comodin:",e)}catch(_){}
+    body.innerHTML='<p class="subtle">No se pudo generar la interpretaci\u00f3n del Comod\u00edn'+(e&&e.message?": "+e.message:"")+'</p><div class="ai-interp-btns"><button class="btn btn-outline btn-sm" onclick="reintentarInterp(\''+dest+'\')">Reintentar</button></div>';
   }
-  function ok1(t){
-    limpiar1();
-    extBody.innerHTML='<div class="ai-interp-texto">'+interpParaHTML(t)+'</div>';
-    if(iaLabel) extBody.insertAdjacentHTML("beforeend",'<div class="ai-interp-ia">IA: '+escHTML(iaLabel)+'</div>');
-    mainBody.style.display="";
-    iniciarLecturaIntegrada();
+  function mostrarOK(t){
+    limpiar();
+    cartas._interp=t;
+    cartas._ia=iaLabel;
+    body.innerHTML='<div class="ai-interp-texto">'+interpParaHTML(t)+'</div>';
+    if(iaLabel) body.insertAdjacentHTML("beforeend",'<div class="ai-interp-ia">IA que ha asistido la interpretaci\u00f3n: '+escHTML(iaLabel)+'</div>');
+    if(typeof vozSoporte==="function"&&vozSoporte()){
+      var vd=String(dest).replace(/"/g,"");
+      cont.insertAdjacentHTML("beforeend",vozBarHTML(vd));
+      VOZ.textos[vd]=vozTextoDe(cartas,ctx);
+      vozPoblarSelect(cont.querySelector(".voz-select"));
+      vozActualizarBarras();
+    }
   }
-  tick1=setInterval(tickS2(extBody,ini1),1000);
-  failsafe1=setTimeout(function(){
-    if(acabado1) return;
-    if(extBody.querySelector(".ai-spinner")) error1(new Error("La IA tard\u00f3 demasiado."));
-  },30000);
-  var extCtx={titulo:"Extensi\u00f3n del Comod\u00edn \u2192 3 cartas",fecha:ctx.fecha,descripcion:ctx.descripcion,situacion:ctx.situacion};
-  console.log("[BATS-IA-COMODIN] Llamando IA extension. extCartas="+JSON.stringify(extCartas?extCartas.length:"null"));
+  function tickS(){
+    if(!acabado) body.querySelector(".ai-interp-t").textContent=" ("+Math.round((Date.now()-ini)/1000)+" s)";
+  }
+  window._iaStatus=function(s){
+    if(acabado) return;
+    var sEl=body.querySelector(".ai-interp-status");
+    if(sEl) sEl.textContent=s;
+    try{console.log("[BATS-IA]",s)}catch(_){}
+  };
+  tickS();
+  tick=setInterval(tickS,1000);
+  failsafe=setTimeout(function(){
+    if(acabado) return;
+    if(body.querySelector(".ai-spinner")) mostrarError(new Error("La IA tard\u00f3 demasiado. Reintenta."));
+  },60000);
   try{
-    generarInterpretacionLarga(extCartas,extCtx).then(ok1).catch(error1);
-  }catch(e){error1(e);}
-  function iniciarLecturaIntegrada(){
-    var ini2=Date.now(),tick2=null,failsafe2=null,acabado2=false;
-    function limpiar2(){acabado2=true;if(tick2){clearInterval(tick2);tick2=null}if(failsafe2){clearTimeout(failsafe2);failsafe2=null}}
-    mainBody.innerHTML='<div style="color:var(--gold2);font-size:.85rem;margin-bottom:6px">\u2726 Lectura integrada (Comod\u00edn \u2192 La Salida)</div><div class="ai-cargando"><span class="ai-spinner"></span>Generando interpretaci\u00f3n integrada<span class="ai-interp-t"></span>\u2026</div>';
-    function error2(e){
-      limpiar2();
-      try{console.error("Error interpretacion integrada:",e)}catch(_){}
-      mainBody.innerHTML='<p class="subtle">No se pudo generar la interpretaci\u00f3n integrada'+(e&&e.message?": "+e.message:"")+'</p><div class="ai-interp-btns"><button class="btn btn-outline btn-sm" onclick="reintentarInterp(\''+dest+'\')">Reintentar</button></div>';
-    }
-    function ok2(t){
-      limpiar2();
-      cartas._interp=t;
-      cartas._ia=iaLabel;
-      mainBody.innerHTML='<div class="ai-interp-texto">'+interpParaHTML(t)+'</div>';
-      if(iaLabel) mainBody.insertAdjacentHTML("beforeend",'<div class="ai-interp-ia">IA que ha asistido la interpretaci\u00f3n: '+escHTML(iaLabel)+'</div>');
-      if(typeof vozSoporte==="function"&&vozSoporte()){
-        var vd=String(dest).replace(/"/g,"");
-        cont.insertAdjacentHTML("beforeend",vozBarHTML(vd));
-        VOZ.textos[vd]=vozTextoDe(cartas,ctx);
-        vozPoblarSelect(cont.querySelector(".voz-select"));
-        vozActualizarBarras();
-      }
-    }
-    tick2=setInterval(tickS2(mainBody,ini2),1000);
-    failsafe2=setTimeout(function(){
-      if(acabado2) return;
-      if(mainBody.querySelector(".ai-spinner")) error2(new Error("La IA tard\u00f3 demasiado."));
-    },30000);
-    console.log("[BATS-IA-COMODIN] Llamando IA integrada. cartasAI length="+cartasAI.length);
-    try{
-      generarInterpretacionLarga(cartasAI,ctx).then(ok2).catch(error2);
-    }catch(e){error2(e);}
-  }
+    generarInterpretacionLargaComodin(cartasAI,extCartas,ctx).then(mostrarOK).catch(mostrarError);
+  }catch(e){mostrarError(e);}
 }
 function interpParaHTML(t){
   return (t||"").replace(/\*\*/g,"").replace(/^#{1,6}\s*/gm,"").replace(/\*([^*]+)\*/g,"$1").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/\n{3,}/g,"\n\n").replace(/\n/g,"<br>");
