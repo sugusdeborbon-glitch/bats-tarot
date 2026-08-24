@@ -307,11 +307,49 @@ function construirUserContentLargo(cartas,ctx){
   if(ctx.p2) lines.push("Persona 2: "+ctx.p2);
   if(ctx.tipoRel) lines.push("Tipo de relaci\u00f3n: "+ctx.tipoRel);
   if(ctx.numero) lines.push("Arcano n\u00famero: "+ctx.numero);
+
+  var ci=null;
+  if(typeof comodinResuelto==="function") ci=comodinResuelto(cartas);
+
+  if(ci&&ci.extension&&ci.extensionResuelta){
+    lines.push("");
+    lines.push("IMPORTANTE: Esta tirada incluye un COMOD\u00cdN que fue resuelto con una extensi\u00f3n de 3 cartas.");
+    lines.push("El COMOD\u00cdn apareci\u00f3 en la posici\u00f3n: "+(ci.posicion||"desconocida")+".");
+    lines.push("La Salida (la tercera carta de la extensi\u00f3n) reemplaza al Comod\u00edn en su posici\u00f3n original.");
+    lines.push("La quintaesencia ya fue recalculada con La Salida.");
+    lines.push("");
+    lines.push("Mec\u00e1nica del Comod\u00edn en esta tirada:");
+    lines.push("  - El Comod\u00edn apareci\u00f3 boca abajo (invertido) = La carta oculta tiende a su polo opuesto.");
+    lines.push("  - Al dar vuelta = reverso: su significado astral directo.");
+    lines.push("  - Al cerrar umbral = cierra el ciclo.");
+    lines.push("  - Al abrir umbral = revela la carta del destino \u2192 extensi\u00f3n de 3 cartas.");
+    lines.push("    \u2022 Posici\u00f3n 1: Significado de la carta en su polaridad.");
+    lines.push("    \u2022 Posici\u00f3n 2: Qu\u00e9 est\u00e1 bloqueando o impulsando esa polaridad.");
+    lines.push("    \u2022 Posici\u00f3n 3: La Salida \u2192 reemplaza al Comod\u00edn en la tirada.");
+    lines.push("");
+    lines.push("Interpreta la tirada completa, integrando la extensi\u00f3n del Comod\u00edn.");
+    lines.push("La Salida reemplaza al Comod\u00edn en su posici\u00f3n original. Interpreta la tirada como si La Salida fuera la carta original.");
+    lines.push("");
+    lines.push("Cartas de la extensi\u00f3n:");
+    ci.extension.forEach(function(it,i){
+      var c=it.carta,inv=it.invertida;
+      lines.push((i+1)+". "+it.posicion+": "+c.nombre+(inv?" (INVERTIDA)":""));
+      var ref=(it.texto||(typeof txt==="function"?txt(c,inv,false):"")||"").replace(/\s+/g," ").trim();
+      if(ref) lines.push("   Referencia BATS: "+ref);
+    });
+    lines.push("");
+  }
+
   lines.push("");
   lines.push("Lista de cartas con nombre de posici\u00f3n y Referencia BATS:");
   cartas.forEach(function(it,i){
     var c=it.carta,inv=it.invertida;
-    lines.push((i+1)+". "+(it.posicion||"Posici\u00f3n "+(i+1))+": "+c.nombre+(inv?" (INVERTIDA)":""));
+    var label=(it.posicion||"Posici\u00f3n "+(i+1));
+    if(ci&&ci.extensionResuelta&&typeof esComodin==="function"&&esComodin(c)){
+      var laSalida=ci.extension&&ci.extension[2];
+      if(laSalida) label=label+" (Comod\u00edn \u2192 La Salida: "+laSalida.carta.nombre+(laSalida.invertida?" INVERTIDA":"")+")";
+    }
+    lines.push((i+1)+". "+label+": "+c.nombre+(inv?" (INVERTIDA)":""));
     var ref=(it.texto||(typeof txt==="function"?txt(c,inv,false):"")||"").replace(/\s+/g," ").trim();
     if(ref) lines.push("   Referencia BATS: "+ref);
   });
@@ -328,60 +366,6 @@ function construirUserContentLargo(cartas,ctx){
   lines.push("Formato de respuesta: texto plano en espa\u00f1ol, sin markdown (sin *, # ni **). Usa l\u00edneas en blanco para separar secciones.");
   lines.push(interpLenInstruccion());
   return lines.join("\n");
-}
-function construirUserContentComodinLargo(cartas,extCartas,ctx){
-  var lines=[];
-  if(ctx.titulo) lines.push("Tirada: "+ctx.titulo);
-  if(ctx.fecha) lines.push("Fecha: "+ctx.fecha);
-  if(ctx.descripcion) lines.push("Descripci\u00f3n: "+ctx.descripcion);
-  if(ctx.situacion) lines.push("Situaci\u00f3n: "+ctx.situacion);
-  if(ctx.p1) lines.push("Persona 1: "+ctx.p1);
-  if(ctx.p2) lines.push("Persona 2: "+ctx.p2);
-  if(ctx.tipoRel) lines.push("Tipo de relaci\u00f3n: "+ctx.tipoRel);
-  lines.push("");
-  lines.push("IMPORTANTE: Esta tirada incluye un COMOD\u00cdN que ya fue resuelto con una extensi\u00f3n de 3 cartas.");
-  lines.push("Debes generar DOS secciones en tu respuesta:");
-  lines.push("");
-  lines.push("--- SECCI\u00d3N 1: Lectura de la extensi\u00f3n del Comod\u00edn ---");
-  lines.push("Interpreta solo las 3 cartas de la extensi\u00f3n (NO la tirada completa).");
-  lines.push("Cada carta responde a una pregunta espec\u00edfica. Interpreta cada una individualmente.");
-  lines.push("");
-  lines.push("Cartas de la extensi\u00f3n:");
-  extCartas.forEach(function(it,i){
-    var c=it.carta,inv=it.invertida;
-    lines.push((i+1)+". "+it.posicion+": "+c.nombre+(inv?" (INVERTIDA)":""));
-    var ref=(it.texto||(typeof txt==="function"?txt(c,inv,false):"")||"").replace(/\s+/g," ").trim();
-    if(ref) lines.push("   Referencia BATS: "+ref);
-  });
-  lines.push("");
-  lines.push("--- SECCI\u00d3N 2: Lectura integrada de la tirada completa ---");
-  lines.push("Interpreta la tirada completa. La Salida (la tercera carta de la extensi\u00f3n) reemplaza al Comod\u00edn en su posici\u00f3n original.");
-  lines.push("La quintaesencia ya fue recalculada con La Salida.");
-  lines.push("");
-  lines.push("Tirada completa (Comod\u00edn \u2192 La Salida):");
-  cartas.forEach(function(it,i){
-    var c=it.carta,inv=it.invertida;
-    lines.push((i+1)+". "+(it.posicion||"Posici\u00f3n "+(i+1))+": "+c.nombre+(inv?" (INVERTIDA)":""));
-    var ref=(it.texto||(typeof txt==="function"?txt(c,inv,false):"")||"").replace(/\s+/g," ").trim();
-    if(ref) lines.push("   Referencia BATS: "+ref);
-  });
-  var q=cartas._q;
-  if(q){
-    lines.push("");
-    lines.push("Quintaesencia calculada: "+q.nombre);
-    var refQ=(typeof QUINTA_BATS!=="undefined"&&QUINTA_BATS[q.nombre])?QUINTA_BATS[q.nombre]:null;
-    if(refQ) lines.push("Referencia BATS de la quintaesencia: "+refQ.replace(/\s+/g," ").trim());
-  }
-  var o=getAILong();
-  if(o.enfoque){lines.push("");lines.push("Enfoque solicitado por el consultante: "+o.enfoque);}
-  lines.push("");
-  lines.push("Formato de respuesta: texto plano en espa\u00f1ol, sin markdown (sin *, # ni **).");
-  lines.push("Separa las dos secciones claramente con un t\u00edtulo visible para cada una.");
-  lines.push(interpLenInstruccion());
-  return lines.join("\n");
-}
-function generarInterpretacionLargaComodin(cartas,extCartas,ctx){
-  return llamarIA({user:construirUserContentComodinLargo(cartas,extCartas,ctx)},"larga").then(function(t){return (t||"").trim()});
 }
 function generarInterpretacionLarga(cartas,ctx){
   return llamarIA({user:construirUserContentLargo(cartas,ctx)},"larga").then(function(t){return (t||"").trim()});

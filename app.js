@@ -1,4 +1,5 @@
 var BATS_VERSION="1.9.0";
+window._ocultarReferencias=false;
 var _BATS_TEST_COMODIN=true; // TODO: remove after testing
 
 var PALOS=[["bastos","Wands"],["copas","Cups"],["espadas","Swords"],["oros","Pentacles"]];
@@ -174,8 +175,23 @@ function abrirExtension(i){
   window._mazoRestante=pool.slice(3);
   recalcularQuintaYRenderizar();
   var dest=window._lastPanelDest;
-  if(dest&&window._lastCtx){
-    try{renderInterpLarga(dest,cartas,window._lastCtx)}catch(e){console.error("renderInterpLarga post-ext:",e)}
+  var ctx=window._lastCtx;
+  if(dest&&ctx){
+    window._ocultarReferencias=true;
+    var el=document.getElementById(dest);
+    if(el) el.innerHTML='<div class="ai-cargando"><span class="ai-spinner"></span>Interpretando con IA\u2026</div>';
+    generarTextosIA(cartas,ctx).then(function(){
+      window._ocultarReferencias=false;
+      renderCartasActuales();
+      try{renderInterpLarga(dest,cartas,ctx)}catch(e){console.error("renderInterpLarga post-ext:",e)}
+      try{ponerBotones(dest,window._lastPanelTitle||"",window._lastPanel||"")}catch(e){}
+    }).catch(function(e){
+      console.error("Error textos IA post-ext:",e);
+      window._ocultarReferencias=false;
+      renderCartasActuales();
+      try{renderInterpLarga(dest,cartas,ctx)}catch(e2){console.error("renderInterpLarga post-ext:",e2)}
+      try{ponerBotones(dest,window._lastPanelTitle||"",window._lastPanel||"")}catch(e2){}
+    });
   }
 }
 function renderCartasActuales(){
@@ -311,6 +327,7 @@ function cartasExtensionParaAI(cartas){
   });
 }
 function qHTML(cartas){
+  if(window._ocultarReferencias) return '';
   if(comodinPendiente(cartas)){
     return '<div class="q-box"><div class="q-label">✦ QUINTAESENCIA</div><div class="q-inner"><div style="color:var(--text2)">Pendiente de resolución del Comodín</div></div></div>';
   }
@@ -336,7 +353,7 @@ function renderExtensionHTML(cartas){
     h+='<div class="card-view ext-card'+(inv?" invertida":"")+'">'+imgCard(c);
     h+='<div class="card-name">'+c.nombre+(inv?" (inv)":"")+'</div>';
     h+='<div class="ext-pos">'+it.posicion+'</div>';
-    h+='<div class="card-field">'+(it.texto||txt(c,inv))+'</div>';
+    if(!window._ocultarReferencias) h+='<div class="card-field">'+(it.texto||txt(c,inv))+'</div>';
     h+='</div>';
   });
   h+='</div></div>';
@@ -366,7 +383,7 @@ function mostrarCompleto(cartas,dest,opts){
     if(comodinC&&it.comodinEstado==="reverso"){
       html+='<div class="card-field" style="color:var(--gold2);font-style:italic">'+COMODIN_TEXTO_REVERSO+'</div>';
     }
-    if(texto&&opts.mostrarTexto!==false&&!comodinC) html+='<div class="card-field">'+texto+'</div>';
+    if(texto&&opts.mostrarTexto!==false&&!comodinC&&!window._ocultarReferencias) html+='<div class="card-field">'+texto+'</div>';
     html+='</div>';
   });
   html+='</div>';
@@ -399,7 +416,7 @@ function mostrarCruz(cartas,dest,opts){
     if(comodinC&&it.comodinEstado==="reverso"){
       html+='<div class="card-field" style="color:var(--gold2);font-style:italic;font-size:.7rem">'+COMODIN_TEXTO_REVERSO+'</div>';
     }
-    if(texto&&opts.mostrarTexto!==false&&!comodinC) html+='<div class="card-field" style="font-size:.7rem">'+texto+'</div>';
+    if(texto&&opts.mostrarTexto!==false&&!comodinC&&!window._ocultarReferencias) html+='<div class="card-field" style="font-size:.7rem">'+texto+'</div>';
     html+='</div>';
   });
   html+='</div>';
@@ -863,18 +880,28 @@ function renderConIA(cartas,dest,renderFn,ctx){
   var panelId=ctx.panelId||window._lastPanel||"tirada";
   var titulo=ctx.titulo||window._lastPanelTitle||"Tirada";
   if(typeof getAIMode==="undefined"||getAIMode()==="off"){
+    window._ocultarReferencias=false;
     renderFn();
     ponerBotones(dest,titulo,panelId);
     return;
   }
+  if(comodinPendiente(cartas)){
+    window._ocultarReferencias=true;
+    try{renderFn()}catch(e){console.error("renderFn:",e)}
+    try{ponerBotones(dest,titulo,panelId)}catch(e){console.error("ponerBotones:",e)}
+    return;
+  }
+  window._ocultarReferencias=true;
   var el=document.getElementById(dest);
   if(el) el.innerHTML='<div class="ai-cargando"><span class="ai-spinner"></span>Interpretando con IA\u2026</div>';
   generarTextosIA(cartas,ctx).then(function(){
+    window._ocultarReferencias=false;
     try{renderFn()}catch(e){console.error("renderFn:",e)}
     try{renderInterpLarga(dest,cartas,ctx)}catch(e){console.error("renderInterpLarga:",e);toast("Error al iniciar la interpretaci\u00f3n larga: "+(e&&e.message||e),true)}
     try{ponerBotones(dest,titulo,panelId)}catch(e){console.error("ponerBotones:",e)}
   }).catch(function(e){
     console.error("Error textos IA:",e);
+    window._ocultarReferencias=false;
     toast((e&&e.message||"Error de IA")+". Se muestran los textos BATS.",true);
     try{renderFn()}catch(e2){console.error("renderFn:",e2)}
     try{renderInterpLarga(dest,cartas,ctx)}catch(e3){console.error("renderInterpLarga:",e3);toast("Error al iniciar la interpretaci\u00f3n larga: "+(e3&&e3.message||e3),true)}
@@ -893,15 +920,6 @@ function renderInterpLarga(dest,cartas,ctx){
     el.parentNode.insertBefore(cont,el.nextSibling);
   }
   cont.style.display="";
-  if(comodinPendiente(cartas)){
-    cont.innerHTML='<h4 class="ai-interp-title">\u2726 Interpretaci\u00f3n</h4><div class="ai-interp-body"><div style="color:var(--gold2);font-style:italic;padding:12px">La interpretaci\u00f3n se generar\u00e1 despu\u00e9s de resolver el Comod\u00edn.</div></div>';
-    return;
-  }
-  var ci=comodinResuelto(cartas);
-  if(ci&&ci.extension&&ci.extensionResuelta){
-    renderInterpLargaComodin(dest,cartas,ctx,cont,ci);
-    return;
-  }
   cont.innerHTML='<h4 class="ai-interp-title">\u2726 Interpretaci\u00f3n</h4><div class="ai-interp-body"><div class="ai-cargando"><span class="ai-spinner"></span>Generando interpretaci\u00f3n<span class="ai-interp-t"></span>\u2026 <span class="ai-interp-v" style="font-size:.75em;opacity:.6">v'+BATS_VERSION+'</span><span class="ai-interp-status" style="display:block;font-size:.72em;opacity:.75;margin-top:4px"></span></div></div>';
   var body=cont.querySelector(".ai-interp-body")||cont;
   var tEl=body.querySelector(".ai-interp-t");
@@ -950,61 +968,6 @@ function renderInterpLarga(dest,cartas,ctx){
   }catch(e){
     mostrarError(e);
   }
-}
-function renderInterpLargaComodin(dest,cartas,ctx,cont,ci){
-  var extCartas=cartasExtensionParaAI(cartas);
-  var cartasAI=cartasParaAI(cartas);
-  var iaLabel=etiquetaIA()||"";
-  cont.innerHTML='<h4 class="ai-interp-title">\u2726 Interpretaci\u00f3n (Comod\u00edn \u221e)</h4>';
-  function tickS2(el2,ini2){
-    return function(){
-      var tE=el2.querySelector(".ai-interp-t");
-      if(tE) tE.textContent=" ("+Math.round((Date.now()-ini2)/1000)+" s)";
-    };
-  }
-  var body=document.createElement("div");
-  body.className="ai-interp-body";
-  body.innerHTML='<div class="ai-cargando"><span class="ai-spinner"></span>Generando interpretaci\u00f3n<span class="ai-interp-t"></span>\u2026 <span class="ai-interp-v" style="font-size:.75em;opacity:.6">v'+BATS_VERSION+'</span><span class="ai-interp-status" style="display:block;font-size:.72em;opacity:.75;margin-top:4px"></span></div>';
-  cont.appendChild(body);
-  var ini=Date.now(),tick=null,failsafe=null,acabado=false;
-  function limpiar(){acabado=true;if(tick){clearInterval(tick);tick=null}if(failsafe){clearTimeout(failsafe);failsafe=null}}
-  function mostrarError(e){
-    limpiar();
-    try{console.error("Error interpretacion comodin:",e)}catch(_){}
-    body.innerHTML='<p class="subtle">No se pudo generar la interpretaci\u00f3n del Comod\u00edn'+(e&&e.message?": "+e.message:"")+'</p><div class="ai-interp-btns"><button class="btn btn-outline btn-sm" onclick="reintentarInterp(\''+dest+'\')">Reintentar</button></div>';
-  }
-  function mostrarOK(t){
-    limpiar();
-    cartas._interp=t;
-    cartas._ia=iaLabel;
-    body.innerHTML='<div class="ai-interp-texto">'+interpParaHTML(t)+'</div>';
-    if(iaLabel) body.insertAdjacentHTML("beforeend",'<div class="ai-interp-ia">IA que ha asistido la interpretaci\u00f3n: '+escHTML(iaLabel)+'</div>');
-    if(typeof vozSoporte==="function"&&vozSoporte()){
-      var vd=String(dest).replace(/"/g,"");
-      cont.insertAdjacentHTML("beforeend",vozBarHTML(vd));
-      VOZ.textos[vd]=vozTextoDe(cartas,ctx);
-      vozPoblarSelect(cont.querySelector(".voz-select"));
-      vozActualizarBarras();
-    }
-  }
-  function tickS(){
-    if(!acabado) body.querySelector(".ai-interp-t").textContent=" ("+Math.round((Date.now()-ini)/1000)+" s)";
-  }
-  window._iaStatus=function(s){
-    if(acabado) return;
-    var sEl=body.querySelector(".ai-interp-status");
-    if(sEl) sEl.textContent=s;
-    try{console.log("[BATS-IA]",s)}catch(_){}
-  };
-  tickS();
-  tick=setInterval(tickS,1000);
-  failsafe=setTimeout(function(){
-    if(acabado) return;
-    if(body.querySelector(".ai-spinner")) mostrarError(new Error("La IA tard\u00f3 demasiado. Reintenta."));
-  },60000);
-  try{
-    generarInterpretacionLargaComodin(cartasAI,extCartas,ctx).then(mostrarOK).catch(mostrarError);
-  }catch(e){mostrarError(e);}
 }
 function interpParaHTML(t){
   return (t||"").replace(/\*\*/g,"").replace(/^#{1,6}\s*/gm,"").replace(/\*([^*]+)\*/g,"$1").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/\n{3,}/g,"\n\n").replace(/\n/g,"<br>");
