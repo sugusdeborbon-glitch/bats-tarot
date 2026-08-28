@@ -1,6 +1,6 @@
 var BATS_VERSION="1.10.0";
 window._ocultarReferencias=false;
-var _BATS_TEST_COMODIN=true; // TODO: remove after testing
+var _BATS_TEST_COMODIN=false; // TODO: remove after testing
 
 var PALOS=[["bastos","Wands"],["copas","Cups"],["espadas","Swords"],["oros","Pentacles"]];
 var NOMPALO={bastos:"Bastos",copas:"Copas",espadas:"Espadas",oros:"Oros"};
