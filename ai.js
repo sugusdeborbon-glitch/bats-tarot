@@ -354,6 +354,7 @@ function construirUserContentLargo(cartas,ctx){
     if(ref) lines.push("   Referencia BATS: "+ref);
   });
   var q=cartas._q;
+  if(!q&&typeof calcQuinta==="function") q=calcQuinta(cartas);
   if(q){
     lines.push("");
     lines.push("Quintaesencia calculada: "+q.nombre);
@@ -369,6 +370,60 @@ function construirUserContentLargo(cartas,ctx){
 }
 function generarInterpretacionLarga(cartas,ctx){
   return llamarIA({user:construirUserContentLargo(cartas,ctx)},"larga").then(function(t){return (t||"").trim()});
+}
+
+var _AI_FLAGS_KEY="bats-ia-flags";
+var _aiFlagsCache=null;
+function aiFlagsCache(){
+  if(_aiFlagsCache) return _aiFlagsCache;
+  try{
+    var raw=lsGet(_AI_FLAGS_KEY);
+    if(raw){var o=JSON.parse(raw);if(o&&typeof o.useCorta==="boolean"&&typeof o.useLarga==="boolean") _aiFlagsCache=o;}
+  }catch(e){}
+  return _aiFlagsCache;
+}
+function getAIFlagsCached(){
+  if(_aiFlagsCache) return _aiFlagsCache;
+  var c=aiFlagsCache();
+  return c||{useCorta:true,useLarga:true};
+}
+function cargarAIFlags(cb){
+  var url=getWorkerURL();
+  if(!url||!/^https:\/\//i.test(url)){cb(getAIFlagsCached());return}
+  fetch(url+"/api/ai-flags",{method:"GET"}).then(function(r){
+    return r.text().then(function(txt){
+      var data;
+      try{data=JSON.parse(txt)}catch(e){throw new Error("bad json")}
+      if(!r.ok) throw new Error("http "+r.status);
+      var fl={useCorta:data.useCorta!==false,useLarga:data.useLarga!==false};
+      _aiFlagsCache=fl;
+      try{lsSet(_AI_FLAGS_KEY,JSON.stringify(fl))}catch(e){}
+      cb(fl);
+    });
+  }).catch(function(e){
+    cb(getAIFlagsCached());
+  });
+}
+function setAIFlagsLocal(fl){
+  _aiFlagsCache=fl;
+  try{lsSet(_AI_FLAGS_KEY,JSON.stringify(fl))}catch(e){}
+}
+function getFlagCorta(panelId){
+  var loc=lsGet("bats-ia-"+panelId);
+  if(loc){
+    try{var o=JSON.parse(loc);if(o&&typeof o.corta==="boolean")return o.corta}catch(e){}
+  }
+  return getAIFlagsCached().useCorta!==false;
+}
+function getFlagLarga(panelId){
+  var loc=lsGet("bats-ia-"+panelId);
+  if(loc){
+    try{var o=JSON.parse(loc);if(o&&typeof o.larga==="boolean")return o.larga}catch(e){}
+  }
+  return getAIFlagsCached().useLarga!==false;
+}
+function setFlagPanel(panelId,corta,larga){
+  try{lsSet("bats-ia-"+panelId,JSON.stringify({corta:!!corta,larga:!!larga}))}catch(e){}
 }
 
 function adminGetToken(){try{return sessionStorage.getItem(STORE_PFX+"bats-admin-token")}catch(e){return null}}

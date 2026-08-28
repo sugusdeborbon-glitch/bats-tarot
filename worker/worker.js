@@ -22,6 +22,9 @@ const CONFIG_KEY = "ai_config";
 const TTS_ENDPOINT = "/api/tts";
 const TTS_MAX_TEXT = 20000;
 const TTS_GOOGLE = "https://translate.google.com/translate_tts";
+const AI_FLAGS_ENDPOINT = "/api/ai-flags";
+const DEFAULT_USE_CORTA = true;
+const DEFAULT_USE_LARGA = true;
 
 function _sistemaBase(nombre, estructura) {
   return "Eres el intérprete profesional BATS (Business Ashram Tarot System) para la tirada “" + nombre + "”, basada en el mazo Rider-Waite-Smith.\n"
@@ -194,6 +197,8 @@ function sanitizeConfig(body) {
     cfg.maxTokens = body.maxTokens;
   }
   if (LEN_LINES[body.lenDefault]) cfg.lenDefault = body.lenDefault;
+  if (typeof body.useCorta === "boolean") cfg.useCorta = body.useCorta;
+  if (typeof body.useLarga === "boolean") cfg.useLarga = body.useLarga;
   return cfg;
 }
 
@@ -210,7 +215,7 @@ export default {
       }
       if (req.method === "GET") {
         const cfg = await getConfig(env);
-        return json({ config: cfg, available: availableProviders(env), defaults: DEFAULT_ORDER, systemDefaults: SISTEMAS }, 200, req);
+        return json({ config: cfg, available: availableProviders(env), defaults: DEFAULT_ORDER, systemDefaults: SISTEMAS, aiFlags: { useCorta: typeof cfg.useCorta === "boolean" ? cfg.useCorta : DEFAULT_USE_CORTA, useLarga: typeof cfg.useLarga === "boolean" ? cfg.useLarga : DEFAULT_USE_LARGA } }, 200, req);
       }
       if (req.method === "PUT") {
         let body;
@@ -224,6 +229,17 @@ export default {
         return json({ ok: true, config: cfg }, 200, req);
       }
       return json({ error: "Método no permitido" }, 405, req);
+    }
+
+    if (url.pathname === AI_FLAGS_ENDPOINT) {
+      if (req.method !== "GET") {
+        return json({ error: "Método no permitido" }, 405, req);
+      }
+      const cfg = await getConfig(env);
+      return json({
+        useCorta: typeof cfg.useCorta === "boolean" ? cfg.useCorta : DEFAULT_USE_CORTA,
+        useLarga: typeof cfg.useLarga === "boolean" ? cfg.useLarga : DEFAULT_USE_LARGA
+      }, 200, req);
     }
 
     if (url.pathname === TTS_ENDPOINT) {

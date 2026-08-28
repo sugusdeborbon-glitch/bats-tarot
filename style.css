@@ -123,6 +123,8 @@ label{display:block;font-size:.82rem;color:var(--gold);margin-bottom:3px;margin-
 .ext-card .card-name{font-size:.78rem}
 .ext-pos{color:var(--gold);font-size:.7rem;font-weight:600;text-transform:uppercase;margin:4px 0 2px}
 .checkbox-inline{display:inline-block;margin-left:8px;font-size:.82rem;color:var(--text2)}
+.ia-panel-flags{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center;margin:6px 0 2px;padding:6px 10px;background:var(--bg3);border-radius:8px;font-size:.8rem;color:var(--text2)}
+.ia-panel-flags-t{font-weight:600;color:var(--gold2)}
 
 .back-link{display:inline-block;color:var(--gold);text-decoration:none;font-size:.82rem;margin-bottom:8px;cursor:pointer;transition:color .2s}
 .back-link:hover{color:var(--gold2)}

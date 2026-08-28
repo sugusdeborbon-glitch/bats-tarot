@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icono-512.png" sizes="512x512">
 <link rel="apple-touch-icon" href="icono-512.png">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=1.10.0">
 </head>
 <body>
 
@@ -75,6 +75,12 @@
     <button class="btn btn-outline btn-sm" onclick="tirarDiariaInv()">Con Invertidas</button>
     <label class="checkbox-inline"><input type="checkbox" id="diaria-comodin"> Incluir Comodín</label>
   </div>
+  <div class="ia-panel-flags">
+    <span class="ia-panel-flags-t">Llamadas IA:</span>
+    <label class="checkbox-inline"><input type="checkbox" id="ia-corta-diaria" onchange="cambiarFlagPanel('diaria','corta',this)"> Texto por carta</label>
+    <label class="checkbox-inline"><input type="checkbox" id="ia-larga-diaria" onchange="cambiarFlagPanel('diaria','larga',this)"> Interpretación larga</label>
+    <button class="btn btn-outline btn-sm" onclick="restablecerFlagsPanel('diaria')">Por defecto</button>
+  </div>
   <div id="r-diaria"></div>
   <a class="back-link" onclick="irA('inicio')" style="display:block;text-align:center;margin-top:16px">← Inicio</a>
 </section>
@@ -102,6 +108,12 @@
     <label><input type="checkbox" id="rel-comodin"> Incluir Comodín</label>
   </div>
   <div class="btn-group"><button class="btn btn-gold" onclick="tirarRelacion()">✦ Tirar</button></div>
+  <div class="ia-panel-flags">
+    <span class="ia-panel-flags-t">Llamadas IA:</span>
+    <label class="checkbox-inline"><input type="checkbox" id="ia-corta-rel" onchange="cambiarFlagPanel('rel','corta',this)"> Texto por carta</label>
+    <label class="checkbox-inline"><input type="checkbox" id="ia-larga-rel" onchange="cambiarFlagPanel('rel','larga',this)"> Interpretación larga</label>
+    <button class="btn btn-outline btn-sm" onclick="restablecerFlagsPanel('rel')">Por defecto</button>
+  </div>
   <div id="r-relacion"></div>
   <a class="back-link" onclick="irA('inicio')" style="display:block;text-align:center;margin-top:16px">← Inicio</a>
 </section>
@@ -118,6 +130,12 @@
     <button class="btn btn-gold" onclick="tirarLaboral()">✦ Tirar BATS Laboral</button>
     <button class="btn btn-outline btn-sm" onclick="tirarLaboralInv()">Con Invertidas</button>
     <label class="checkbox-inline"><input type="checkbox" id="laboral-comodin"> Incluir Comodín</label>
+  </div>
+  <div class="ia-panel-flags">
+    <span class="ia-panel-flags-t">Llamadas IA:</span>
+    <label class="checkbox-inline"><input type="checkbox" id="ia-corta-laboral" onchange="cambiarFlagPanel('laboral','corta',this)"> Texto por carta</label>
+    <label class="checkbox-inline"><input type="checkbox" id="ia-larga-laboral" onchange="cambiarFlagPanel('laboral','larga',this)"> Interpretación larga</label>
+    <button class="btn btn-outline btn-sm" onclick="restablecerFlagsPanel('laboral')">Por defecto</button>
   </div>
   <div id="r-laboral"></div>
   <a class="back-link" onclick="irA('inicio')" style="display:block;text-align:center;margin-top:16px">← Inicio</a>
@@ -150,6 +168,12 @@
     <label><input type="checkbox" id="aprendizaje-comodin"> Incluir Comodín</label>
   </div>
   <div class="btn-group"><button class="btn btn-gold" onclick="tirarAprendizaje()">✦ Tirar</button></div>
+  <div class="ia-panel-flags">
+    <span class="ia-panel-flags-t">Llamadas IA:</span>
+    <label class="checkbox-inline"><input type="checkbox" id="ia-corta-aprendizaje" onchange="cambiarFlagPanel('aprendizaje','corta',this)"> Texto por carta</label>
+    <label class="checkbox-inline"><input type="checkbox" id="ia-larga-aprendizaje" onchange="cambiarFlagPanel('aprendizaje','larga',this)"> Interpretación larga</label>
+    <button class="btn btn-outline btn-sm" onclick="restablecerFlagsPanel('aprendizaje')">Por defecto</button>
+  </div>
   <div id="r-aprendizaje"></div>
   <a class="back-link" onclick="irA('inicio')" style="display:block;text-align:center;margin-top:16px">← Inicio</a>
 </section>
@@ -195,6 +219,12 @@
     <label><input type="checkbox" id="pers-comodin"> Incluir Comodín</label>
   </div>
   <div class="btn-group"><button class="btn btn-gold" onclick="tirarPers()">✦ Tirar</button></div>
+  <div class="ia-panel-flags">
+    <span class="ia-panel-flags-t">Llamadas IA:</span>
+    <label class="checkbox-inline"><input type="checkbox" id="ia-corta-pers" onchange="cambiarFlagPanel('pers','corta',this)"> Texto por carta</label>
+    <label class="checkbox-inline"><input type="checkbox" id="ia-larga-pers" onchange="cambiarFlagPanel('pers','larga',this)"> Interpretación larga</label>
+    <button class="btn btn-outline btn-sm" onclick="restablecerFlagsPanel('pers')">Por defecto</button>
+  </div>
   <div id="r-pers"></div>
   <a class="back-link" onclick="irA('inicio')" style="display:block;text-align:center;margin-top:16px">← Inicio</a>
 </section>
@@ -326,6 +356,12 @@
         <p class="subtle" style="text-align:left">Un token es más o menos un trocito de palabra. Más tokens permiten respuestas más largas, pero tardan un poco más.</p>
       </div>
       <div class="form-group">
+        <label>Llamadas a la IA para las tiradas (por defecto)</label>
+        <p class="subtle" style="text-align:left">Activa o desactiva por defecto las dos llamadas de interpretación. Cada usuario puede cambiarlas en cada tirada.</p>
+        <label style="display:flex;align-items:center;gap:8px;font-weight:normal;font-size:.9rem"><input type="checkbox" id="admin-use-corta" style="width:auto"> Texto por carta (interpretación corta)</label>
+        <label style="display:flex;align-items:center;gap:8px;font-weight:normal;font-size:.9rem;margin-top:4px"><input type="checkbox" id="admin-use-larga" style="width:auto"> Interpretación narrativa (larga)</label>
+      </div>
+      <div class="form-group">
         <label for="admin-sys-diaria">Instrucciones · Cruz Diaria</label>
         <textarea id="admin-sys-diaria" class="input-desc" rows="6"></textarea>
         <button class="btn btn-outline btn-sm" onclick="adminRestaurarSistema('diaria')">Restaurar original</button>
@@ -442,10 +478,10 @@
 
   <div id="vers-app" style="text-align:center;font-size:.7rem;opacity:.6;padding:14px 0 20px"></div>
 
-    <script src="datos_bats.js?v=1.9.0"></script>
-    <script src="quintaesencia_bats.js?v=1.9.0"></script>
-    <script src="ai.js?v=1.9.0"></script>
-    <script src="app.js?v=1.9.0"></script>
+    <script src="datos_bats.js?v=1.10.0"></script>
+    <script src="quintaesencia_bats.js?v=1.10.0"></script>
+    <script src="ai.js?v=1.10.0"></script>
+    <script src="app.js?v=1.10.0"></script>
 
 </body>
 </html>

@@ -1,4 +1,4 @@
-var BATS_VERSION="1.9.0";
+var BATS_VERSION="1.10.0";
 window._ocultarReferencias=false;
 var _BATS_TEST_COMODIN=true; // TODO: remove after testing
 
@@ -176,23 +176,30 @@ function abrirExtension(i){
   recalcularQuintaYRenderizar();
   var dest=window._lastPanelDest;
   var ctx=window._lastCtx;
-  if(dest&&ctx){
+  if(!dest||!ctx) return;
+  var panelId=ctx.panelId||window._lastPanel||"tirada";
+  var useCorta=getFlagCorta(panelId);
+  var useLarga=getFlagLarga(panelId);
+  function fin(){
+    window._ocultarReferencias=false;
+    renderCartasActuales();
+    if(useLarga){try{renderInterpLarga(dest,cartas,ctx)}catch(e){console.error("renderInterpLarga post-ext:",e)}}
+    try{ponerBotones(dest,window._lastPanelTitle||"",window._lastPanel||"")}catch(e){}
+  }
+  if(!useCorta&&!useLarga){fin();return;}
+  if(useLarga){
     window._ocultarReferencias=true;
     var el=document.getElementById(dest);
     if(el) el.innerHTML='<div class="ai-cargando"><span class="ai-spinner"></span>Interpretando con IA\u2026</div>';
-    generarTextosIA(cartas,ctx).then(function(){
-      window._ocultarReferencias=false;
-      renderCartasActuales();
-      try{renderInterpLarga(dest,cartas,ctx)}catch(e){console.error("renderInterpLarga post-ext:",e)}
-      try{ponerBotones(dest,window._lastPanelTitle||"",window._lastPanel||"")}catch(e){}
-    }).catch(function(e){
+    var pCorta=useCorta?generarTextosIA(cartas,ctx):Promise.resolve(cartas);
+    pCorta.then(fin).catch(function(e){
       console.error("Error textos IA post-ext:",e);
-      window._ocultarReferencias=false;
-      renderCartasActuales();
-      try{renderInterpLarga(dest,cartas,ctx)}catch(e2){console.error("renderInterpLarga post-ext:",e2)}
-      try{ponerBotones(dest,window._lastPanelTitle||"",window._lastPanel||"")}catch(e2){}
+      fin();
     });
+    return;
   }
+  window._ocultarReferencias=true;
+  generarTextosIA(cartas,ctx).then(fin).catch(function(e){console.error("Error textos IA post-ext:",e);fin()});
 }
 function renderCartasActuales(){
   var cartas=window._ult;if(!cartas) return;
@@ -879,10 +886,24 @@ function renderConIA(cartas,dest,renderFn,ctx){
   if(typeof vozParar==="function"){try{vozParar()}catch(e){}}
   var panelId=ctx.panelId||window._lastPanel||"tirada";
   var titulo=ctx.titulo||window._lastPanelTitle||"Tirada";
-  if(typeof getAIMode==="undefined"||getAIMode()==="off"){
+  var modo=(typeof getAIMode==="function")?getAIMode():"off";
+  var useCorta=modo!=="off"&&getFlagCorta(panelId);
+  var useLarga=modo!=="off"&&getFlagLarga(panelId);
+  function finSinIA(){
     window._ocultarReferencias=false;
-    renderFn();
-    ponerBotones(dest,titulo,panelId);
+    try{renderFn()}catch(e){console.error("renderFn:",e)}
+    try{ponerBotones(dest,titulo,panelId)}catch(e){console.error("ponerBotones:",e)}
+  }
+  function falloIA(e){
+    console.error("Error textos IA:",e);
+    window._ocultarReferencias=false;
+    toast((e&&e.message||"Error de IA")+". Se muestran los textos BATS.",true);
+    try{renderFn()}catch(e2){console.error("renderFn:",e2)}
+    if(useLarga){try{renderInterpLarga(dest,cartas,ctx)}catch(e3){console.error("renderInterpLarga:",e3);toast("Error al iniciar la interpretaci\u00f3n larga: "+(e3&&e3.message||e3),true)}}
+    try{ponerBotones(dest,titulo,panelId)}catch(e4){console.error("ponerBotones:",e4)}
+  }
+  if(modo==="off"||(!useCorta&&!useLarga)){
+    finSinIA();
     return;
   }
   if(comodinPendiente(cartas)){
@@ -891,22 +912,30 @@ function renderConIA(cartas,dest,renderFn,ctx){
     try{ponerBotones(dest,titulo,panelId)}catch(e){console.error("ponerBotones:",e)}
     return;
   }
+  if(useLarga){
+    var el=document.getElementById(dest);
+    if(useCorta){
+      window._ocultarReferencias=true;
+      if(el) el.innerHTML='<div class="ai-cargando"><span class="ai-spinner"></span>Interpretando con IA\u2026</div>';
+      generarTextosIA(cartas,ctx).then(function(){
+        window._ocultarReferencias=false;
+        try{renderFn()}catch(e){console.error("renderFn:",e)}
+        try{renderInterpLarga(dest,cartas,ctx)}catch(e){console.error("renderInterpLarga:",e);toast("Error al iniciar la interpretaci\u00f3n larga: "+(e&&e.message||e),true)}
+        try{ponerBotones(dest,titulo,panelId)}catch(e){console.error("ponerBotones:",e)}
+      }).catch(falloIA);
+    } else {
+      try{renderFn()}catch(e){console.error("renderFn:",e)}
+      try{renderInterpLarga(dest,cartas,ctx)}catch(e){console.error("renderInterpLarga:",e);toast("Error al iniciar la interpretaci\u00f3n larga: "+(e&&e.message||e),true)}
+      try{ponerBotones(dest,titulo,panelId)}catch(e){console.error("ponerBotones:",e)}
+    }
+    return;
+  }
   window._ocultarReferencias=true;
-  var el=document.getElementById(dest);
-  if(el) el.innerHTML='<div class="ai-cargando"><span class="ai-spinner"></span>Interpretando con IA\u2026</div>';
   generarTextosIA(cartas,ctx).then(function(){
     window._ocultarReferencias=false;
     try{renderFn()}catch(e){console.error("renderFn:",e)}
-    try{renderInterpLarga(dest,cartas,ctx)}catch(e){console.error("renderInterpLarga:",e);toast("Error al iniciar la interpretaci\u00f3n larga: "+(e&&e.message||e),true)}
     try{ponerBotones(dest,titulo,panelId)}catch(e){console.error("ponerBotones:",e)}
-  }).catch(function(e){
-    console.error("Error textos IA:",e);
-    window._ocultarReferencias=false;
-    toast((e&&e.message||"Error de IA")+". Se muestran los textos BATS.",true);
-    try{renderFn()}catch(e2){console.error("renderFn:",e2)}
-    try{renderInterpLarga(dest,cartas,ctx)}catch(e3){console.error("renderInterpLarga:",e3);toast("Error al iniciar la interpretaci\u00f3n larga: "+(e3&&e3.message||e3),true)}
-    try{ponerBotones(dest,titulo,panelId)}catch(e4){console.error("ponerBotones:",e4)}
-  });
+  }).catch(falloIA);
 }
 function renderInterpLarga(dest,cartas,ctx){
   ctx=ctx||{};
@@ -983,6 +1012,26 @@ function valPanel(id){
   return el?el.value:"";
 }
 
+var PANELES_IA=["diaria","rel","laboral","pers","aprendizaje"];
+function sincronizarFlagsPaneles(){
+  PANELES_IA.forEach(function(p){
+    var c1=document.getElementById("ia-corta-"+p),c2=document.getElementById("ia-larga-"+p);
+    if(c1) c1.checked=getFlagCorta(p);
+    if(c2) c2.checked=getFlagLarga(p);
+  });
+}
+function cambiarFlagPanel(panelId,que,chk){
+  var c=getFlagCorta(panelId),l=getFlagLarga(panelId);
+  if(que==="corta") c=chk.checked; else l=chk.checked;
+  setFlagPanel(panelId,c,l);
+}
+function restablecerFlagsPanel(panelId){
+  try{localStorage.removeItem(STORE_PFX+"bats-ia-"+panelId)}catch(e){}
+  var c1=document.getElementById("ia-corta-"+panelId),c2=document.getElementById("ia-larga-"+panelId);
+  if(c1) c1.checked=getFlagCorta(panelId);
+  if(c2) c2.checked=getFlagLarga(panelId);
+}
+
 function tirarDiaria(){hacerDiaria(false)}
 function tirarDiariaInv(){hacerDiaria(true)}
 function hacerDiaria(inv){
@@ -1057,8 +1106,7 @@ function hacerLaboral(inv){
   },{titulo:"BATS Laboral",descripcion:valPanel("desc-laboral"),guion:"laboral",panelId:"laboral"});
 }
 
-function actPos(){
-  var n=parseInt(document.getElementById("pers-cant").value);
+function actPos(){  var n=parseInt(document.getElementById("pers-cant").value);
   var cont=document.getElementById("campos-posiciones"),h="",vals={};
   for(var i=1;i<=15;i++){var el=document.getElementById("pers-pos-"+i);if(el) vals[i]=el.value}
   for(var i=1;i<=n;i++) h+='<div class="pos-field"><span class="pos-num">'+(i<10?"0":"")+i+'</span><input type="text" id="pers-pos-'+i+'" value="'+(vals[i]||'Posici\u00f3n '+i)+'"></div>';
@@ -1380,7 +1428,7 @@ function initSW(){
 }
 
 var ADMIN_URL_KEY="b3a2b557191caaaf8e5c246b";
-var _adminState={config:null,defaults:null,available:null,systemDefaults:null,pendingOrder:null,pendingOn:null};
+var _adminState={config:null,defaults:null,available:null,systemDefaults:null,pendingOrder:null,pendingOn:null,aiFlags:null};
 var ADMIN_SISTEMAS_CFGKEY={
   diaria:"systemDiaria",
   rel:"systemRel",
@@ -1413,6 +1461,7 @@ function adminEntrar(token){
     _adminState.defaults=data.defaults||["groq","sambanova","google","openrouter","nvidia"];
     _adminState.available=data.available||[];
     _adminState.systemDefaults=data.systemDefaults||{};
+    _adminState.aiFlags=data.aiFlags||{useCorta:true,useLarga:true};
     _adminState.pendingOrder=null;
     _adminState.pendingOn=null;
     document.getElementById("admin-box").style.display="none";
@@ -1490,6 +1539,10 @@ function adminPoblar(){
   adminTempVal();
   document.getElementById("admin-len").value=cfg.lenDefault||"media";
   document.getElementById("admin-maxtok").value=cfg.maxTokens||4096;
+  var af=_adminState.aiFlags||{useCorta:true,useLarga:true};
+  var elUC=document.getElementById("admin-use-corta"),elUL=document.getElementById("admin-use-larga");
+  if(elUC) elUC.checked=af.useCorta!==false;
+  if(elUL) elUL.checked=af.useLarga!==false;
   for(var g in ADMIN_SISTEMAS_CFGKEY){
     var elS=document.getElementById("admin-sys-"+g);
     if(!elS) continue;
@@ -1514,6 +1567,9 @@ function adminGuardar(){
   cfg.temperature=parseFloat(document.getElementById("admin-temp").value);
   cfg.maxTokens=parseInt(document.getElementById("admin-maxtok").value,10)||4096;
   cfg.lenDefault=document.getElementById("admin-len").value;
+  var elUC=document.getElementById("admin-use-corta"),elUL=document.getElementById("admin-use-larga");
+  cfg.useCorta=elUC?elUC.checked:true;
+  cfg.useLarga=elUL?elUL.checked:true;
   for(var g in ADMIN_SISTEMAS_CFGKEY){
     var elS=document.getElementById("admin-sys-"+g);
     if(!elS) continue;
@@ -1526,6 +1582,10 @@ function adminGuardar(){
     _adminState.config=data.config||cfg;
     _adminState.pendingOrder=null;
     _adminState.pendingOn=null;
+    if(data.config){
+      _adminState.aiFlags={useCorta:data.config.useCorta!==false,useLarga:data.config.useLarga!==false};
+    }
+    if(typeof setAIFlagsLocal==="function") setAIFlagsLocal(_adminState.aiFlags);
     adminPoblar();
     adminMsg("\u2713 Cambios guardados. Ya est\u00e1n aplicados para todas las tiradas.");
   },function(e){
@@ -1543,6 +1603,8 @@ function adminRestaurarTodo(){
     _adminState.config={};
     _adminState.pendingOrder=null;
     _adminState.pendingOn=null;
+    _adminState.aiFlags={useCorta:true,useLarga:true};
+    if(typeof setAIFlagsLocal==="function") setAIFlagsLocal({useCorta:true,useLarga:true});
     adminPoblar();
     adminMsg("\u2713 Valores originales restaurados.");
   },function(e){
@@ -1873,6 +1935,7 @@ setTimeout(function(){
   if(document.getElementById("r-historial")) cargarHist();
   if(typeof actualizarUI_AI==="function") actualizarUI_AI();
   if(document.getElementById("cfg-provider")) cargarPanelConfig();
+  if(typeof cargarAIFlags==="function") cargarAIFlags(sincronizarFlagsPaneles);
   if(typeof initAdmin==="function") initAdmin();
   if(typeof vozCargar==="function"){vozCargar();vozTasa(vozTasaActual())}
   initSW();
