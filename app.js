@@ -1,6 +1,7 @@
 // State initialized by js/state.js (window._* backed by BATS.state)
 // Card data & deck operations now in js/deck.js (window.BATS.deck)
 // Numerology & quintessence now in js/numerology.js (window.BATS.numerology)
+// AI interpretation pipeline now in js/ai-pipeline.js (window.BATS.aiPipeline)
 // Global vars (PALOS, BARAJA, z, ini, etc.) remain on window for backward compatibility
 
 function toggleMenu(){
@@ -341,10 +342,7 @@ function valPanel(id){
   return el?el.value:"";
 }
 
-function interpParaHTML(t){
-  var h=escHTML(t);
-  return h.replace(/\*\*/g,"").replace(/^#{1,6}\s*/gm,"").replace(/\*([^*]+)\*/g,"$1").replace(/\n{3,}/g,"\n\n").replace(/\n/g,"<br>");
-}
+/* ============ AI PIPELINE → moved to js/ai-pipeline.js ============ */
 function escHTML(s){
   return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 }
