@@ -1,4 +1,4 @@
-var CACHE = "bats-v29";
+var CACHE = "bats-v30";
 var STATIC_CACHE = CACHE + "-static";
 var IMG_CACHE = CACHE + "-img";
 
@@ -12,6 +12,7 @@ var ARCHIVOS = [
   "js/deck.js",
   "js/numerology.js",
   "js/tts.js",
+  "js/admin.js",
   "manifest.json",
   "datos_bats.js",
   "quintaesencia_bats.js",
