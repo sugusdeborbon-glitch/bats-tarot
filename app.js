@@ -1,6 +1,5 @@
-var BATS_VERSION="1.10.0";
-window._ocultarReferencias=false;
-var _BATS_TEST_COMODIN=false; // TODO: remove after testing
+// State initialized by js/state.js (window._* backed by BATS.state)
+// BATS_VERSION, _ocultarReferencias, _BATS_TEST_COMODIN now managed centrally
 
 var PALOS=[["bastos","Wands"],["copas","Cups"],["espadas","Swords"],["oros","Pentacles"]];
 var NOMPALO={bastos:"Bastos",copas:"Copas",espadas:"Espadas",oros:"Oros"};

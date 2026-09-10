@@ -5,6 +5,8 @@
   "main": "index.html",
   "scripts": {
     "build": "echo 'No build step needed - static PWA'",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "capacitor:init": "npx cap init BATS-Tarot com.bats.tarot --webDir .",
     "capacitor:add:android": "npx cap add android",
     "capacitor:sync": "npx cap sync",
@@ -24,5 +26,8 @@
     "@capacitor/filesystem": "^8.1.2",
     "@capacitor/share": "^8.0.1",
     "localtunnel": "^2.0.2"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.7"
   }
 }
