@@ -125,18 +125,49 @@ function toast(msg,isError){
 }
 
 function imgCard(c,comodinEstado,comodinInv,idx){
+  var frag=document.createDocumentFragment();
   if(esComodin(c)){
     var src=comodinImg(comodinEstado||"reverso",comodinInv);
     var cls="comodin-card"+(comodinInv&&comodinEstado!=="reverso"?" invertida":"");
-    var onclick=typeof idx==="number"?'onclick="revelarComodin('+idx+')"':('onclick="abrirLightbox(\''+src+'\',\'Comodín\')"');
-    return '<img src="'+src+'" alt="Comodín" class="'+cls+'" '+onclick+'>';
+    var img=document.createElement("img");
+    img.src=src;img.alt="Comodín";img.className=cls;
+    if(typeof idx==="number") img.onclick=function(){revelarComodin(idx)};
+    else img.onclick=function(){abrirLightbox(src,"Comodín")};
+    frag.appendChild(img);
+    return frag;
   }
-  return '<img src="'+c.img+'" alt="'+c.nombre+'" loading="lazy" onclick="abrirLightbox(this.src,this.alt)" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"><div class="card-placeholder" style="display:none"><div class="cp-name">'+c.letras+'</div><div class="cp-suit">'+(c.tipo==="arcano"?"AM":c.nucleo)+'</div></div>';
+  var img=document.createElement("img");
+  img.src=c.img;img.alt=c.nombre;img.loading="lazy";
+  img.onclick=function(){abrirLightbox(c.img,c.nombre)};
+  img.onerror=function(){this.style.display='none';this.nextElementSibling.style.display='flex'};
+  frag.appendChild(img);
+  var ph=document.createElement("div");
+  ph.className="card-placeholder";ph.style.display="none";
+  var cpn=document.createElement("div");cpn.className="cp-name";cpn.textContent=c.letras;
+  var cps=document.createElement("div");cps.className="cp-suit";cps.textContent=c.tipo==="arcano"?"AM":c.nucleo;
+  ph.appendChild(cpn);ph.appendChild(cps);
+  frag.appendChild(ph);
+  return frag;
 }
 function abrirLightbox(src,alt){
   var o=document.createElement('div');
   o.className='lightbox';
-  o.innerHTML='<div class="lightbox-bg" onclick="this.parentElement.remove()"></div><div class="lightbox-content" onclick="this.parentElement.remove()"><img src="'+src+'" alt="'+alt+'"><div class="lightbox-nombre">'+alt+'</div></div>';
+  var bg=document.createElement('div');
+  bg.className='lightbox-bg';
+  bg.onclick=function(){o.remove()};
+  var content=document.createElement('div');
+  content.className='lightbox-content';
+  content.onclick=function(){o.remove()};
+  var img=document.createElement('img');
+  img.src=src;
+  img.alt=alt;
+  var nom=document.createElement('div');
+  nom.className='lightbox-nombre';
+  nom.textContent=alt;
+  content.appendChild(img);
+  content.appendChild(nom);
+  o.appendChild(bg);
+  o.appendChild(content);
   document.body.appendChild(o);
 }
 
@@ -190,7 +221,7 @@ function abrirExtension(i){
   if(useLarga){
     window._ocultarReferencias=true;
     var el=document.getElementById(dest);
-    if(el) el.innerHTML='<div class="ai-cargando"><span class="ai-spinner"></span>Interpretando con IA\u2026</div>';
+    if(el){_clear(el);var ld=document.createElement("div");ld.className="ai-cargando";var sp=document.createElement("span");sp.className="ai-spinner";ld.appendChild(sp);ld.appendChild(document.createTextNode("Interpretando con IA\u2026"));el.appendChild(ld);}
     var pCorta=useCorta?generarTextosIA(cartas,ctx):Promise.resolve(cartas);
     pCorta.then(fin).catch(function(e){
       console.error("Error textos IA post-ext:",e);
@@ -210,7 +241,7 @@ function renderCartasActuales(){
   else mostrarCompleto(cartas,dest,opts);
   ponerBotones(dest,window._lastPanelTitle||"",window._lastPanel||"");
   var qEl=document.getElementById("q-result");
-  if(qEl) qEl.innerHTML=qHTML(cartas);
+  if(qEl){_clear(qEl);var qn=qHTML(cartas);if(qn)qEl.appendChild(qn);}
 }
 function recalcularQuintaYRenderizar(){
   renderCartasActuales();
@@ -270,8 +301,8 @@ function extensionHtml(cartas){
   if(!ci||!ci.extensionResuelta||!ci.extension) return "";
   var h='<div style="margin:16px auto;padding:12px;background:#1a1225;border:1px solid #d4a847;border-radius:8px;text-align:center;max-width:620px"><div style="color:#f0d080;font-weight:600;margin-bottom:8px">✦ COMODÍN ∞ → EXTENSIÓN BATS</div>';
   ci.extension.forEach(function(it){
-    h+='<div style="margin:8px 0"><strong style="color:#f0d080;font-size:.75rem">'+it.posicion+':</strong> '+it.carta.nombre+(it.invertida?" (inv)":"")+'</div>';
-    h+='<div style="color:#b8a898;font-size:.8rem">'+(it.texto||txt(it.carta,it.invertida)||"\u2014")+'</div>';
+    h+='<div style="margin:8px 0"><strong style="color:#f0d080;font-size:.75rem">'+escHTML(it.posicion)+':</strong> '+escHTML(it.carta.nombre)+(it.invertida?" (inv)":"")+'</div>';
+    h+='<div style="color:#b8a898;font-size:.8rem">'+escHTML(it.texto||txt(it.carta,it.invertida)||"\u2014")+'</div>';
   });
   h+='</div>';
   return h;
@@ -334,102 +365,135 @@ function cartasExtensionParaAI(cartas){
   });
 }
 function qHTML(cartas){
-  if(window._ocultarReferencias) return '';
+  if(window._ocultarReferencias) return document.createDocumentFragment();
+  var d=_mkEl("div","q-box");
+  var lbl=_mkEl("div","q-label");lbl.textContent="\u2726 QUINTAESENCIA";
+  var inner=_mkEl("div","q-inner");
   if(comodinPendiente(cartas)){
-    return '<div class="q-box"><div class="q-label">✦ QUINTAESENCIA</div><div class="q-inner"><div style="color:var(--text2)">Pendiente de resolución del Comodín</div></div></div>';
+    var pend=document.createElement("div");pend.style.color="var(--text2)";pend.textContent="Pendiente de resolución del Comodín";
+    inner.appendChild(pend);d.appendChild(lbl);d.appendChild(inner);return d;
   }
   var q=calcQuinta(cartas);
-  if(!q) return '<div class="q-box"><div class="q-label">✦ QUINTAESENCIA</div><div class="q-inner"><div style="color:var(--text2)">No calculada</div></div></div>';
+  if(!q){
+    var nc=document.createElement("div");nc.style.color="var(--text2)";nc.textContent="No calculada";
+    inner.appendChild(nc);d.appendChild(lbl);d.appendChild(inner);return d;
+  }
   var raw=cartas._qtext||textoQuinta(q.nombre)||txt(q,false);
   var p=parsearQuinta(raw);
-  var h='<div class="q-box"><div class="q-label">✦ QUINTAESENCIA: '+q.nombre+'</div><div class="q-inner">'+imgCard(q)+'<div><div class="q-name">'+q.nombre+'</div>';
-  if(p.lectura) h+='<div class="q-text">'+p.lectura+'</div>';
-  if(p.consejo) h+='<div class="q-field"><span class="q-fl">Consejo de acción BATS</span>'+p.consejo+'</div>';
-  if(p.palabraClave) h+='<div class="q-field"><span class="q-fl">Palabra clave</span>'+p.palabraClave+'</div>';
-  if(p.antipatron) h+='<div class="q-field"><span class="q-fl">Antipatrón</span>'+p.antipatron+'</div>';
-  h+='</div></div></div>';
-  return h;
+  lbl.textContent="\u2726 QUINTAESENCIA: "+q.nombre;
+  inner.appendChild(imgCard(q));
+  var info=document.createElement("div");
+  var nm=document.createElement("div");nm.className="q-name";nm.textContent=q.nombre;info.appendChild(nm);
+  if(p.lectura){var t=document.createElement("div");t.className="q-text";t.textContent=p.lectura;info.appendChild(t);}
+  if(p.consejo){var f=document.createElement("div");f.className="q-field";var fl=document.createElement("span");fl.className="q-fl";fl.textContent="Consejo de acción BATS";f.appendChild(fl);f.appendChild(document.createTextNode(p.consejo));info.appendChild(f);}
+  if(p.palabraClave){var f=document.createElement("div");f.className="q-field";var fl=document.createElement("span");fl.className="q-fl";fl.textContent="Palabra clave";f.appendChild(fl);f.appendChild(document.createTextNode(p.palabraClave));info.appendChild(f);}
+  if(p.antipatron){var f=document.createElement("div");f.className="q-field";var fl=document.createElement("span");fl.className="q-fl";fl.textContent="Antipatrón";f.appendChild(fl);f.appendChild(document.createTextNode(p.antipatron));info.appendChild(f);}
+  inner.appendChild(info);
+  d.appendChild(lbl);d.appendChild(inner);
+  return d;
 }
 
 function renderExtensionHTML(cartas){
   var ci=comodinEnCartas(cartas);
-  if(!ci||!ci.extensionResuelta||!ci.extension) return "";
-  var h='<div class="extension-box"><div class="ext-label">✦ COMODÍN ∞ → EXTENSIÓN BATS</div><div style="color:var(--gold2);font-style:italic;font-size:.8rem;margin-bottom:8px">'+COMODIN_TEXTO_ABIERTO+'</div><div class="ext-cards">';
+  if(!ci||!ci.extensionResuelta||!ci.extension) return document.createDocumentFragment();
+  var frag=document.createDocumentFragment();
+  var box=document.createElement("div");box.className="extension-box";
+  var lbl=document.createElement("div");lbl.className="ext-label";lbl.textContent="\u2726 COMODÍN \u221E \u2192 EXTENSIÓN BATS";
+  var desc=document.createElement("div");desc.style.cssText="color:var(--gold2);font-style:italic;font-size:.8rem;margin-bottom:8px";desc.textContent=COMODIN_TEXTO_ABIERTO;
+  var cards=document.createElement("div");cards.className="ext-cards";
   ci.extension.forEach(function(it){
     var c=it.carta,inv=it.invertida;
-    h+='<div class="card-view ext-card'+(inv?" invertida":"")+'">'+imgCard(c);
-    h+='<div class="card-name">'+c.nombre+(inv?" (inv)":"")+'</div>';
-    h+='<div class="ext-pos">'+it.posicion+'</div>';
-    if(!window._ocultarReferencias) h+='<div class="card-field">'+(it.texto||txt(c,inv))+'</div>';
-    h+='</div>';
+    var card=document.createElement("div");
+    card.className="card-view ext-card"+(inv?" invertida":"");
+    card.appendChild(imgCard(c));
+    var nm=document.createElement("div");nm.className="card-name";nm.textContent=c.nombre+(inv?" (inv)":"");
+    card.appendChild(nm);
+    var pos=document.createElement("div");pos.className="ext-pos";pos.textContent=it.posicion;
+    card.appendChild(pos);
+    if(!window._ocultarReferencias){
+      var tf=document.createElement("div");tf.className="card-field";tf.textContent=it.texto||txt(c,inv);
+      card.appendChild(tf);
+    }
+    cards.appendChild(card);
   });
-  h+='</div></div>';
-  return h;
+  box.appendChild(lbl);box.appendChild(desc);box.appendChild(cards);
+  frag.appendChild(box);
+  return frag;
 }
 function mostrarCompleto(cartas,dest,opts){
   opts=opts||{};
   window._lastPanelDest=dest;window._lastRenderOpts=opts;
-  var html='<div class="card-container">';
+  var el=document.getElementById(dest);_clear(el);
+  var container=document.createElement("div");container.className="card-container";
   cartas.forEach(function(it,i){
     var c=it.carta,inv=it.invertida;
     var pos=it.posicion||(opts.posiciones?opts.posiciones[i]:null);
     var texto=it.texto||txt(c,inv);
     var comodinC=esComodin(c);
-    html+='<div class="card-view'+(inv?" invertida":"")+(comodinC?" comodin-slot":"")+'">';
-    if(comodinC) html+=imgCard(c,it.comodinEstado||"reverso",it.comodinInvertido,i);
-    else html+=imgCard(c);
-    html+='<div class="card-name">'+c.nombre+'</div>';
-    if(pos) html+='<div style="font-size:.72rem;color:var(--gold2);margin-top:2px">'+pos+'</div>';
+    var cv=document.createElement("div");
+    cv.className="card-view"+(inv?" invertida":"")+(comodinC?" comodin-slot":"");
+    if(comodinC) cv.appendChild(imgCard(c,it.comodinEstado||"reverso",it.comodinInvertido,i));
+    else cv.appendChild(imgCard(c));
+    var nm=document.createElement("div");nm.className="card-name";nm.textContent=c.nombre;cv.appendChild(nm);
+    if(pos){var ps=document.createElement("div");ps.style.cssText="font-size:.72rem;color:var(--gold2);margin-top:2px";ps.textContent=pos;cv.appendChild(ps);}
     if(comodinC&&it.comodinEstado==="cerrado"&&!it.comodinInvertido&&!it.extensionResuelta){
-      html+='<div class="card-field" style="color:var(--gold2);font-style:italic">'+COMODIN_TEXTO_CERRADO+'</div>';
-      html+='<div style="margin-top:6px"><button class="btn btn-gold btn-sm" onclick="abrirExtension('+i+')">✦ Abrir Extensión</button></div>';
+      var cf=document.createElement("div");cf.className="card-field";cf.style.cssText="color:var(--gold2);font-style:italic";cf.textContent=COMODIN_TEXTO_CERRADO;cv.appendChild(cf);
+      var bwrap=document.createElement("div");bwrap.style.marginTop="6px";
+      var btn=document.createElement("button");btn.className="btn btn-gold btn-sm";btn.textContent="\u2726 Abrir Extensión";btn.onclick=(function(jj){return function(){abrirExtension(jj)}})(i);
+      bwrap.appendChild(btn);cv.appendChild(bwrap);
     }
     if(comodinC&&it.comodinInvertido&&it.comodinEstado!=="reverso"){
-      html+='<div class="card-field" style="color:var(--gold2);font-style:italic">'+COMODIN_INV_TEXT+'</div>';
+      var cf=document.createElement("div");cf.className="card-field";cf.style.cssText="color:var(--gold2);font-style:italic";cf.textContent=COMODIN_INV_TEXT;cv.appendChild(cf);
     }
     if(comodinC&&it.comodinEstado==="reverso"){
-      html+='<div class="card-field" style="color:var(--gold2);font-style:italic">'+COMODIN_TEXTO_REVERSO+'</div>';
+      var cf=document.createElement("div");cf.className="card-field";cf.style.cssText="color:var(--gold2);font-style:italic";cf.textContent=COMODIN_TEXTO_REVERSO;cv.appendChild(cf);
     }
-    if(texto&&opts.mostrarTexto!==false&&!comodinC&&!window._ocultarReferencias) html+='<div class="card-field">'+texto+'</div>';
-    html+='</div>';
+    if(texto&&opts.mostrarTexto!==false&&!comodinC&&!window._ocultarReferencias){
+      var cf=document.createElement("div");cf.className="card-field";cf.textContent=texto;cv.appendChild(cf);
+    }
+    container.appendChild(cv);
   });
-  html+='</div>';
-  html+=renderExtensionHTML(cartas);
-  if(opts.mostrarQ!==false) html+=qHTML(cartas);
-  document.getElementById(dest).innerHTML=html;
+  el.appendChild(container);
+  el.appendChild(renderExtensionHTML(cartas));
+  if(opts.mostrarQ!==false) el.appendChild(qHTML(cartas));
 }
 
 function mostrarCruz(cartas,dest,opts){
   opts=opts||{};
   window._lastPanelDest=dest;window._lastRenderOpts=opts;
   var cls=["cross-center","cross-left","cross-right","cross-top","cross-bottom"];
-  var html='<div class="cross-container">';
+  var el=document.getElementById(dest);_clear(el);
+  var container=document.createElement("div");container.className="cross-container";
   cartas.forEach(function(it,i){
     var c=it.carta,inv=it.invertida,pos=it.posicion;
     var texto=it.texto||txt(c,inv);
     var comodinC=esComodin(c);
-    html+='<div class="card-view'+(inv?" invertida":"")+(comodinC?" comodin-slot":"")+' '+cls[i]+'">';
-    if(comodinC) html+=imgCard(c,it.comodinEstado||"reverso",it.comodinInvertido,i);
-    else html+=imgCard(c);
-    html+='<div class="card-name">'+c.nombre+'</div>';
-    if(pos) html+='<div style="font-size:.65rem;color:var(--gold2);margin-top:1px;line-height:1.2">'+pos+'</div>';
+    var cv=document.createElement("div");
+    cv.className="card-view"+(inv?" invertida":"")+(comodinC?" comodin-slot":"")+" "+cls[i];
+    if(comodinC) cv.appendChild(imgCard(c,it.comodinEstado||"reverso",it.comodinInvertido,i));
+    else cv.appendChild(imgCard(c));
+    var nm=document.createElement("div");nm.className="card-name";nm.textContent=c.nombre;cv.appendChild(nm);
+    if(pos){var ps=document.createElement("div");ps.style.cssText="font-size:.65rem;color:var(--gold2);margin-top:1px;line-height:1.2";ps.textContent=pos;cv.appendChild(ps);}
     if(comodinC&&it.comodinEstado==="cerrado"&&!it.comodinInvertido&&!it.extensionResuelta){
-      html+='<div class="card-field" style="color:var(--gold2);font-style:italic;font-size:.7rem">'+COMODIN_TEXTO_CERRADO+'</div>';
-      html+='<div style="margin-top:6px"><button class="btn btn-gold btn-sm" onclick="abrirExtension('+i+')">✦ Abrir Extensión</button></div>';
+      var cf=document.createElement("div");cf.className="card-field";cf.style.cssText="color:var(--gold2);font-style:italic;font-size:.7rem";cf.textContent=COMODIN_TEXTO_CERRADO;cv.appendChild(cf);
+      var bwrap=document.createElement("div");bwrap.style.marginTop="6px";
+      var btn=document.createElement("button");btn.className="btn btn-gold btn-sm";btn.textContent="\u2726 Abrir Extensión";btn.onclick=(function(jj){return function(){abrirExtension(jj)}})(i);
+      bwrap.appendChild(btn);cv.appendChild(bwrap);
     }
     if(comodinC&&it.comodinInvertido&&it.comodinEstado!=="reverso"){
-      html+='<div class="card-field" style="color:var(--gold2);font-style:italic;font-size:.7rem">'+COMODIN_INV_TEXT+'</div>';
+      var cf=document.createElement("div");cf.className="card-field";cf.style.cssText="color:var(--gold2);font-style:italic;font-size:.7rem";cf.textContent=COMODIN_INV_TEXT;cv.appendChild(cf);
     }
     if(comodinC&&it.comodinEstado==="reverso"){
-      html+='<div class="card-field" style="color:var(--gold2);font-style:italic;font-size:.7rem">'+COMODIN_TEXTO_REVERSO+'</div>';
+      var cf=document.createElement("div");cf.className="card-field";cf.style.cssText="color:var(--gold2);font-style:italic;font-size:.7rem";cf.textContent=COMODIN_TEXTO_REVERSO;cv.appendChild(cf);
     }
-    if(texto&&opts.mostrarTexto!==false&&!comodinC&&!window._ocultarReferencias) html+='<div class="card-field" style="font-size:.7rem">'+texto+'</div>';
-    html+='</div>';
+    if(texto&&opts.mostrarTexto!==false&&!comodinC&&!window._ocultarReferencias){
+      var cf=document.createElement("div");cf.className="card-field";cf.style.cssText="font-size:.7rem";cf.textContent=texto;cv.appendChild(cf);
+    }
+    container.appendChild(cv);
   });
-  html+='</div>';
-  html+=renderExtensionHTML(cartas);
-  if(opts.mostrarQ!==false) html+=qHTML(cartas);
-  document.getElementById(dest).innerHTML=html;
+  el.appendChild(container);
+  el.appendChild(renderExtensionHTML(cartas));
+  if(opts.mostrarQ!==false) el.appendChild(qHTML(cartas));
 }
 
 function guardarHist(tipo,cartas,descripcion,titulo){
@@ -507,30 +571,58 @@ function slugify(s){
   return s.toLowerCase().replace(/[^a-z0-9áéíóúüñ\s-]/g,'').replace(/\s+/g,'_').replace(/-+/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'')||"tirada";
 }
 function btnGuardar(tipo,cartas){
-  return '<button class="btn btn-outline btn-sm" onclick="guardarHist(\''+tipo.replace(/'/g,"\\'")+'\',window._ult,document.getElementById(\'desc-\'+window._lastPanel)&&document.getElementById(\'desc-\'+window._lastPanel).value||\'\',document.getElementById(\'titulo-\'+window._lastPanel)&&document.getElementById(\'titulo-\'+window._lastPanel).value||\'\');return false">Guardar en historial</button>';
+  var btn=document.createElement("button");btn.className="btn btn-outline btn-sm";btn.textContent="Guardar en historial";
+  btn.onclick=function(){guardarHist(tipo,window._ult,document.getElementById('desc-'+window._lastPanel)&&document.getElementById('desc-'+window._lastPanel).value||'',document.getElementById('titulo-'+window._lastPanel)&&document.getElementById('titulo-'+window._lastPanel).value||'');return false};
+  return btn;
 }
 function btnMD(titulo,panelId){
-  var esc=titulo.replace(/'/g,"\\'");
-  return '<button class="btn btn-outline btn-sm" onclick="descargarMD(\''+esc+'\',window._ult,document.getElementById(\'desc-'+panelId+'\')&&document.getElementById(\'desc-'+panelId+'\').value||\'\',document.getElementById(\'situacion-'+panelId+'\')&&document.getElementById(\'situacion-'+panelId+'\').value||\'\',document.getElementById(\'accion-'+panelId+'\')&&document.getElementById(\'accion-'+panelId+'\').value||\'\',document.getElementById(\'tipo-'+panelId+'\')&&document.getElementById(\'tipo-'+panelId+'\').value||\'\',document.getElementById(\'anotaciones-'+panelId+'\')&&document.getElementById(\'anotaciones-'+panelId+'\').value||\'\',document.getElementById(\'observado-'+panelId+'\')&&document.getElementById(\'observado-'+panelId+'\').value||\'\')">Descargar MD</button>';
+  var btn=document.createElement("button");btn.className="btn btn-outline btn-sm";btn.textContent="Descargar MD";
+  btn.onclick=function(){descargarMD(titulo,window._ult,document.getElementById('desc-'+panelId)&&document.getElementById('desc-'+panelId).value||'',document.getElementById('situacion-'+panelId)&&document.getElementById('situacion-'+panelId).value||'',document.getElementById('accion-'+panelId)&&document.getElementById('accion-'+panelId).value||'',document.getElementById('tipo-'+panelId)&&document.getElementById('tipo-'+panelId).value||'',document.getElementById('anotaciones-'+panelId)&&document.getElementById('anotaciones-'+panelId).value||'',document.getElementById('observado-'+panelId)&&document.getElementById('observado-'+panelId).value||'')};
+  return btn;
 }
 function btnHTML(titulo,panelId){
-  var esc=titulo.replace(/'/g,"\\'");
-  return '<button class="btn btn-outline btn-sm" onclick="descargarHTML(\''+esc+'\',window._ult,document.getElementById(\'desc-'+panelId+'\')&&document.getElementById(\'desc-'+panelId+'\').value||\'\',document.getElementById(\'situacion-'+panelId+'\')&&document.getElementById(\'situacion-'+panelId+'\').value||\'\',document.getElementById(\'accion-'+panelId+'\')&&document.getElementById(\'accion-'+panelId+'\').value||\'\',document.getElementById(\'tipo-'+panelId+'\')&&document.getElementById(\'tipo-'+panelId+'\').value||\'\',document.getElementById(\'anotaciones-'+panelId+'\')&&document.getElementById(\'anotaciones-'+panelId+'\').value||\'\',document.getElementById(\'observado-'+panelId+'\')&&document.getElementById(\'observado-'+panelId+'\').value||\'\')">Descargar HTML</button>';
+  var btn=document.createElement("button");btn.className="btn btn-outline btn-sm";btn.textContent="Descargar HTML";
+  btn.onclick=function(){descargarHTML(titulo,window._ult,document.getElementById('desc-'+panelId)&&document.getElementById('desc-'+panelId).value||'',document.getElementById('situacion-'+panelId)&&document.getElementById('situacion-'+panelId).value||'',document.getElementById('accion-'+panelId)&&document.getElementById('accion-'+panelId).value||'',document.getElementById('tipo-'+panelId)&&document.getElementById('tipo-'+panelId).value||'',document.getElementById('anotaciones-'+panelId)&&document.getElementById('anotaciones-'+panelId).value||'',document.getElementById('observado-'+panelId)&&document.getElementById('observado-'+panelId).value||'')};
+  return btn;
 }
 function btnAI(titulo,panelId){
-  var esc=titulo.replace(/'/g,"\\'");
-  return '<button class="btn btn-outline btn-sm" onclick="descargarAI(\''+esc+'\',window._ult)">Descargar IA</button>';
+  var btn=document.createElement("button");btn.className="btn btn-outline btn-sm";btn.textContent="Descargar IA";
+  btn.onclick=function(){descargarAI(titulo,window._ult)};
+  return btn;
 }
 function btnCompartir(titulo){
-  return '<button class="btn btn-outline btn-sm" onclick="compartirTirada()">Compartir</button>';
+  var btn=document.createElement("button");btn.className="btn btn-outline btn-sm";btn.textContent="Compartir";
+  btn.onclick=function(){compartirTirada()};
+  return btn;
 }
 function cuadernoHTML(panelId){
   var cntId='cnt-'+panelId;
-  return '<div class="cuaderno-section"><h4 style="color:var(--gold);margin:0 0 8px;font-size:.9rem">Cuaderno de reflexiones</h4><div class="form-group"><label for="anotaciones-'+panelId+'">Anotaciones</label><div class="char-counter"><textarea id="anotaciones-'+panelId+'" class="input-desc" maxlength="300" placeholder="Escribe lo que consideres sobre esta tirada..." oninput="updateCounter(this,\''+cntId+'\')"></textarea><span class="counter-text" id="'+cntId+'">0/300</span></div></div><div class="form-group"><label for="observado-'+panelId+'">Lo observado</label><textarea id="observado-'+panelId+'" class="input-desc" maxlength="500" placeholder="Escribe después lo que has visto o vivido respecto a lo que entendiste..."></textarea></div></div>';
+  var wrap=document.createElement("div");wrap.className="cuaderno-section";
+  var h4=document.createElement("h4");h4.style.cssText="color:var(--gold);margin:0 0 8px;font-size:.9rem";h4.textContent="Cuaderno de reflexiones";wrap.appendChild(h4);
+  var fg1=document.createElement("div");fg1.className="form-group";
+  var lbl1=document.createElement("label");lbl1.htmlFor="anotaciones-"+panelId;lbl1.textContent="Anotaciones";fg1.appendChild(lbl1);
+  var cc=document.createElement("div");cc.className="char-counter";
+  var ta=document.createElement("textarea");ta.id="anotaciones-"+panelId;ta.className="input-desc";ta.maxLength=300;ta.placeholder="Escribe lo que consideres sobre esta tirada...";
+  ta.oninput=function(){updateCounter(this,cntId)};
+  cc.appendChild(ta);
+  var sp=document.createElement("span");sp.className="counter-text";sp.id=cntId;sp.textContent="0/300";cc.appendChild(sp);
+  fg1.appendChild(cc);wrap.appendChild(fg1);
+  var fg2=document.createElement("div");fg2.className="form-group";
+  var lbl2=document.createElement("label");lbl2.htmlFor="observado-"+panelId;lbl2.textContent="Lo observado";fg2.appendChild(lbl2);
+  var ta2=document.createElement("textarea");ta2.id="observado-"+panelId;ta2.className="input-desc";ta2.maxLength=500;ta2.placeholder="Escribe después lo que has visto o vivido respecto a lo que entendiste...";
+  fg2.appendChild(ta2);wrap.appendChild(fg2);
+  return wrap;
 }
 function ponerBotones(dest,titulo,panelId){
   var el=document.getElementById(dest);
-  el.insertAdjacentHTML("beforeend",cuadernoHTML(panelId)+'<div class="btn-group mt-8">'+btnMD(titulo,panelId)+btnHTML(titulo,panelId)+btnAI(titulo,panelId)+btnCompartir(titulo)+btnGuardar(titulo)+'</div>');
+  el.appendChild(cuadernoHTML(panelId));
+  var bg=document.createElement("div");bg.className="btn-group mt-8";
+  bg.appendChild(btnMD(titulo,panelId));
+  bg.appendChild(btnHTML(titulo,panelId));
+  bg.appendChild(btnAI(titulo,panelId));
+  bg.appendChild(btnCompartir(titulo));
+  bg.appendChild(btnGuardar(titulo));
+  el.appendChild(bg);
 }
 
 var BATS_BASE="https://sugusdeborbon-glitch.github.io/bats-tarot/";
@@ -570,8 +662,8 @@ function descargarHTML(titulo,cartas,descripcion,situacion,accion,tipo,anotacion
     var txts=it.texto||txt(c,inv)||"\u2014";
     if(esCruz) cardsHTML+='<div class="card '+(inv?"inv ":"")+clsCruz[i]+'">';
     else cardsHTML+='<div class="card'+(inv?" inv":"")+'">';
-    cardsHTML+='<img src="'+BATS_BASE+c.img+'" alt="'+c.nombre+'">';
-    cardsHTML+='<div class="cn">'+c.nombre+(inv?' <small>(inv)</small>':'')+'</div>';
+    cardsHTML+='<img src="'+BATS_BASE+c.img+'" alt="'+escHTML(c.nombre)+'">';
+    cardsHTML+='<div class="cn">'+escHTML(c.nombre)+(inv?' <small>(inv)</small>':'')+'</div>';
     if(pos) cardsHTML+='<div class="cp">'+pos+'</div>';
     cardsHTML+='<div class="ct">'+txts+'</div></div>';
   });
@@ -579,9 +671,9 @@ function descargarHTML(titulo,cartas,descripcion,situacion,accion,tipo,anotacion
   var qH="";
   if(q){
     var p=parsearQuinta(cartas._qtext||textoQuinta(q.nombre)||txt(q,false));
-    qH='<div class="q"><div class="ql">✦ QUINTAESENCIA: '+q.nombre+'</div>';
-    qH+='<img src="'+BATS_BASE+q.img+'" alt="'+q.nombre+'">';
-    qH+='<div class="cn">'+q.nombre+'</div>';
+    qH='<div class="q"><div class="ql">✦ QUINTAESENCIA: '+escHTML(q.nombre)+'</div>';
+    qH+='<img src="'+BATS_BASE+q.img+'" alt="'+escHTML(q.nombre)+'">';
+    qH+='<div class="cn">'+escHTML(q.nombre)+'</div>';
     if(p.lectura) qH+='<div class="ct">'+p.lectura+'</div>';
     if(p.consejo) qH+='<div class="ct" style="margin-top:6px"><strong style="color:#f0d080;font-size:.75rem">CONSEJO DE ACCIÓN BATS:</strong> '+p.consejo+'</div>';
     if(p.palabraClave) qH+='<div class="ct" style="margin-top:4px"><strong style="color:#f0d080;font-size:.75rem">PALABRA CLAVE:</strong> '+p.palabraClave+'</div>';
@@ -592,16 +684,16 @@ function descargarHTML(titulo,cartas,descripcion,situacion,accion,tipo,anotacion
   var extraCSS=esCruz?".cross-container{display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:auto auto auto;gap:12px;max-width:520px;margin:16px auto;justify-items:center;align-items:start}.cross-center{grid-column:2;grid-row:2}.cross-left{grid-column:1;grid-row:2}.cross-right{grid-column:3;grid-row:2}.cross-top{grid-column:2;grid-row:1}.cross-bottom{grid-column:2;grid-row:3}.cross-container .card{width:140px}":"";
   var interpH=cartas._interp?'<div class="interp"><div class="ql">✦ INTERPRETACIÓN</div><div class="ct">'+interpParaHTML(cartas._interp)+'</div></div>':"";
   var iaH=cartas._ia?'<p class="ia">IA que ha asistido la interpretaci\u00f3n: '+escHTML(cartas._ia)+'</p>':"";
-  var html='<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>'+titulo+' - BATS</title>';
+  var html='<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>'+escHTML(titulo)+' - BATS</title>';
   html+='<style>body{font-family:sans-serif;background:#0d0a13;color:#e8dcc8;padding:20px;max-width:800px;margin:0 auto}h1{color:#d4a847}.cards{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;margin:16px 0}.card{width:160px;text-align:center;background:#1a1225;border-radius:8px;padding:8px;border:1px solid #2a1a3e}.card.inv img,.card.invertida img{transform:rotate(180deg)}.card img,.q img{width:100%;border-radius:6px}.cn{color:#d4a847;font-weight:600;margin-top:4px;font-size:.9rem}.cp{color:#f0d080;font-size:.75rem;margin-top:2px}.ct{color:#b8a898;font-size:.8rem;margin-top:4px;text-align:left}.q{margin:20px auto;padding:12px;background:#1a1225;border:1px solid #d4a847;border-radius:8px;text-align:center;max-width:320px}.ql{color:#f0d080;font-weight:600;margin-bottom:8px}.q img{width:80px}.interp{margin:20px auto;padding:12px;background:#1a1225;border:1px solid #d4a847;border-radius:8px;max-width:620px;text-align:left}.interp .ct{white-space:pre-wrap}.ia{color:#8a7f6a;font-size:.72rem;text-align:center;margin:4px auto 0;max-width:620px}.foot{color:#666;font-size:.8rem;text-align:center;margin-top:24px}'+extraCSS+'</style></head><body>';
-  html+='<h1>'+titulo+'</h1><p style="color:#b8a898"><em>'+fs+'</em></p>';
-  if(descripcion) html+='<p style="font-style:italic;color:#b8a898;margin-bottom:12px">'+descripcion+'</p>';
-  if(tipo) html+='<p style="font-style:italic;color:#f0d080;margin-bottom:12px"><strong>Tipo de relación:</strong> '+tipo+'</p>';
-  if(situacion) html+='<p style="font-style:italic;color:#f0d080;margin-bottom:12px"><strong>Situación:</strong> '+situacion+'</p>';
+  html+='<h1>'+escHTML(titulo)+'</h1><p style="color:#b8a898"><em>'+escHTML(fs)+'</em></p>';
+  if(descripcion) html+='<p style="font-style:italic;color:#b8a898;margin-bottom:12px">'+escHTML(descripcion)+'</p>';
+  if(tipo) html+='<p style="font-style:italic;color:#f0d080;margin-bottom:12px"><strong>Tipo de relación:</strong> '+escHTML(tipo)+'</p>';
+  if(situacion) html+='<p style="font-style:italic;color:#f0d080;margin-bottom:12px"><strong>Situación:</strong> '+escHTML(situacion)+'</p>';
   html+='<div class="'+wrap+'">'+cardsHTML+'</div>'+extensionHtml(cartas)+qH+interpH+iaH;
-  if(accion) html+='<p style="font-style:italic;color:#b8a898;margin-top:12px"><strong>Acción recomendada:</strong> '+accion+'</p>';
-  if(anotaciones) html+='<p style="color:#b8a898;margin-top:8px"><strong>Anotaciones:</strong> '+anotaciones+'</p>';
-  if(observado) html+='<p style="color:#b8a898;margin-top:8px"><strong>Lo observado:</strong> '+observado+'</p>';
+  if(accion) html+='<p style="font-style:italic;color:#b8a898;margin-top:12px"><strong>Acción recomendada:</strong> '+escHTML(accion)+'</p>';
+  if(anotaciones) html+='<p style="color:#b8a898;margin-top:8px"><strong>Anotaciones:</strong> '+escHTML(anotaciones)+'</p>';
+  if(observado) html+='<p style="color:#b8a898;margin-top:8px"><strong>Lo observado:</strong> '+escHTML(observado)+'</p>';
   html+='<p class="foot">Generado por BATS Tarot</p></body></html>';
   downloadBlob(html,"bats-"+slug+"-"+fn+".html","text/html");
 }
@@ -640,29 +732,56 @@ function descargarAI(titulo,cartas){
 
 function cargarHist(){
   var h=JSON.parse(lsGet("bats-hist")||"[]");
-  var c=document.getElementById("r-historial");
-  var htm='<div class="priv-notice">Las lecturas se guardan solo en este navegador y no se sincronizan. Para conservarlas o trasladarlas a otro dispositivo, usa Exportar.</div>';
-  htm+='<div class="hist-controls"><div class="hist-search-row"><input type="text" id="hist-search" placeholder="Palabra clave..." onkeydown="if(event.key===\'Enter\')buscarHist()"><button class="btn btn-outline btn-sm" onclick="buscarHist()">Buscar</button><button class="btn btn-outline btn-sm" onclick="limpiarFiltros()">Limpiar</button></div><div class="hist-filters-row"><select id="hist-tipo"><option value="">Todos los tipos</option><option value="Cruz Diaria">Cruz Diaria</option><option value="Tirada de la relación">Relación</option><option value="BATS Laboral">BATS Laboral</option><option value="El Aprendizaje">Aprendizaje</option><option value="Tirada Personalizada">Personalizada</option><option value="El Arcano Visitante">Arcano Visitante</option></select><label>Desde: <input type="date" id="hist-desde"></label><label>Hasta: <input type="date" id="hist-hasta"></label></div></div>';
-  htm+='<div id="hist-listado"></div>';
-  c.innerHTML=htm;
+  var c=document.getElementById("r-historial");_clear(c);
+  var notice=document.createElement("div");notice.className="priv-notice";notice.textContent="Las lecturas se guardan solo en este navegador y no se sincronizan. Para conservarlas o trasladarlas a otro dispositivo, usa Exportar.";
+  c.appendChild(notice);
+  var controls=document.createElement("div");controls.className="hist-controls";
+  var srow=document.createElement("div");srow.className="hist-search-row";
+  var inp=document.createElement("input");inp.type="text";inp.id="hist-search";inp.placeholder="Palabra clave...";
+  inp.onkeydown=function(ev){if(ev.key==='Enter')buscarHist()};
+  srow.appendChild(inp);
+  var btnB=document.createElement("button");btnB.className="btn btn-outline btn-sm";btnB.textContent="Buscar";btnB.onclick=buscarHist;srow.appendChild(btnB);
+  var btnL=document.createElement("button");btnL.className="btn btn-outline btn-sm";btnL.textContent="Limpiar";btnL.onclick=limpiarFiltros;srow.appendChild(btnL);
+  controls.appendChild(srow);
+  var frow=document.createElement("div");frow.className="hist-filters-row";
+  var sel=document.createElement("select");sel.id="hist-tipo";
+  ["","Cruz Diaria","Tirada de la relación","BATS Laboral","El Aprendizaje","Tirada Personalizada","El Arcano Visitante"].forEach(function(v){
+    var o=document.createElement("option");o.value=v;o.textContent=v||"Todos los tipos";sel.appendChild(o);
+  });
+  frow.appendChild(sel);
+  var lblD=document.createElement("label");lblD.textContent="Desde: ";var inpD=document.createElement("input");inpD.type="date";inpD.id="hist-desde";lblD.appendChild(inpD);frow.appendChild(lblD);
+  var lblH=document.createElement("label");lblH.textContent="Hasta: ";var inpH=document.createElement("input");inpH.type="date";inpH.id="hist-hasta";lblH.appendChild(inpH);frow.appendChild(lblH);
+  controls.appendChild(frow);c.appendChild(controls);
+  var listado=document.createElement("div");listado.id="hist-listado";c.appendChild(listado);
   renderHistCards(h);
 }
 function renderHistCards(arr,fullArr){
   fullArr=fullArr||arr;
   var c=document.getElementById("hist-listado");
   if(!c) return;
-  if(!arr.length){c.innerHTML='<p class="subtle">No hay lecturas guardadas.</p>';return}
-  var htm='<div class="historial-grid">';
+  _clear(c);
+  if(!arr.length){var p=document.createElement("p");p.className="subtle";p.textContent="No hay lecturas guardadas.";c.appendChild(p);return}
+  var grid=document.createElement("div");grid.className="historial-grid";
   arr.forEach(function(hr){
     var origIdx=fullArr.indexOf(hr);
     var d=new Date(hr.fecha),fs=d.toLocaleDateString("es-ES",{year:"numeric",month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"});
-    var previewImgs=hr.cartas.slice(0,4).map(function(ca){return '<img src="'+ca.img+'" alt="" loading="lazy">'}).join("");
-    htm+='<div class="historial-card" onclick="verHist('+origIdx+')">';
-    if(previewImgs) htm+='<div class="hc-preview">'+previewImgs+'</div>';
-    htm+='<div class="h-fecha">'+fs+'</div><div class="h-tipo">'+(hr.titulo||hr.tipo)+(hr.descripcion?' <span style="font-weight:normal;font-size:.75rem;opacity:.7"> · '+hr.descripcion+'</span>':'')+'</div><div class="h-cartas">'+hr.resumen+'</div></div>';
+    var card=document.createElement("div");card.className="historial-card";card.onclick=(function(jj){return function(){verHist(jj)}})(origIdx);
+    if(hr.cartas&&hr.cartas.length){
+      var prev=document.createElement("div");prev.className="hc-preview";
+      hr.cartas.slice(0,4).forEach(function(ca){
+        var im=document.createElement("img");im.src=ca.img;im.alt="";im.loading="lazy";prev.appendChild(im);
+      });
+      card.appendChild(prev);
+    }
+    var fd=document.createElement("div");fd.className="h-fecha";fd.textContent=fs;card.appendChild(fd);
+    var ft=document.createElement("div");ft.className="h-tipo";
+    ft.appendChild(document.createTextNode(hr.titulo||hr.tipo));
+    if(hr.descripcion){var sp=document.createElement("span");sp.style.cssText="font-weight:normal;font-size:.75rem;opacity:.7";sp.textContent=" \u00B7 "+hr.descripcion;ft.appendChild(sp);}
+    card.appendChild(ft);
+    var fc=document.createElement("div");fc.className="h-cartas";fc.textContent=hr.resumen;card.appendChild(fc);
+    grid.appendChild(card);
   });
-  htm+='</div>';
-  c.innerHTML=htm;
+  c.appendChild(grid);
 }
 function buscarHist(){
   var q=document.getElementById('hist-search')?.value?.toLowerCase().trim()||'';
@@ -701,49 +820,74 @@ function verHist(i){
   cartas._interp=hr._interp||"";
   cartas._ia=hr._ia||"";
   cartas._qtext=hr._qtext||"";
-  var htm='<div class="result-box"><h3 style="color:var(--gold);margin-bottom:6px">'+(hr.titulo||hr.tipo)+'</h3>';
+  var root=document.getElementById("r-historial");_clear(root);
+  var box=document.createElement("div");box.className="result-box";
+  var tit=document.createElement("h3");tit.style.cssText="color:var(--gold);margin-bottom:6px";tit.textContent=hr.titulo||hr.tipo;box.appendChild(tit);
   var fs=new Date(hr.fecha).toLocaleDateString("es-ES",{year:"numeric",month:"long",day:"numeric",hour:"2-digit",minute:"2-digit"});
-  htm+='<p style="color:var(--text-muted);margin-bottom:8px;font-size:.85rem">'+fs+'</p>';
-  if(hr.descripcion) htm+='<p style="font-style:italic;color:var(--text-muted);margin-bottom:8px;font-size:.9rem">'+(hr.titulo?hr.tipo+": ":"")+hr.descripcion+'</p>';
-  if(hr.tipo_rel) htm+='<p style="font-style:italic;color:var(--text-muted);margin-bottom:8px;font-size:.9rem"><strong>Tipo de relación:</strong> '+hr.tipo_rel+'</p>';
-  if(hr.situacion) htm+='<p style="font-style:italic;color:var(--text-muted);margin-bottom:8px;font-size:.9rem"><strong>Situación:</strong> '+hr.situacion+'</p>';
-  if(hr.accion) htm+='<p style="font-style:italic;color:var(--text-muted);margin-bottom:8px;font-size:.9rem"><strong>Acción:</strong> '+hr.accion+'</p>';
+  var fp=document.createElement("p");fp.style.cssText="color:var(--text-muted);margin-bottom:8px;font-size:.85rem";fp.textContent=fs;box.appendChild(fp);
+  if(hr.descripcion){var dp=document.createElement("p");dp.style.cssText="font-style:italic;color:var(--text-muted);margin-bottom:8px;font-size:.9rem";dp.textContent=(hr.titulo?hr.tipo+": ":"")+hr.descripcion;box.appendChild(dp);}
+  if(hr.tipo_rel){var tp=document.createElement("p");tp.style.cssText="font-style:italic;color:var(--text-muted);margin-bottom:8px;font-size:.9rem";var st=document.createElement("strong");st.textContent="Tipo de relaci\u00f3n: ";tp.appendChild(st);tp.appendChild(document.createTextNode(hr.tipo_rel));box.appendChild(tp);}
+  if(hr.situacion){var sp=document.createElement("p");sp.style.cssText="font-style:italic;color:var(--text-muted);margin-bottom:8px;font-size:.9rem";var st=document.createElement("strong");st.textContent="Situaci\u00f3n: ";sp.appendChild(st);sp.appendChild(document.createTextNode(hr.situacion));box.appendChild(sp);}
+  if(hr.accion){var ap=document.createElement("p");ap.style.cssText="font-style:italic;color:var(--text-muted);margin-bottom:8px;font-size:.9rem";var st=document.createElement("strong");st.textContent="Acci\u00f3n: ";ap.appendChild(st);ap.appendChild(document.createTextNode(hr.accion));box.appendChild(ap);}
   if(hr.cartas[0]&&hr.cartas[0].posicion){
     cartas.forEach(function(it){
       var c=it.carta;
-      htm+='<div class="card-result"><div class="pos-name">'+(it.posicion||"")+'</div>';
-      htm+='<div class="card-name-r">'+c.nombre+(it.invertida?" (inv)":"")+'</div>';
-      htm+='<div class="card-msg">'+(it.texto||"\u2014")+'</div></div>';
+      var cr=document.createElement("div");cr.className="card-result";
+      var pn=document.createElement("div");pn.className="pos-name";pn.textContent=it.posicion||"";cr.appendChild(pn);
+      var cn=document.createElement("div");cn.className="card-name-r";cn.textContent=c.nombre+(it.invertida?" (inv)":"");cr.appendChild(cn);
+      var cm=document.createElement("div");cm.className="card-msg";cm.textContent=it.texto||"\u2014";cr.appendChild(cm);
+      box.appendChild(cr);
     });
   }else{
-    htm+='<div class="card-container">';
+    var cc=document.createElement("div");cc.className="card-container";
     cartas.forEach(function(it){
       var c=it.carta,inv=it.invertida?" invertida":"";
-      var ci=imgCard(c,esComodin(c)?it.comodinEstado:undefined,esComodin(c)?it.comodinInvertido:undefined);
-      htm+='<div class="card-view'+inv+'">'+ci+'<div class="card-name">'+c.nombre+(it.invertida?' <span style="color:var(--danger);font-size:.7rem">(inv)</span>':'')+'</div>';
-      if(it.texto) htm+='<div class="card-field">'+it.texto+'</div>';
-      htm+='</div>';
+      var cv=document.createElement("div");cv.className="card-view"+inv;
+      cv.appendChild(imgCard(c,esComodin(c)?it.comodinEstado:undefined,esComodin(c)?it.comodinInvertido:undefined));
+      var nm=document.createElement("div");nm.className="card-name";nm.textContent=c.nombre;
+      if(it.invertida){var iv=document.createElement("span");iv.style.cssText="color:var(--danger);font-size:.7rem";iv.textContent=" (inv)";nm.appendChild(iv);}
+      cv.appendChild(nm);
+      if(it.texto){var tf=document.createElement("div");tf.className="card-field";tf.textContent=it.texto;cv.appendChild(tf);}
+      cc.appendChild(cv);
     });
-    htm+='</div>';
+    box.appendChild(cc);
   }
-  htm+=extensionHtml(cartas);
-  htm+=qHTML(cartas);
+  box.appendChild(_htmlToDom(extensionHtml(cartas)));
+  box.appendChild(qHTML(cartas));
   if(hr._interp){
-    htm+='<div class="ai-interp-texto" style="margin-top:10px">'+interpParaHTML(hr._interp)+'</div>';
+    var itd=document.createElement("div");itd.className="ai-interp-texto";itd.style.marginTop="10px";
+    itd.innerHTML=interpParaHTML(hr._interp);box.appendChild(itd);
   }else{
-    htm+='<p style="font-style:italic;color:var(--text-muted);margin-top:10px;font-size:.85rem">Lectura sin interpretación guardada.</p>';
+    var np=document.createElement("p");np.style.cssText="font-style:italic;color:var(--text-muted);margin-top:10px;font-size:.85rem";np.textContent="Lectura sin interpretaci\u00f3n guardada.";box.appendChild(np);
   }
-  if(hr._ia) htm+='<div class="ai-interp-ia">IA que ha asistido la interpretaci\u00f3n: '+escHTML(hr._ia)+'</div>';
+  if(hr._ia){var iad=document.createElement("div");iad.className="ai-interp-ia";iad.textContent="IA que ha asistido la interpretaci\u00f3n: "+hr._ia;box.appendChild(iad);}
   if(typeof vozSoporte==="function"&&vozSoporte()){
-    htm+=vozBarHTML("hist-"+i);
+    box.appendChild(vozBarDOM("hist-"+i));
     VOZ.textos["hist-"+i]=vozTextoDe(cartas,{guion:/arcano/i.test(hr.tipo||"")?"arcano":null});
   }
-  htm+='<div class="cuaderno-section"><h4 style="color:var(--gold);margin:12px 0 6px;font-size:.9rem">Cuaderno de reflexiones</h4>';
-  htm+='<div class="form-group"><label for="c-anot-'+i+'">Anotaciones</label><div class="char-counter"><textarea id="c-anot-'+i+'" class="input-desc" maxlength="300" oninput="var c=document.getElementById(\'cnt-'+i+'\');if(c)c.textContent=this.length+\'/300\'" placeholder="Escribe lo que consideres sobre esta tirada...">'+(hr.anotaciones||"")+'</textarea><span class="counter-text" id="cnt-'+i+'">'+(hr.anotaciones||"").length+'/300</span></div></div>';
-  htm+='<div class="form-group"><label for="c-obs-'+i+'">Lo observado</label><textarea id="c-obs-'+i+'" class="input-desc" maxlength="500" placeholder="Escribe después lo que has visto o vivido respecto a lo que entendiste...">'+(hr.observado||"")+'</textarea></div>';
-  htm+='<div class="btn-group"><button class="btn btn-outline btn-sm" onclick="guardarCuaderno('+i+')">Guardar cambios</button></div></div>';
-  htm+='<div class="btn-group mt-8"><button class="btn btn-outline btn-sm" onclick="compartirHist('+i+')">Compartir</button><button class="btn btn-outline btn-sm" onclick="descargarHistMD('+i+')">MD</button><button class="btn btn-outline btn-sm" onclick="descargarHistHTML('+i+')">HTML</button><button class="btn btn-outline btn-sm" onclick="descargarHistAI('+i+')">IA</button><button class="btn btn-danger btn-sm" onclick="eliminarHist('+i+')">Eliminar</button><button class="btn btn-outline btn-sm" onclick="cargarHist()">← Volver</button></div></div>';
-  document.getElementById("r-historial").innerHTML=htm;
+  var cs=document.createElement("div");cs.className="cuaderno-section";
+  var h4=document.createElement("h4");h4.style.cssText="color:var(--gold);margin:12px 0 6px;font-size:.9rem";h4.textContent="Cuaderno de reflexiones";cs.appendChild(h4);
+  var fg1=document.createElement("div");fg1.className="form-group";
+  var lbl1=document.createElement("label");lbl1.htmlFor="c-anot-"+i;lbl1.textContent="Anotaciones";fg1.appendChild(lbl1);
+  var cc2=document.createElement("div");cc2.className="char-counter";
+  var ta=document.createElement("textarea");ta.id="c-anot-"+i;ta.className="input-desc";ta.maxLength=300;ta.placeholder="Escribe lo que consideres sobre esta tirada...";
+  ta.value=hr.anotaciones||"";ta.oninput=function(){var el=document.getElementById('cnt-'+i);if(el)el.textContent=this.length+'/300'};
+  cc2.appendChild(ta);
+  var spn=document.createElement("span");spn.className="counter-text";spn.id="cnt-"+i;spn.textContent=(hr.anotaciones||"").length+'/300';cc2.appendChild(spn);
+  fg1.appendChild(cc2);cs.appendChild(fg1);
+  var fg2=document.createElement("div");fg2.className="form-group";
+  var lbl2=document.createElement("label");lbl2.htmlFor="c-obs-"+i;lbl2.textContent="Lo observado";fg2.appendChild(lbl2);
+  var ta2=document.createElement("textarea");ta2.id="c-obs-"+i;ta2.className="input-desc";ta2.maxLength=500;ta2.placeholder="Escribe después lo que has visto o vivido respecto a lo que entendiste...";
+  ta2.value=hr.observado||"";fg2.appendChild(ta2);cs.appendChild(fg2);
+  var bg2=document.createElement("div");bg2.className="btn-group";
+  var btnSave=document.createElement("button");btnSave.className="btn btn-outline btn-sm";btnSave.textContent="Guardar cambios";btnSave.onclick=(function(jj){return function(){guardarCuaderno(jj)}})(i);
+  bg2.appendChild(btnSave);cs.appendChild(bg2);box.appendChild(cs);
+  var bg3=document.createElement("div");bg3.className="btn-group mt-8";
+  var bDefs=[["Compartir",function(){compartirHist(i)}],["MD",function(){descargarHistMD(i)}],["HTML",function(){descargarHistHTML(i)}],["IA",function(){descargarHistAI(i)}]];
+  bDefs.forEach(function(d){var b=document.createElement("button");b.className="btn btn-outline btn-sm";b.textContent=d[0];b.onclick=d[1];bg3.appendChild(b);});
+  var bDel=document.createElement("button");bDel.className="btn btn-danger btn-sm";bDel.textContent="Eliminar";bDel.onclick=(function(jj){return function(){eliminarHist(jj)}})(i);bg3.appendChild(bDel);
+  var bBack=document.createElement("button");bBack.className="btn btn-outline btn-sm";bBack.textContent="\u2190 Volver";bBack.onclick=cargarHist;bg3.appendChild(bBack);
+  box.appendChild(bg3);root.appendChild(box);
   if(typeof vozSoporte==="function"&&vozSoporte()){
     var sel=document.querySelector("#r-historial .voz-select");
     if(sel) vozPoblarSelect(sel);
@@ -916,7 +1060,7 @@ function renderConIA(cartas,dest,renderFn,ctx){
     var el=document.getElementById(dest);
     if(useCorta){
       window._ocultarReferencias=true;
-      if(el) el.innerHTML='<div class="ai-cargando"><span class="ai-spinner"></span>Interpretando con IA\u2026</div>';
+      if(el){_clear(el);var ld=document.createElement("div");ld.className="ai-cargando";var sp=document.createElement("span");sp.className="ai-spinner";ld.appendChild(sp);ld.appendChild(document.createTextNode("Interpretando con IA\u2026"));el.appendChild(ld);}
       generarTextosIA(cartas,ctx).then(function(){
         window._ocultarReferencias=false;
         try{renderFn()}catch(e){console.error("renderFn:",e)}
@@ -949,26 +1093,39 @@ function renderInterpLarga(dest,cartas,ctx){
     el.parentNode.insertBefore(cont,el.nextSibling);
   }
   cont.style.display="";
-  cont.innerHTML='<h4 class="ai-interp-title">\u2726 Interpretaci\u00f3n</h4><div class="ai-interp-body"><div class="ai-cargando"><span class="ai-spinner"></span>Generando interpretaci\u00f3n<span class="ai-interp-t"></span>\u2026 <span class="ai-interp-v" style="font-size:.75em;opacity:.6">v'+BATS_VERSION+'</span><span class="ai-interp-status" style="display:block;font-size:.72em;opacity:.75;margin-top:4px"></span></div></div>';
-  var body=cont.querySelector(".ai-interp-body")||cont;
-  var tEl=body.querySelector(".ai-interp-t");
-  var sEl=body.querySelector(".ai-interp-status");
+  _clear(cont);
+  var h4=document.createElement("h4");h4.className="ai-interp-title";h4.textContent="\u2726 Interpretación";cont.appendChild(h4);
+  var bodyWrap=document.createElement("div");bodyWrap.className="ai-interp-body";
+  var carg=document.createElement("div");carg.className="ai-cargando";
+  var sp=document.createElement("span");sp.className="ai-spinner";carg.appendChild(sp);
+  carg.appendChild(document.createTextNode("Generando interpretación"));
+  var tEl=document.createElement("span");tEl.className="ai-interp-t";carg.appendChild(tEl);
+  carg.appendChild(document.createTextNode("\u2026 "));
+  var vEl=document.createElement("span");vEl.className="ai-interp-v";vEl.style.cssText="font-size:.75em;opacity:.6";vEl.textContent="v"+BATS_VERSION;carg.appendChild(vEl);
+  var sEl=document.createElement("span");sEl.className="ai-interp-status";sEl.style.cssText="display:block;font-size:.72em;opacity:.75;margin-top:4px";carg.appendChild(sEl);
+  bodyWrap.appendChild(carg);cont.appendChild(bodyWrap);
+  var body=bodyWrap;
   var ini=Date.now(),tick=null,failsafe=null,acabado=false;
   function limpiar(){acabado=true;if(tick){clearInterval(tick);tick=null}if(failsafe){clearTimeout(failsafe);failsafe=null}}
   function mostrarError(e){
     limpiar();
     try{console.error("Error interpretacion larga:",e)}catch(_){}
-    body.innerHTML='<p class="subtle">No se pudo generar la interpretaci\u00f3n'+(e&&e.message?": "+e.message:"")+'</p><div class="ai-interp-btns"><button class="btn btn-outline btn-sm" onclick="reintentarInterp(\''+dest+'\')">Reintentar</button></div>';
+    _clear(body);
+    var p=document.createElement("p");p.className="subtle";p.textContent="No se pudo generar la interpretación"+(e&&e.message?": "+e.message:"");body.appendChild(p);
+    var btns=document.createElement("div");btns.className="ai-interp-btns";
+    var rb=document.createElement("button");rb.className="btn btn-outline btn-sm";rb.textContent="Reintentar";rb.onclick=(function(dd){return function(){reintentarInterp(dd)}})(dest);
+    btns.appendChild(rb);body.appendChild(btns);
   }
   function mostrarOK(t){
     limpiar();
     cartas._interp=t;
     cartas._ia=etiquetaIA()||"";
-    body.innerHTML='<div class="ai-interp-texto">'+interpParaHTML(t)+'</div>';
-    if(cartas._ia) body.insertAdjacentHTML("beforeend",'<div class="ai-interp-ia">IA que ha asistido la interpretaci\u00f3n: '+escHTML(cartas._ia)+'</div>');
+    _clear(body);
+    var td=document.createElement("div");td.className="ai-interp-texto";td.innerHTML=interpParaHTML(t);body.appendChild(td);
+    if(cartas._ia){var iad=document.createElement("div");iad.className="ai-interp-ia";iad.textContent="IA que ha asistido la interpretación: "+cartas._ia;body.appendChild(iad);}
     if(typeof vozSoporte==="function"&&vozSoporte()){
       var vd=String(dest).replace(/"/g,"");
-      body.insertAdjacentHTML("beforeend",vozBarHTML(vd));
+      body.appendChild(vozBarDOM(vd));
       VOZ.textos[vd]=vozTextoDe(cartas,ctx);
       vozPoblarSelect(body.querySelector(".voz-select"));
       vozActualizarBarras();
@@ -999,11 +1156,17 @@ function renderInterpLarga(dest,cartas,ctx){
   }
 }
 function interpParaHTML(t){
-  return (t||"").replace(/\*\*/g,"").replace(/^#{1,6}\s*/gm,"").replace(/\*([^*]+)\*/g,"$1").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/\n{3,}/g,"\n\n").replace(/\n/g,"<br>");
+  var h=escHTML(t);
+  return h.replace(/\*\*/g,"").replace(/^#{1,6}\s*/gm,"").replace(/\*([^*]+)\*/g,"$1").replace(/\n{3,}/g,"\n\n").replace(/\n/g,"<br>");
 }
 function escHTML(s){
   return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 }
+function _clear(el){while(el.firstChild)el.removeChild(el.firstChild);return el;}
+function _mkEl(tag,cls){var e=document.createElement(tag);if(cls)e.className=cls;return e;}
+function _mkTxt(s){return document.createTextNode(s==null?"":s);}
+function _mkOpt(val,txt,selected){var o=document.createElement("option");o.value=val;o.textContent=txt;if(selected)o.selected=true;return o;}
+function _htmlToDom(html){var t=document.createElement("div");t.innerHTML=html;var f=document.createDocumentFragment();while(t.firstChild)f.appendChild(t.firstChild);return f;}
 function reintentarInterp(dest){
   if(window._ult) renderInterpLarga(dest,window._ult,window._lastCtx||{});
 }
@@ -1106,11 +1269,29 @@ function hacerLaboral(inv){
   },{titulo:"BATS Laboral",descripcion:valPanel("desc-laboral"),guion:"laboral",panelId:"laboral"});
 }
 
-function actPos(){  var n=parseInt(document.getElementById("pers-cant").value);
-  var cont=document.getElementById("campos-posiciones"),h="",vals={};
-  for(var i=1;i<=15;i++){var el=document.getElementById("pers-pos-"+i);if(el) vals[i]=el.value}
-  for(var i=1;i<=n;i++) h+='<div class="pos-field"><span class="pos-num">'+(i<10?"0":"")+i+'</span><input type="text" id="pers-pos-'+i+'" value="'+(vals[i]||'Posici\u00f3n '+i)+'"></div>';
-  cont.innerHTML=h;
+function actPos(){
+  var n=parseInt(document.getElementById("pers-cant").value);
+  var cont=document.getElementById("campos-posiciones");
+  var vals={};
+  for(var i=1;i<=15;i++){
+    var el=document.getElementById("pers-pos-"+i);
+    if(el) vals[i]=el.value;
+  }
+  cont.textContent="";
+  for(var i=1;i<=n;i++){
+    var div=document.createElement("div");
+    div.className="pos-field";
+    var span=document.createElement("span");
+    span.className="pos-num";
+    span.textContent=(i<10?"0":"")+i;
+    var inp=document.createElement("input");
+    inp.type="text";
+    inp.id="pers-pos-"+i;
+    inp.value=vals[i]||'Posici\u00f3n '+i;
+    div.appendChild(span);
+    div.appendChild(inp);
+    cont.appendChild(div);
+  }
 }
 actPos();
 function configurarComodinCorte(subsetId,comodinId){
@@ -1216,7 +1397,7 @@ function tirarVisitante(){
   window._lastCtx={guion:"arcano",titulo:"El Arcano Visitante",fecha:new Date().toLocaleDateString("es-ES",{year:"numeric",month:"long",day:"numeric"}),numero:num};
   if(typeof getAIMode!=="undefined"&&getAIMode()!=="off"){
     var rres=document.getElementById("r-arcano-visitante");
-    rres.innerHTML='<div class="ai-cargando"><span class="ai-spinner"></span>Interpretando con IA\u2026</div>';
+    _clear(rres);var ld=document.createElement("div");ld.className="ai-cargando";var sp=document.createElement("span");sp.className="ai-spinner";ld.appendChild(sp);ld.appendChild(document.createTextNode("Interpretando con IA\u2026"));rres.appendChild(ld);
     generarIAVisitante(carta).then(function(t){
       c._avtexts=t;
       renderAV(carta,num,d,fnac,nombre,dd,t);
@@ -1232,30 +1413,47 @@ function tirarVisitante(){
 }
 function renderAV(carta,num,d,fnac,nombre,dd,texts){
   texts=texts||null;
-  var res=document.getElementById("r-arcano-visitante");
-  var html='<div class="result-box">';
-  html+='<div class="q-box"><div class="q-label">✦ TU ARCANO DEL DÍA</div><div class="q-inner">'+imgCard(carta)+'<div><div class="q-name">'+(num<=21?"XIIII".substring(0,num).replace(/^(X*)(I{0,3})(IV|V|VI{0,3})$/,"$1$2$3"):num===22?"0/XXII":num)+" — "+carta.nombre+'</div></div></div></div>';
-  html+='<div class="av-calc"><strong>Cálculo:</strong> '+fnac.replace(/\//g,"+").replace(/\+/g," + ")+" + "+dd.replace(/\//g,"+").replace(/\+/g," + ")+" + "+normalizarNombre(nombre)+" = <strong>"+num+"</strong></div>";
-  html+='<div class="av-questions">';
-  html+='<div class="card-result"><div class="pos-name">¿Qué vienes a mostrarme hoy?</div><div class="card-msg">'+(texts?(texts.q1||"—"):(d?d.normal:"—"))+'</div></div>';
-  html+='<div class="card-result"><div class="pos-name">¿Qué patrón conocido me estás ayudando a no repetir hoy?</div><div class="card-msg">'+(texts?(texts.q2||"—"):(d?d.sombra||d.normal:"—"))+'</div></div>';
-  html+='<div class="card-result"><div class="pos-name">¿Qué acción consciente me ayuda a escucharte?</div><div class="card-msg">'+(texts?(texts.q3||"—"):(d?d.ayuda||d.normal:"—"))+'</div></div>';
-  html+='</div>';
-  html+='<div class="ai-interp" id="ai-interp-r-arcano-visitante"></div>';
-  html+='<div class="cuaderno-section"><h4 style="color:var(--gold);margin:12px 0 6px;font-size:.9rem">Cuaderno de reflexiones</h4>';
-  html+='<div class="form-group"><label for="anotaciones-arcano-visitante">Anotaciones</label><div class="char-counter"><textarea id="anotaciones-arcano-visitante" class="input-desc" maxlength="300" placeholder="Escribe lo que consideres..." oninput="var c=document.getElementById(\'cnt-av\');if(c)c.textContent=this.length+\'/300\'"></textarea><span class="counter-text" id="cnt-av">0/300</span></div></div>';
-  html+='<div class="form-group"><label for="observado-arcano-visitante">Lo observado</label><textarea id="observado-arcano-visitante" class="input-desc" maxlength="500" placeholder="Escribe después lo que has visto o vivido..."></textarea></div>';
-  html+='</div>';
-  html+='<div class="av-disclaimer">El tarot no predice el futuro. Muestra patrones. La decisión siempre es tuya.</div>';
-  html+='</div>';
-  res.innerHTML=html;
-  var btns='<div class="btn-group mt-8">';
-  btns+='<button class="btn btn-outline btn-sm" onclick="descargarAV(\'md\')">Descargar MD</button>';
-  btns+='<button class="btn btn-outline btn-sm" onclick="descargarAV(\'html\')">Descargar HTML</button>';
-  btns+='<button class="btn btn-outline btn-sm" onclick="compartirAV()">Compartir</button>';
-  btns+='<button class="btn btn-outline btn-sm" onclick="guardarHist(\'El Arcano Visitante\',window._ult,\'\',\'El Arcano Visitante\')">Guardar</button>';
-  btns+='</div>';
-  res.insertAdjacentHTML("beforeend",btns);
+  var res=document.getElementById("r-arcano-visitante");_clear(res);
+  var rb=document.createElement("div");rb.className="result-box";
+  var qb=document.createElement("div");qb.className="q-box";
+  var ql=document.createElement("div");ql.className="q-label";ql.textContent="\u2726 TU ARCANO DEL DÍA";qb.appendChild(ql);
+  var qi=document.createElement("div");qi.className="q-inner";
+  qi.appendChild(imgCard(carta));
+  var info=document.createElement("div");
+  var qn=document.createElement("div");qn.className="q-name";
+  qn.textContent=(num<=21?"XIIII".substring(0,num).replace(/^(X*)(I{0,3})(IV|V|VI{0,3})$/,"$1$2$3"):num===22?"0/XXII":num)+" \u2014 "+carta.nombre;
+  info.appendChild(qn);qi.appendChild(info);qb.appendChild(qi);rb.appendChild(qb);
+  var calc=document.createElement("div");calc.className="av-calc";
+  var stC=document.createElement("strong");stC.textContent="Cálculo: ";calc.appendChild(stC);calc.appendChild(document.createTextNode(fnac.replace(/\//g,"+").replace(/\+/g," + ")+" + "+dd.replace(/\//g,"+").replace(/\+/g," + ")+" + "+normalizarNombre(nombre)+" = "));var strong=document.createElement("strong");strong.textContent=num;calc.appendChild(strong);rb.appendChild(calc);
+  var qs=document.createElement("div");qs.className="av-questions";
+  var qdefs=[["¿Qué vienes a mostrarme hoy?",texts?(texts.q1||"—"):(d?d.normal:"—")],["¿Qué patrón conocido me estás ayudando a no repetir hoy?",texts?(texts.q2||"—"):(d?d.sombra||d.normal:"—")],["¿Qué acción consciente me ayuda a escucharte?",texts?(texts.q3||"—"):(d?d.ayuda||d.normal:"—")]];
+  qdefs.forEach(function(qd){
+    var cr=document.createElement("div");cr.className="card-result";
+    var pn=document.createElement("div");pn.className="pos-name";pn.textContent=qd[0];cr.appendChild(pn);
+    var cm=document.createElement("div");cm.className="card-msg";cm.textContent=qd[1];cr.appendChild(cm);
+    qs.appendChild(cr);
+  });
+  rb.appendChild(qs);
+  var aiDiv=document.createElement("div");aiDiv.className="ai-interp";aiDiv.id="ai-interp-r-arcano-visitante";rb.appendChild(aiDiv);
+  var cs=document.createElement("div");cs.className="cuaderno-section";
+  var h4=document.createElement("h4");h4.style.cssText="color:var(--gold);margin:12px 0 6px;font-size:.9rem";h4.textContent="Cuaderno de reflexiones";cs.appendChild(h4);
+  var fg1=document.createElement("div");fg1.className="form-group";
+  var lbl1=document.createElement("label");lbl1.htmlFor="anotaciones-arcano-visitante";lbl1.textContent="Anotaciones";fg1.appendChild(lbl1);
+  var cc=document.createElement("div");cc.className="char-counter";
+  var ta=document.createElement("textarea");ta.id="anotaciones-arcano-visitante";ta.className="input-desc";ta.maxLength=300;ta.placeholder="Escribe lo que consideres...";
+  ta.oninput=function(){var c=document.getElementById('cnt-av');if(c)c.textContent=this.length+'/300'};
+  cc.appendChild(ta);var sp=document.createElement("span");sp.className="counter-text";sp.id="cnt-av";sp.textContent="0/300";cc.appendChild(sp);
+  fg1.appendChild(cc);cs.appendChild(fg1);
+  var fg2=document.createElement("div");fg2.className="form-group";
+  var lbl2=document.createElement("label");lbl2.htmlFor="observado-arcano-visitante";lbl2.textContent="Lo observado";fg2.appendChild(lbl2);
+  var ta2=document.createElement("textarea");ta2.id="observado-arcano-visitante";ta2.className="input-desc";ta2.maxLength=500;ta2.placeholder="Escribe después lo que has visto o vivido...";
+  fg2.appendChild(ta2);cs.appendChild(fg2);rb.appendChild(cs);
+  var disc=document.createElement("div");disc.className="av-disclaimer";disc.textContent="El tarot no predice el futuro. Muestra patrones. La decisión siempre es tuya.";rb.appendChild(disc);
+  res.appendChild(rb);
+  var bg=document.createElement("div");bg.className="btn-group mt-8";
+  var bDefs=[["Descargar MD",function(){descargarAV('md')}],["Descargar HTML",function(){descargarAV('html')}],["Compartir",compartirAV],["Guardar",function(){guardarHist('El Arcano Visitante',window._ult,'','El Arcano Visitante')}]];
+  bDefs.forEach(function(bd){var b=document.createElement("button");b.className="btn btn-outline btn-sm";b.textContent=bd[0];b.onclick=bd[1];bg.appendChild(b);});
+  res.appendChild(bg);
 }
 function descargarAV(fmt){
   var anot=document.getElementById('anotaciones-arcano-visitante')?.value||'';
@@ -1289,16 +1487,16 @@ function descargarAV(fmt){
     var html='<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>El Arcano Visitante - BATS</title>';
     html+='<style>body{font-family:sans-serif;background:#0d0a13;color:#e8dcc8;padding:20px;max-width:800px;margin:0 auto}h1{color:#d4a847}h3{color:#d4a847;margin-top:16px}.ct{color:#b8a898;font-size:.9rem;line-height:1.5;margin:4px 0 12px}.ia{color:#8a7f6a;font-size:.72rem;margin:4px 0 12px}.foot{color:#666;font-size:.8rem;text-align:center;margin-top:24px}img{width:120px;border-radius:8px;border:2px solid #2a1a3e}</style></head><body>';
     html+='<h1>El Arcano Visitante</h1><p style="color:#b8a898"><em>'+fs+'</em></p>';
-    html+='<p><strong>'+num+" — "+c.nombre+'</strong></p><p style="color:#b8a898">Nacimiento: '+fnac+' · Nombre: '+nombre+'</p>';
-    html+='<img src="'+BATS_BASE+c.img+'" alt="'+c.nombre+'">';
+    html+='<p><strong>'+escHTML(num+" — "+c.nombre)+'</strong></p><p style="color:#b8a898">Nacimiento: '+escHTML(fnac)+' · Nombre: '+escHTML(nombre)+'</p>';
+    html+='<img src="'+BATS_BASE+c.img+'" alt="'+escHTML(c.nombre)+'">';
     var ts=c._avtexts||null;
-    html+='<h3>¿Qué vienes a mostrarme hoy?</h3><div class="ct">'+(ts&&ts.q1?ts.q1:(d?d.normal:"—"))+'</div>';
-    html+='<h3>¿Qué patrón conocido me estás ayudando a no repetir hoy?</h3><div class="ct">'+(ts&&ts.q2?ts.q2:(d?d.sombra||d.normal:"—"))+'</div>';
-    html+='<h3>¿Qué acción consciente me ayuda a escucharte?</h3><div class="ct">'+(ts&&ts.q3?ts.q3:(d?d.ayuda||d.normal:"—"))+'</div>';
+    html+='<h3>¿Qué vienes a mostrarme hoy?</h3><div class="ct">'+escHTML(ts&&ts.q1?ts.q1:(d?d.normal:"—"))+'</div>';
+    html+='<h3>¿Qué patrón conocido me estás ayudando a no repetir hoy?</h3><div class="ct">'+escHTML(ts&&ts.q2?ts.q2:(d?d.sombra||d.normal:"—"))+'</div>';
+    html+='<h3>¿Qué acción consciente me ayuda a escucharte?</h3><div class="ct">'+escHTML(ts&&ts.q3?ts.q3:(d?d.ayuda||d.normal:"—"))+'</div>';
     if(inAV)html+='<h3>✦ Interpretación</h3><div class="ct">'+interpParaHTML(inAV)+'</div>';
     if(window._ult._ia)html+='<p class="ia">IA que ha asistido la interpretación: '+escHTML(window._ult._ia)+'</p>';
-    if(anot)html+='<h3>Anotaciones</h3><div class="ct">'+anot+'</div>';
-    if(obs)html+='<h3>Lo observado</h3><div class="ct">'+obs+'</div>';
+    if(anot)html+='<h3>Anotaciones</h3><div class="ct">'+escHTML(anot)+'</div>';
+    if(obs)html+='<h3>Lo observado</h3><div class="ct">'+escHTML(obs)+'</div>';
     html+='<p class="foot">Generado por BATS Tarot</p></body></html>';
     downloadBlob(html,"bats-arcano-visitante.html","text/html");
   }
@@ -1339,37 +1537,49 @@ function buscarAyuda(){
     if(!enc) enc=!!(["normal","sombra","ayuda","invertida"].filter(function(cp){return d[cp]&&d[cp].toLowerCase().indexOf(q)>=0}).length);
     if(enc) res.push({carta:c,datos:d});
   });
-  if(!res.length){cont.innerHTML='<p class="subtle">No se encontraron cartas con "'+q+'".</p>';return}
-  var htm='<p class="subtle">'+res.length+' carta(s):</p>';
+  _clear(cont);
+  if(!res.length){
+    var p=document.createElement('p');p.className='subtle';p.textContent='No se encontraron cartas con "'+q+'".';cont.appendChild(p);return;
+  }
+  var cnt=document.createElement("p");cnt.className="subtle";cnt.textContent=res.length+" carta(s):";cont.appendChild(cnt);
   res.forEach(function(r){
     var c=r.carta,d=r.datos;
-    htm+='<div class="resultado-ayuda-item"><div style="display:flex;gap:10px;align-items:start;margin-bottom:6px">'+imgCard(c)+'<div><h3>'+c.nombre+'</h3><span class="subtle">'+(c.tipo==="arcano"?"Arcano Mayor":c.nucleo)+'</span></div></div>';
-    if(d.normal) htm+='<div class="campo"><strong>Normal</strong><p>'+d.normal+'</p></div>';
-    if(d.sombra) htm+='<div class="campo"><strong>Sombra</strong><p>'+d.sombra+'</p></div>';
-    if(d.ayuda) htm+='<div class="campo"><strong>Ayuda</strong><p>'+d.ayuda+'</p></div>';
-    if(d.invertida) htm+='<div class="campo"><strong>Invertida</strong><p>'+d.invertida+'</p></div>';
-    htm+='</div>';
+    var item=document.createElement("div");item.className="resultado-ayuda-item";
+    var top=document.createElement("div");top.style.cssText="display:flex;gap:10px;align-items:start;margin-bottom:6px";
+    top.appendChild(imgCard(c));
+    var info=document.createElement("div");
+    var h3=document.createElement("h3");h3.textContent=c.nombre;info.appendChild(h3);
+    var sub=document.createElement("span");sub.className="subtle";sub.textContent=c.tipo==="arcano"?"Arcano Mayor":c.nucleo;info.appendChild(sub);
+    top.appendChild(info);item.appendChild(top);
+      if(d.normal){var f=document.createElement("div");f.className="campo";var st=document.createElement("strong");st.textContent="Normal";f.appendChild(st);var pp=document.createElement("p");pp.textContent=d.normal;f.appendChild(pp);item.appendChild(f);}
+      if(d.sombra){var f=document.createElement("div");f.className="campo";var st=document.createElement("strong");st.textContent="Sombra";f.appendChild(st);var pp=document.createElement("p");pp.textContent=d.sombra;f.appendChild(pp);item.appendChild(f);}
+      if(d.ayuda){var f=document.createElement("div");f.className="campo";var st=document.createElement("strong");st.textContent="Ayuda";f.appendChild(st);var pp=document.createElement("p");pp.textContent=d.ayuda;f.appendChild(pp);item.appendChild(f);}
+      if(d.invertida){var f=document.createElement("div");f.className="campo";var st=document.createElement("strong");st.textContent="Invertida";f.appendChild(st);var pp=document.createElement("p");pp.textContent=d.invertida;f.appendChild(pp);item.appendChild(f);}
+    cont.appendChild(item);
   });
-  cont.innerHTML=htm;
 }
 function mostrarTodas(){
-  var cont=document.getElementById("r-ayuda"),htm="";
+  var cont=document.getElementById("r-ayuda");_clear(cont);
   var grps={arcano:"Arcanos Mayores",bastos:"Bastos",copas:"Copas",espadas:"Espadas",oros:"Oros"};
   Object.keys(grps).forEach(function(tipo){
     var cartas=BARAJA.filter(function(c){return tipo==="arcano"?c.tipo==="arcano":c.tipo===tipo});
     if(!cartas.length) return;
-    htm+='<h3 style="color:var(--gold);margin:12px 0 6px;font-size:1rem">'+grps[tipo]+'</h3>';
+    var h3=document.createElement("h3");h3.style.cssText="color:var(--gold);margin:12px 0 6px;font-size:1rem";h3.textContent=grps[tipo];cont.appendChild(h3);
     cartas.forEach(function(c){
       var d=batsDe(c);if(!d)return;
-      htm+='<div class="resultado-ayuda-item"><div style="display:flex;gap:10px;align-items:start;margin-bottom:6px">'+imgCard(c)+'<div><h3>'+c.nombre+'</h3></div></div>';
-      if(d.normal) htm+='<div class="campo"><strong>Normal</strong><p>'+d.normal+'</p></div>';
-      if(d.sombra) htm+='<div class="campo"><strong>Sombra</strong><p>'+d.sombra+'</p></div>';
-      if(d.ayuda) htm+='<div class="campo"><strong>Ayuda</strong><p>'+d.ayuda+'</p></div>';
-      if(d.invertida) htm+='<div class="campo"><strong>Invertida</strong><p>'+d.invertida+'</p></div>';
-      htm+='</div>';
+      var item=document.createElement("div");item.className="resultado-ayuda-item";
+      var top=document.createElement("div");top.style.cssText="display:flex;gap:10px;align-items:start;margin-bottom:6px";
+      top.appendChild(imgCard(c));
+      var info=document.createElement("div");
+      var h3=document.createElement("h3");h3.textContent=c.nombre;info.appendChild(h3);
+      top.appendChild(info);item.appendChild(top);
+      if(d.normal){var f=document.createElement("div");f.className="campo";var st=document.createElement("strong");st.textContent="Normal";f.appendChild(st);var pp=document.createElement("p");pp.textContent=d.normal;f.appendChild(pp);item.appendChild(f);}
+      if(d.sombra){var f=document.createElement("div");f.className="campo";var st=document.createElement("strong");st.textContent="Sombra";f.appendChild(st);var pp=document.createElement("p");pp.textContent=d.sombra;f.appendChild(pp);item.appendChild(f);}
+      if(d.ayuda){var f=document.createElement("div");f.className="campo";var st=document.createElement("strong");st.textContent="Ayuda";f.appendChild(st);var pp=document.createElement("p");pp.textContent=d.ayuda;f.appendChild(pp);item.appendChild(f);}
+      if(d.invertida){var f=document.createElement("div");f.className="campo";var st=document.createElement("strong");st.textContent="Invertida";f.appendChild(st);var pp=document.createElement("p");pp.textContent=d.invertida;f.appendChild(pp);item.appendChild(f);}
+      cont.appendChild(item);
     });
   });
-  cont.innerHTML=htm;
 }
 
 function compVersiones(a,b){
@@ -1393,15 +1603,20 @@ function checkNovedades(){
         if(visto===''||compVersiones(v,visto)>0){
           var h=d.historial[v];
           if(contado>0) texto+='<div class="nov-sep"></div>';
-          texto+='<h4>'+h.titulo+'</h4><div>'+h.texto+'</div>';
+          texto+='<h4>'+escHTML(h.titulo)+'</h4><div>'+escHTML(h.texto)+'</div>';
           contado++;
         }
       });
     }
-    if(!texto) texto=d.texto||'';
+    if(!texto) texto=escHTML(d.texto||'');
     var m=document.createElement('div');
     m.className='novedades-modal';
-    m.innerHTML='<div class="novedades-box"><h3>'+(d.titulo||'Novedades')+'</h3><div class="novedades-texto">'+texto+'</div><button class="btn btn-gold" onclick="this.closest(\'.novedades-modal\').remove();marcarNovedadesVista(\''+d.ultima+'\')">Entendido</button></div>';
+    var box=document.createElement('div');box.className='novedades-box';
+    var h3=document.createElement('h3');h3.textContent=d.titulo||'Novedades';box.appendChild(h3);
+    var txt=document.createElement('div');txt.className='novedades-texto';txt.innerHTML=texto;box.appendChild(txt);
+    var btn=document.createElement('button');btn.className='btn btn-gold';btn.textContent='Entendido';
+    btn.onclick=function(){m.remove();marcarNovedadesVista(d.ultima)};
+    box.appendChild(btn);m.appendChild(box);
     document.body.appendChild(m);
   }).catch(function(){});
 }
@@ -1418,7 +1633,8 @@ function initSW(){
           if(sw.state === 'installed' && navigator.serviceWorker.controller){
             var banner = document.createElement('div');
             banner.className = 'update-banner';
-            banner.innerHTML = 'Nueva versi\u00f3n disponible <button onclick="location.reload()">Actualizar</button>';
+            var txt=document.createElement('span');txt.textContent='Nueva versi\u00f3n disponible ';banner.appendChild(txt);
+            var ubtn=document.createElement('button');ubtn.textContent='Actualizar';ubtn.onclick=function(){location.reload()};banner.appendChild(ubtn);
             document.body.appendChild(banner);
           }
         });
@@ -1524,17 +1740,16 @@ function adminPoblar(){
   var order=adminOrdenActual();
   var on=_adminState.pendingOn||cfg.providersOn||{};
   var names=adminNombres();
-  var html="";
+  var cont=document.getElementById("admin-proveedores");_clear(cont);
   order.forEach(function(id,i){
-    html+='<div class="admin-prov" style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.08)">'
-      +'<span style="opacity:.5;width:16px">'+(i+1)+'</span>'
-      +'<input type="checkbox" id="admin-on-'+id+'" '+(on[id]===false?"":"checked")+' onchange="adminCambio()" style="width:auto">'
-      +'<span style="flex:1;text-align:left">'+names[id]+'</span>'
-      +'<button class="btn btn-outline btn-sm" onclick="adminMover('+i+',-1)" '+(i===0?"disabled":"")+'>\u25B2</button>'
-      +'<button class="btn btn-outline btn-sm" onclick="adminMover('+i+',1)" '+(i===order.length-1?"disabled":"")+'>\u25BC</button>'
-      +'</div>';
+    var row=document.createElement("div");row.className="admin-prov";row.style.cssText="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.08)";
+    var num=document.createElement("span");num.style.cssText="opacity:.5;width:16px";num.textContent=i+1;row.appendChild(num);
+    var chk=document.createElement("input");chk.type="checkbox";chk.id="admin-on-"+id;if(on[id]!==false)chk.checked=true;chk.style.width="auto";chk.onchange=adminCambio;row.appendChild(chk);
+    var nm=document.createElement("span");nm.style.cssText="flex:1;text-align:left";nm.textContent=names[id]||id;row.appendChild(nm);
+    var upBtn=document.createElement("button");upBtn.className="btn btn-outline btn-sm";upBtn.textContent="\u25B2";if(i===0)upBtn.disabled=true;upBtn.onclick=(function(ii){return function(){adminMover(ii,-1)}})(i);row.appendChild(upBtn);
+    var dnBtn=document.createElement("button");dnBtn.className="btn btn-outline btn-sm";dnBtn.textContent="\u25BC";if(i===order.length-1)dnBtn.disabled=true;dnBtn.onclick=(function(ii){return function(){adminMover(ii,1)}})(i);row.appendChild(dnBtn);
+    cont.appendChild(row);
   });
-  document.getElementById("admin-proveedores").innerHTML=html;
   document.getElementById("admin-temp").value=cfg.temperature!=null?cfg.temperature:0.7;
   adminTempVal();
   document.getElementById("admin-len").value=cfg.lenDefault||"media";
@@ -1695,7 +1910,7 @@ function vozPoblarSelect(sel){
   if(!sel) return;
   var es=vozVozesES();
   var saved=lsGet(VOZ_VOZ_KEY);
-  sel.innerHTML="";
+  _clear(sel);
   if(!es.length){
     var opt=document.createElement("option");
     opt.value="";opt.textContent="Sin voz en español";
@@ -1730,6 +1945,23 @@ function vozBarHTML(dest){
   h+='<span class="voz-notice" style="display:none"></span>';
   h+='</div>';
   return h;
+}
+function vozBarDOM(dest){
+  var d=String(dest||"").replace(/"/g,"");
+  var bar=document.createElement("div");bar.className="voz-bar";bar.id="voz-"+d;bar.setAttribute("data-dest",d);
+  var lbl=document.createElement("span");lbl.className="voz-label";lbl.textContent="Leer";bar.appendChild(lbl);
+  var pBtn=document.createElement("button");pBtn.className="btn btn-outline btn-sm voz-play";pBtn.textContent="\u25B6 Escuchar";pBtn.onclick=function(){vozLeer(d)};bar.appendChild(pBtn);
+  var paBtn=document.createElement("button");paBtn.className="btn btn-outline btn-sm voz-pause";paBtn.textContent="\u23F8 Pausa";paBtn.disabled=true;paBtn.onclick=vozPausa;bar.appendChild(paBtn);
+  var sBtn=document.createElement("button");sBtn.className="btn btn-outline btn-sm voz-stop";sBtn.textContent="\u23F9 Parar";sBtn.disabled=true;sBtn.onclick=vozParar;bar.appendChild(sBtn);
+  var tGrp=document.createElement("span");tGrp.className="voz-tasa-group";
+  [0.75,1,1.25].forEach(function(t){
+    var tb=document.createElement("button");tb.className="btn btn-outline btn-sm voz-tasa"+(t===1?" active":"");tb.setAttribute("data-t",t);tb.textContent=t+"\u00D7";tb.onclick=function(){vozTasa(t)};tGrp.appendChild(tb);
+  });
+  bar.appendChild(tGrp);
+  var sel=document.createElement("select");sel.className="voz-select";sel.onchange=function(){vozCambiarVoz(d,this.value)};bar.appendChild(sel);
+  var mp3=document.createElement("button");mp3.className="btn btn-outline btn-sm voz-mp3";mp3.setAttribute("data-mp3",d);mp3.textContent="\u2B07 MP3";mp3.onclick=function(){vozDescargarMP3(d)};bar.appendChild(mp3);
+  var notice=document.createElement("span");notice.className="voz-notice";notice.style.display="none";bar.appendChild(notice);
+  return bar;
 }
 function vozActualizarBarras(){
   if(typeof document==="undefined") return;

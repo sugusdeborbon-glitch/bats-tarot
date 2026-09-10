@@ -1,4 +1,5 @@
 {
+  "$schema": "https://opencode.ai/config.json",
   "name": "BATS Tarot",
   "description": "Business Ashram Tarot System - PWA + Android APK",
   "commands": {

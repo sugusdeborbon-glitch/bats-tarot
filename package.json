@@ -1,6 +1,6 @@
 {
   "name": "bats-tarot",
-  "version": "1.0.0",
+  "version": "1.10.0",
   "description": "Business Ashram Tarot System - PWA",
   "main": "index.html",
   "scripts": {

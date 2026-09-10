@@ -69,6 +69,9 @@ La app tiene **3 recetas distintas** según lo que pidas:
 > caracteres. Si se entrega una «Referencia BATS de la quintaesencia», úsala como
 > base de la síntesis; no inventes un significado distinto. Idioma: español,
 > claro y directo. No inventes datos. No escribas nada fuera del JSON.
+> En tu interpretación deberás tener en cuenta, si hay algo escrito, lo que el
+> usuario ha escrito en el campo «Descripción (opcional)» o «Pregunta marco» o
+> «Título de la tirada».
 
 **User** le entrega la tirada:
 
@@ -88,6 +91,8 @@ La app tiene **3 recetas distintas** según lo que pidas:
 > Referencia BATS de la quintaesencia: Como terminal, la tirada cierra como
 > llamada al inicio radical, volver a cero sin coordenadas previas.
 
+La interpretación de la Quintaesencia se vincula a toda la tirada y su
+interpretación y descripción debe ser transversal y más simbólica.
 Si una carta sale **invertida**, se marca «(INVERTIDA)» tras su nombre y su
 Referencia BATS es la del **significado invertido**.
 
@@ -102,7 +107,8 @@ Referencia BATS es la del **significado invertido**.
 > Vas a recibir una única tirada del Tarot Rider-Waite-Smith, de cualquier ámbito
 > (diaria, laboral, relación, aprendizaje, decisión, entrevista a un arcano,
 > tirada libre...). No presupongas su estructura; dedúcela a partir de los
-> títulos, posiciones y preguntas.
+> títulos, posiciones y preguntas. Dedúcela también de los textos que lleguen de
+> los campos de descripción del usuario.
 > Cada carta llega con una «Referencia BATS»: es la fuente de significado
 > autorizada del sistema para esa carta en esa orientación. Úsala como base; no
 > la sustituyas por el significado genérico de manual RWS. Si una carta no trae
@@ -164,28 +170,30 @@ ayuda).
 
 ## Dónde vive cada texto
 
-Todo el texto está en el archivo `ai.js`, al principio del archivo:
+Todo el texto está en el archivo `worker/worker.js`, al principio del archivo
+(como constantes `AI_SISTEMA_*` y `SISTEMAS`):
 
-| Receta | Texto en `ai.js` | Fichero de la tirada que se envía |
+| Receta | Texto en `worker.js` | Construido por |
 |---|---|---|
-| Corta (una por tirada) | `AI_SISTEMA_POR_GUION` (`diaria`, `rel`, `laboral`, `aprendizaje`, `pers`) + `AI_SISTEMA` genérico | construido por `construirUserContent()` |
-| Larga | `AI_SISTEMA_LARGA` | construido por `construirUserContentLargo()` |
-| Arcano Visitante | `AI_SISTEMA_AV` | construido por `generarIAVisitante()` |
+| Corta (una por tirada) | `_sistemaBase()` + `SISTEMAS` | `app.js` → `construirUserContent()` |
+| Larga | `AI_SISTEMA_LARGA` | `app.js` → `construirUserContentLargo()` |
+| Arcano Visitante | `AI_SISTEMA_AV` | `app.js` → `generarIAVisitante()` |
 
 Estos textos se pueden ajustar sin tocar el código desde el **panel de
 administración** de la app (pestaña Avanzado), que los guarda en la configuración
-del servidor.
+del servidor (KV de Cloudflare).
 
 ---
 
 ## Parámetros técnicos (los «mandos»)
 
 - **Temperatura**: 0.7 (cuánto de «creativo» es; más alto = más variado, más bajo = más serio).
-- **Máximo de tokens**: 4096 (lo máximo que puede escribir la IA en una respuesta;
+- **Máximo de tokens**: 8192 (lo máximo que puede escribir la IA en una respuesta;
   con extensión «larga» va ajustado).
-- **Espera máxima**: 25 segundos por proveedor; si uno falla, se prueba el siguiente.
-- **Proveedores** (en orden): Groq → SambaNova → Google → OpenRouter → NVIDIA.
-- **Seguridad**: el servidor exige un token interno; sin él devuelve error 401.
+- **Espera máxima**: 40 segundos por proveedor; si uno falla, se prueba el siguiente.
+- **Proveedores** (en orden): Groq → SambaNova → Google → OpenRouter → NVIDIA → Mistral.
+- **Seguridad**: el servidor exige un token interno (`X-BATS-Token`); sin él devuelve error 401.
+- **Rate limit**: 5 llamadas por minuto por IP (en memoria; se reinicia con el worker).
 
 ---
 

@@ -101,7 +101,11 @@ function cargarPanelConfig(){
   var elW=document.getElementById("cfg-worker");
   if(elW) elW.value=lsGet(AI_WORKER_URL_KEY)||defaultWorkerURL();
   var st=document.getElementById("cfg-key-status");
-  if(st) st.innerHTML=cfg.key?'<span style="color:var(--gold)">\u2713 Clave guardada</span>':'<span class="subtle">Sin clave guardada</span>';
+  if(st){
+    while(st.firstChild)st.removeChild(st.firstChild);
+    if(cfg.key){var sp=document.createElement("span");sp.style.color="var(--gold)";sp.textContent="\u2713 Clave guardada";st.appendChild(sp);}
+    else{var sp=document.createElement("span");sp.className="subtle";sp.textContent="Sin clave guardada";st.appendChild(sp);}
+  }
   cargarAIInterpretacion();
 }
 
