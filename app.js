@@ -1,100 +1,7 @@
 // State initialized by js/state.js (window._* backed by BATS.state)
-// BATS_VERSION, _ocultarReferencias, _BATS_TEST_COMODIN now managed centrally
-
-var PALOS=[["bastos","Wands"],["copas","Cups"],["espadas","Swords"],["oros","Pentacles"]];
-var NOMPALO={bastos:"Bastos",copas:"Copas",espadas:"Espadas",oros:"Oros"};
-var BARAJA=[];
-var MAYORES=[
-  [0,"El Loco","TheFool"],[1,"El Mago","TheMagician"],[2,"La Sacerdotisa","TheHighPriestess"],
-  [3,"La Emperatriz","TheEmpress"],[4,"El Emperador","TheEmperor"],[5,"El Hierofante","TheHierophant"],
-  [6,"Los Enamorados","TheLovers"],[7,"El Carro","TheChariot"],[8,"La Fuerza","Strength"],
-  [9,"El Ermitaño","TheHermit"],[10,"La Rueda de la Fortuna","WheelOfFortune"],[11,"La Justicia","Justice"],
-  [12,"El Colgado","TheHangedMan"],[13,"La Muerte","Death"],[14,"La Templanza","Temperance"],
-  [15,"El Diablo","TheDevil"],[16,"La Torre","TheTower"],[17,"La Estrella","TheStar"],
-  [18,"La Luna","TheMoon"],[19,"El Sol","TheSun"],[20,"El Juicio","Judgement"],[21,"El Mundo","TheWorld"]
-];
-MAYORES.forEach(function(a){
-  BARAJA.push({nombre:a[1],valor:a[0],tipo:"arcano",img:"cartas/"+z(a[0])+"-"+a[2]+".jpg",nucleo:"Arcano Mayor",letras:ini(a[1])});
-});
-var NUMES=["","As","Dos","Tres","Cuatro","Cinco","Seis","Siete","Ocho","Nueve","Diez"];
-var FIGURAS=["Sota","Caballo","Reina","Rey"];
-PALOS.forEach(function(p){
-  var pa=p[0],pi=p[1],np=NOMPALO[pa];
-  for(var v=1;v<=14;v++){
-    var nom=(v<=10?NUMES[v]:FIGURAS[v-11])+" de "+np;
-    BARAJA.push({nombre:nom,valor:v,tipo:pa,img:"cartas/"+pi+z(v)+".jpg",nucleo:np,letras:ini(nom)});
-  }
-});
-
-var COMODIN={nombre:"Comodín",valor:0,tipo:"comodin",img:"comodin_reverso.png",letras:"∞",nucleo:"Comodín"};
-var COMODIN_INV_TEXT="El conocimiento no es apropiado en este momento; se recomienda avanzar con confianza.";
-var COMODIN_TEXTO_REVERSO="Toca la carta para revelar el umbral.";
-var COMODIN_TEXTO_CERRADO="Toca la carta para abrir la extensión BATS.";
-var COMODIN_TEXTO_ABIERTO="Toca una carta extendida para ver su interpretación completa.";
-var COMODIN_POS=["¿De qué te quiere avisar?","¿En qué te quiere ayudar?","La Salida"];
-function esComodin(c){return c&&c.tipo==="comodin"}
-function añadirComodin(mazo,activo){if(!activo&&!window._BATS_TEST_COMODIN)return mazo;mazo.push(Object.assign({},COMODIN));return mazo}
-function comodinImg(estado,invertida){
-  if(estado==="cerrado") return "comodin_anverso_umbral_cerrado.png";
-  if(estado==="abierto") return "comodin_anverso_umbral_abierto.png";
-  return "comodin_reverso.png";
-}
-function comodinEnCartas(cartas){
-  if(!cartas) return null;
-  for(var i=0;i<cartas.length;i++){if(esComodin(cartas[i].carta)) return cartas[i];}
-  return null;
-}
-var TABLA_78=[];
-(function(){
-  for(var i=1;i<=21;i++)TABLA_78.push(BARAJA[i]);
-  TABLA_78.push(BARAJA[0]);
-  for(var i=22;i<=77;i++)TABLA_78.push(BARAJA[i]);
-})();
-
-function z(n){return n<10?"0"+n:""+n}
-function ini(s){return s.replace(/^(La|Los|El|Las|As|Sota|Caballo|Reina|Rey)\s+(de\s+)?/i,"").substring(0,2).toUpperCase()}
-
-var PITO={A:1,B:2,C:3,D:4,E:5,F:6,G:7,H:8,I:9,J:1,K:2,L:3,M:4,N:5,O:6,P:7,Q:8,R:9,S:1,T:2,U:3,V:4,W:5,X:6,Y:7,Z:8};
-function normalizarNombre(s){return s.toUpperCase().replace(/[ÁÉÍÓÚÜ]/g,function(m){return{"Á":"A","É":"E","Í":"I","Ó":"O","Ú":"U","Ü":"U"}[m]}).replace(/[^A-Z\s]/g,"")}
-function sumaDigitos(n){var s=0;for(var i=0;i<n.length;i++)s+=parseInt(n[i])||0;return s}
-function sumaNombre(s){var n=normalizarNombre(s),sum=0;for(var i=0;i<n.length;i++)if(PITO[n[i]])sum+=PITO[n[i]];return sum}
-function calcArcanoNum(fechaNac,fechaDia,nombre){
-  var dn=fechaNac.replace(/\//g,""),dd=fechaDia.replace(/\//g,"");
-  if(dn.length!==8||dd.length!==8)return null;
-  var sn=sumaDigitos(dn),sd=sumaDigitos(dd),snn=sumaNombre(nombre);
-  var total=sn+sd+snn;
-  if(total===0)return null;
-  if(total>=1&&total<=78)return total;
-  while(total>78){var s=0,t=total;while(t>0){s+=t%10;t=Math.floor(t/10)}total=s}
-  return total>0&&total<=78?total:null;
-}
-
-function barajar(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a}
-function crearSub(m){
-  if(!m||m==="completo") return BARAJA.slice();
-  if(m==="mayores") return BARAJA.filter(function(c){return c.tipo==="arcano"});
-  if(m==="menores") return BARAJA.filter(function(c){return c.tipo!=="arcano"&&c.valor>=1&&c.valor<=10});
-  if(m==="corte") return BARAJA.filter(function(c){return c.tipo!=="arcano"&&c.valor>=11&&c.valor<=14});
-  return BARAJA.slice();
-}
-function repartir(n,inv,mazo){
-  var d=barajar(mazo.slice()),r=[];
-  for(var i=0;i<n&&i<d.length;i++) r.push({carta:d[i],invertida:inv?Math.random()<.5:false});
-  return r;
-}
-function batsDe(c){
-  if(typeof DATOS_BATS!=="undefined"&&DATOS_BATS[c.nombre]) return DATOS_BATS[c.nombre];
-  return null;
-}
-function txt(c,inv,sombra){
-  var d=batsDe(c);
-  if(!d) return "\u2014";
-  if(sombra&&d.sombra) return d.sombra;
-  if(inv&&d.invertida) return d.invertida;
-  if(d.normal) return d.normal;
-  if(d.prof) return d.prof;
-  return c.nucleo||"\u2014";
-}
+// Card data & deck operations now in js/deck.js (window.BATS.deck)
+// Numerology & quintessence now in js/numerology.js (window.BATS.numerology)
+// Global vars (PALOS, BARAJA, z, ini, etc.) remain on window for backward compatibility
 
 function toggleMenu(){
   document.getElementById("menu-overlay").classList.toggle("open");
@@ -245,46 +152,9 @@ function renderCartasActuales(){
 function recalcularQuintaYRenderizar(){
   renderCartasActuales();
 }
-function extraerExtensionDelMazo(n,mazo){
-  var r=[];for(var i=0;i<n&&i<mazo.length;i++) r.push(mazo[i]);
-  return r;
-}
+// extraerExtensionDelMazo → moved to js/deck.js
+// calcQuinta, textoQuinta, parsearQuinta → moved to js/numerology.js
 
-function calcQuinta(cartas){
-  var suma=0;
-  cartas.forEach(function(it){
-    if(esComodin(it.carta)){
-      if(it.extensionResuelta&&it.extension&&it.extension[2]) suma+=it.extension[2].carta.valor;
-    } else {
-      suma+=it.carta.valor;
-    }
-  });
-  while(suma>22){
-    var s=0,t=suma;
-    while(t>0){s+=t%10;t=Math.floor(t/10)}
-    suma=s;
-  }
-  if(suma<1||suma>22) return null;
-  if(suma===22) return BARAJA[0];
-  return BARAJA[suma];
-}
-function textoQuinta(nombre){
-  if(typeof QUINTA_BATS!=="undefined"&&QUINTA_BATS[nombre]) return QUINTA_BATS[nombre];
-  return null;
-}
-function parsearQuinta(texto){
-  if(!texto) return {lectura:"",consejo:"",palabraClave:"",antipatron:""};
-  var parts=texto.split(/\s{2,}/);
-  var r={lectura:"",consejo:"",palabraClave:"",antipatron:""};
-  parts.forEach(function(p){
-    var t=p.trim();
-    if(/^CONSEJO:/i.test(t)) r.consejo=t.replace(/^CONSEJO:\s*/i,"");
-    else if(/^PALABRA CLAVE:/i.test(t)) r.palabraClave=t.replace(/^PALABRA CLAVE:\s*/i,"");
-    else if(/^ANTIPATR[ÓO]N:/i.test(t)) r.antipatron=t.replace(/^ANTIPATR[ÓO]N:\s*/i,"");
-    else r.lectura+=(r.lectura?" ":"")+t;
-  });
-  return r;
-}
 function extensionMd(cartas){
   var ci=comodinEnCartas(cartas);
   if(!ci||!ci.extensionResuelta||!ci.extension) return "";
