@@ -252,3 +252,14 @@ label{display:block;font-size:.82rem;color:var(--gold);margin-bottom:3px;margin-
 .voz-bar .voz-mp3:disabled{opacity:.5;cursor:wait}
 .nov-sep{height:1px;background:var(--bg3);margin:12px 0}
 .novedades-texto h4{color:var(--gold);font-size:.95rem;margin-bottom:6px}
+
+.draw-config label,
+.draw-config .checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+.draw-config input[type="checkbox"] {
+    margin: 0;
+}
