@@ -70,16 +70,20 @@
     <label for="desc-diaria">Descripción (opcional)</label>
     <textarea id="desc-diaria" class="input-desc" maxlength="150" placeholder="¿Qué quieres preguntar hoy?"></textarea>
   </div>
-  <div class="btn-group">
-    <button class="btn btn-gold" onclick="tirarDiaria()">✦ Tirar Cruz Diaria</button>
-    <button class="btn btn-outline btn-sm" onclick="tirarDiariaInv()">Con Invertidas</button>
-    <label class="checkbox-inline"><input type="checkbox" id="diaria-comodin"> Incluir Comodín</label>
+  <div class="draw-config">
+    <div class="draw-config-title">Configura tu tirada</div>
+    <div class="btn-group">
+      <button class="btn btn-gold" onclick="tirarDiaria()">✦ Tirar Cruz Diaria</button>
+    </div>
+    <div class="btn-group">
+      <label class="checkbox-inline"><input type="checkbox" id="diaria-inv"> Con Invertidas</label>
+      <label class="checkbox-inline"><input type="checkbox" id="diaria-comodin"> Incluir Comodín</label>
+    </div>
   </div>
   <div class="ia-panel-flags">
-    <span class="ia-panel-flags-t">Llamadas IA:</span>
+    <span class="ia-panel-flags-t">¿Qué quieres que interprete la IA BATS?</span>
     <label class="checkbox-inline"><input type="checkbox" id="ia-corta-diaria" onchange="cambiarFlagPanel('diaria','corta',this)"> Texto por carta</label>
     <label class="checkbox-inline"><input type="checkbox" id="ia-larga-diaria" onchange="cambiarFlagPanel('diaria','larga',this)"> Interpretación larga</label>
-    <button class="btn btn-outline btn-sm" onclick="restablecerFlagsPanel('diaria')">Por defecto</button>
   </div>
   <div id="r-diaria"></div>
   <a class="back-link" onclick="irA('inicio')" style="display:block;text-align:center;margin-top:16px">← Inicio</a>
@@ -103,16 +107,18 @@
     <label for="desc-rel">Descripción (opcional)</label>
     <textarea id="desc-rel" class="input-desc" maxlength="150" placeholder="Describe el contexto de la relación..."></textarea>
   </div>
-  <div class="form-group">
-    <label><input type="checkbox" id="rel-inv"> Con Invertidas</label>
-    <label><input type="checkbox" id="rel-comodin"> Incluir Comodín</label>
+  <div class="draw-config">
+    <div class="draw-config-title">Configura tu tirada</div>
+    <div class="form-group">
+      <label><input type="checkbox" id="rel-inv"> Con Invertidas</label>
+      <label><input type="checkbox" id="rel-comodin"> Incluir Comodín</label>
+    </div>
+    <div class="btn-group"><button class="btn btn-gold" onclick="tirarRelacion()">✦ Tirar</button></div>
   </div>
-  <div class="btn-group"><button class="btn btn-gold" onclick="tirarRelacion()">✦ Tirar</button></div>
   <div class="ia-panel-flags">
-    <span class="ia-panel-flags-t">Llamadas IA:</span>
+    <span class="ia-panel-flags-t">¿Qué quieres que interprete la IA BATS?</span>
     <label class="checkbox-inline"><input type="checkbox" id="ia-corta-rel" onchange="cambiarFlagPanel('rel','corta',this)"> Texto por carta</label>
     <label class="checkbox-inline"><input type="checkbox" id="ia-larga-rel" onchange="cambiarFlagPanel('rel','larga',this)"> Interpretación larga</label>
-    <button class="btn btn-outline btn-sm" onclick="restablecerFlagsPanel('rel')">Por defecto</button>
   </div>
   <div id="r-relacion"></div>
   <a class="back-link" onclick="irA('inicio')" style="display:block;text-align:center;margin-top:16px">← Inicio</a>
@@ -126,16 +132,20 @@
     <label for="desc-laboral">Descripción (opcional)</label>
     <textarea id="desc-laboral" class="input-desc" maxlength="150" placeholder="Describe tu situación laboral..."></textarea>
   </div>
-  <div class="btn-group">
-    <button class="btn btn-gold" onclick="tirarLaboral()">✦ Tirar BATS Laboral</button>
-    <button class="btn btn-outline btn-sm" onclick="tirarLaboralInv()">Con Invertidas</button>
-    <label class="checkbox-inline"><input type="checkbox" id="laboral-comodin"> Incluir Comodín</label>
+  <div class="draw-config">
+    <div class="draw-config-title">Configura tu tirada</div>
+    <div class="btn-group">
+      <button class="btn btn-gold" onclick="tirarLaboral()">✦ Tirar BATS Laboral</button>
+    </div>
+    <div class="btn-group">
+      <label class="checkbox-inline"><input type="checkbox" id="laboral-inv"> Con Invertidas</label>
+      <label class="checkbox-inline"><input type="checkbox" id="laboral-comodin"> Incluir Comodín</label>
+    </div>
   </div>
   <div class="ia-panel-flags">
-    <span class="ia-panel-flags-t">Llamadas IA:</span>
+    <span class="ia-panel-flags-t">¿Qué quieres que interprete la IA BATS?</span>
     <label class="checkbox-inline"><input type="checkbox" id="ia-corta-laboral" onchange="cambiarFlagPanel('laboral','corta',this)"> Texto por carta</label>
     <label class="checkbox-inline"><input type="checkbox" id="ia-larga-laboral" onchange="cambiarFlagPanel('laboral','larga',this)"> Interpretación larga</label>
-    <button class="btn btn-outline btn-sm" onclick="restablecerFlagsPanel('laboral')">Por defecto</button>
   </div>
   <div id="r-laboral"></div>
   <a class="back-link" onclick="irA('inicio')" style="display:block;text-align:center;margin-top:16px">← Inicio</a>
@@ -163,16 +173,18 @@
       <label for="ap-corte">Corte</label>
     </div>
   </div>
-  <div class="form-group">
-    <label><input type="checkbox" id="aprendizaje-inv"> Con Invertidas</label>
-    <label><input type="checkbox" id="aprendizaje-comodin"> Incluir Comodín</label>
+  <div class="draw-config">
+    <div class="draw-config-title">Configura tu tirada</div>
+    <div class="form-group">
+      <label><input type="checkbox" id="aprendizaje-inv"> Con Invertidas</label>
+      <label><input type="checkbox" id="aprendizaje-comodin"> Incluir Comodín</label>
+    </div>
+    <div class="btn-group"><button class="btn btn-gold" onclick="tirarAprendizaje()">✦ Tirar</button></div>
   </div>
-  <div class="btn-group"><button class="btn btn-gold" onclick="tirarAprendizaje()">✦ Tirar</button></div>
   <div class="ia-panel-flags">
-    <span class="ia-panel-flags-t">Llamadas IA:</span>
+    <span class="ia-panel-flags-t">¿Qué quieres que interprete la IA BATS?</span>
     <label class="checkbox-inline"><input type="checkbox" id="ia-corta-aprendizaje" onchange="cambiarFlagPanel('aprendizaje','corta',this)"> Texto por carta</label>
     <label class="checkbox-inline"><input type="checkbox" id="ia-larga-aprendizaje" onchange="cambiarFlagPanel('aprendizaje','larga',this)"> Interpretación larga</label>
-    <button class="btn btn-outline btn-sm" onclick="restablecerFlagsPanel('aprendizaje')">Por defecto</button>
   </div>
   <div id="r-aprendizaje"></div>
   <a class="back-link" onclick="irA('inicio')" style="display:block;text-align:center;margin-top:16px">← Inicio</a>
@@ -214,16 +226,18 @@
     <label for="desc-pers">Descripción (opcional, máximo 200 caracteres)</label>
     <textarea id="desc-pers" class="input-desc" maxlength="200" placeholder="Describe el propósito de la tirada..."></textarea>
   </div>
-  <div class="form-group">
-    <label><input type="checkbox" id="pers-inv"> Incluir invertidas</label>
-    <label><input type="checkbox" id="pers-comodin"> Incluir Comodín</label>
+  <div class="draw-config">
+    <div class="draw-config-title">Configura tu tirada</div>
+    <div class="form-group">
+      <label><input type="checkbox" id="pers-inv"> Incluir invertidas</label>
+      <label><input type="checkbox" id="pers-comodin"> Incluir Comodín</label>
+    </div>
+    <div class="btn-group"><button class="btn btn-gold" onclick="tirarPers()">✦ Tirar</button></div>
   </div>
-  <div class="btn-group"><button class="btn btn-gold" onclick="tirarPers()">✦ Tirar</button></div>
   <div class="ia-panel-flags">
-    <span class="ia-panel-flags-t">Llamadas IA:</span>
+    <span class="ia-panel-flags-t">¿Qué quieres que interprete la IA BATS?</span>
     <label class="checkbox-inline"><input type="checkbox" id="ia-corta-pers" onchange="cambiarFlagPanel('pers','corta',this)"> Texto por carta</label>
     <label class="checkbox-inline"><input type="checkbox" id="ia-larga-pers" onchange="cambiarFlagPanel('pers','larga',this)"> Interpretación larga</label>
-    <button class="btn btn-outline btn-sm" onclick="restablecerFlagsPanel('pers')">Por defecto</button>
   </div>
   <div id="r-pers"></div>
   <a class="back-link" onclick="irA('inicio')" style="display:block;text-align:center;margin-top:16px">← Inicio</a>

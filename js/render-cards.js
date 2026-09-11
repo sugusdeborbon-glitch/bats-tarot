@@ -135,7 +135,6 @@ function recalcularQuintaYRenderizar(){
 }
 
 function qHTML(cartas){
-  if(window._ocultarReferencias) return document.createDocumentFragment();
   var d=_mkEl("div","q-box");
   var lbl=_mkEl("div","q-label");lbl.textContent="\u2726 QUINTAESENCIA";
   var inner=_mkEl("div","q-inner");

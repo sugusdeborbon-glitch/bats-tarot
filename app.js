@@ -372,8 +372,7 @@ function restablecerFlagsPanel(panelId){
   if(c2) c2.checked=getFlagLarga(panelId);
 }
 
-function tirarDiaria(){hacerDiaria(false)}
-function tirarDiariaInv(){hacerDiaria(true)}
+function tirarDiaria(){hacerDiaria(document.getElementById("diaria-inv")&&document.getElementById("diaria-inv").checked)}
 function hacerDiaria(inv){
   var comodin=document.getElementById("diaria-comodin")&&document.getElementById("diaria-comodin").checked;
   var pos=["Centro: energ\u00eda del d\u00eda","Izquierda: qu\u00e9 frenar o minimizar","Derecha: qu\u00e9 impulsar o hacer","Arriba: ayuda disponible","Abajo: posible salida o resultado"];
@@ -422,8 +421,7 @@ function tirarRelacion(){
     mostrarCompleto(c,"r-relacion",{posiciones:pos});
   },{titulo:"Tirada de la relaci\u00f3n",descripcion:valPanel("desc-rel"),p1:p1,p2:p2,tipoRel:tipoRel,guion:"rel",panelId:"rel"});
 }
-function tirarLaboral(){hacerLaboral(false)}
-function tirarLaboralInv(){hacerLaboral(true)}
+function tirarLaboral(){hacerLaboral(document.getElementById("laboral-inv")&&document.getElementById("laboral-inv").checked)}
 function hacerLaboral(inv){
   var comodin=document.getElementById("laboral-comodin")&&document.getElementById("laboral-comodin").checked;
   var pos=["Centro: energ\u00eda laboral del momento","Izquierda: qu\u00e9 frenar o minimizar en el trabajo","Derecha: qu\u00e9 impulsar o hacer en el trabajo","Arriba: ayuda disponible en el trabajo","Abajo: posible salida o resultado laboral"];
