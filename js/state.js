@@ -77,4 +77,9 @@
     set: function (v) { state.testComodin = v; },
     configurable: true
   });
+
+  Object.defineProperty(window, "BATS_VERSION", {
+    get: function () { return state.version; },
+    configurable: true
+  });
 })();

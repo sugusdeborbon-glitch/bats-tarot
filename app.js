@@ -675,7 +675,7 @@ function checkNovedades(){
     m.className='novedades-modal';
     var box=document.createElement('div');box.className='novedades-box';
     var h3=document.createElement('h3');h3.textContent=d.titulo||'Novedades';box.appendChild(h3);
-    var txt=document.createElement('div');txt.className='novedades-texto';txt.innerHTML=texto;box.appendChild(txt);
+    var txtEl=document.createElement('div');txtEl.className='novedades-texto';txtEl.innerHTML=texto;box.appendChild(txtEl);
     var btn=document.createElement('button');btn.className='btn btn-gold';btn.textContent='Entendido';
     btn.onclick=function(){m.remove();marcarNovedadesVista(d.ultima)};
     box.appendChild(btn);m.appendChild(box);
@@ -695,7 +695,7 @@ function initSW(){
           if(sw.state === 'installed' && navigator.serviceWorker.controller){
             var banner = document.createElement('div');
             banner.className = 'update-banner';
-            var txt=document.createElement('span');txt.textContent='Nueva versi\u00f3n disponible ';banner.appendChild(txt);
+            var txtEl=document.createElement('span');txtEl.textContent='Nueva versi\u00f3n disponible ';banner.appendChild(txtEl);
             var ubtn=document.createElement('button');ubtn.textContent='Actualizar';ubtn.onclick=function(){location.reload()};banner.appendChild(ubtn);
             document.body.appendChild(banner);
           }
