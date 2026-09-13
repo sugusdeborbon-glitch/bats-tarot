@@ -429,7 +429,17 @@ async function llamarProveedor(provider, messages, payload) {
       body: JSON.stringify(bodyObj),
       signal: ctrl.signal
     });
-    const data = await upstream.json();
+    let data;
+    try {
+      data = await upstream.json();
+    } catch (parseErr) {
+      const rawSnippet = " (respuesta no JSON del upstream)";
+      return {
+        ok: false,
+        status: upstream.status,
+        err: provider.name + " (" + upstream.status + ")" + rawSnippet
+      };
+    }
     if (!upstream.ok) {
       const detalle = data && data.error
         ? (data.error.message || data.error.status || JSON.stringify(data.error))
@@ -446,7 +456,10 @@ async function llamarProveedor(provider, messages, payload) {
     }
     return { ok: true, status: upstream.status, content: content };
   } catch (e) {
-    return { ok: false, status: 0, err: provider.name + ": la petición tardó demasiado o falló la conexión." };
+    if (e && e.name === "AbortError") {
+      return { ok: false, status: 504, err: provider.name + ": la petición excedió el tiempo de espera (40s)." };
+    }
+    return { ok: false, status: 502, err: provider.name + ": error de red — " + (e && e.message || "desconocido") };
   } finally {
     clearTimeout(timer);
   }

@@ -133,39 +133,58 @@ function llamarIA(payload,tipo){
 }
 function fetchConTimeout(url,body,extra){
   var timeoutMs=(extra&&extra.timeoutMs)||60000;
-  var ctrl=("AbortController" in window)?new AbortController():null;
-  var timer=ctrl?setTimeout(function(){ctrl.abort()},timeoutMs):null;
-  function limpiar(){if(timer) clearTimeout(timer)}
   function status(s){try{if(window._iaStatus) window._iaStatus(s)}catch(e){}}
-  var opts={
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify(body)
-  };
-  if(extra&&extra.key) opts.headers["Authorization"]="Bearer "+extra.key;
-  if(extra&&extra.token) opts.headers["X-BATS-Token"]=extra.token;
-  if(ctrl) opts.signal=ctrl.signal;
+  var headers={"Content-Type":"application/json"};
+  if(extra&&extra.key) headers["Authorization"]="Bearer "+extra.key;
+  if(extra&&extra.token) headers["X-BATS-Token"]=extra.token;
   status("Enviando petici\u00f3n al servidor de IA\u2026");
+  var http=(window.BATS&&BATS.http)?BATS.http:null;
   var p;
-  try{ p=fetch(url,opts); }
-  catch(e){ limpiar(); return Promise.reject(new Error("URL del servidor de IA inv\u00e1lida. Rev\u00edsala en Configuraci\u00f3n.")); }
-  return p.then(function(r){status("Respuesta recibida, procesando\u2026");return parseAIRespuesta(r)}).then(function(v){limpiar();return v},function(e){
-    limpiar();
+  if(http){
+    p=http.post(url,body,{headers:headers,timeoutMs:timeoutMs,responseType:"text"});
+  } else {
+    var ctrl=("AbortController" in window)?new AbortController():null;
+    var timer=ctrl?setTimeout(function(){ctrl.abort()},timeoutMs):null;
+    var fetchHeaders={"Content-Type":"application/json"};
+    var k=Object.keys(headers);
+    for(var i=0;i<k.length;i++) fetchHeaders[k[i]]=headers[k[i]];
+    var opts={method:"POST",headers:fetchHeaders,body:JSON.stringify(body)};
+    if(ctrl) opts.signal=ctrl.signal;
+    try{ p=fetch(url,opts).then(function(r){
+      clearTimeout(timer);
+      return r.text().then(function(txt){
+        var hdrs={};r.headers.forEach(function(v,k2){hdrs[k2]=v});
+        return{status:r.status,headers:hdrs,data:txt,ok:r.ok,url:url};
+      });
+    }); }
+    catch(e){ clearTimeout(timer); return Promise.reject(new Error("URL del servidor de IA inv\u00e1lida. Rev\u00edsala en Configuraci\u00f3n.")); }
+  }
+  return p.then(function(resp){
+    status("Respuesta recibida, procesando\u2026");
+    return parseAIRespuesta(resp);
+  }).then(function(v){return v},function(e){
     status("error");
     if(e&&e.name==="AbortError") throw new Error("La IA tard\u00f3 demasiado. Reintenta.");
+    if(e&&e.name==="TypeError"&&/fetch/i.test(e.message||""))
+      throw new Error("No se pudo conectar con el servidor de IA. Verifica tu conexi\u00f3n y la URL del Worker en Configuraci\u00f3n.");
     throw e;
   });
 }
-function parseAIRespuesta(r){
-  return r.text().then(function(txt){
-    var data;
-    try{data=JSON.parse(txt)}catch(e){throw new Error("Respuesta no v\u00e1lida del servidor IA")}
-    if(!r.ok) throw new Error(data.error||"Error del servidor IA");
-    var content=data.content||(data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content)||"";
-    if(!content) throw new Error("Respuesta IA vac\u00eda");
-    _ultimaIA={provider:(data.provider||""),modelo:(data.modelo||"")};
-    return content;
-  });
+function parseAIRespuesta(resp){
+  var txt=typeof resp.data==="string"?resp.data:JSON.stringify(resp.data||"");
+  var data;
+  try{data=JSON.parse(txt)}catch(e){
+    var snippet=(txt||"").slice(0,200);
+    throw new Error("Respuesta no v\u00e1lida del servidor IA"+(snippet?": "+snippet:""));
+  }
+  if(!resp.ok){
+    var errMsg=data.error||data.message||"Error del servidor IA";
+    throw new Error("("+resp.status+") "+errMsg);
+  }
+  var content=data.content||(data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content)||"";
+  if(!content) throw new Error("Respuesta IA vac\u00eda");
+  _ultimaIA={provider:(data.provider||""),modelo:(data.modelo||"")};
+  return content;
 }
 var _ultimaIA={provider:"",modelo:""};
 function esEntornoDev(){
@@ -394,16 +413,27 @@ function getAIFlagsCached(){
 function cargarAIFlags(cb){
   var url=getWorkerURL();
   if(!url||!/^https:\/\//i.test(url)){cb(getAIFlagsCached());return}
-  fetch(url+"/api/ai-flags",{method:"GET"}).then(function(r){
-    return r.text().then(function(txt){
-      var data;
-      try{data=JSON.parse(txt)}catch(e){throw new Error("bad json")}
-      if(!r.ok) throw new Error("http "+r.status);
-      var fl={useCorta:data.useCorta!==false,useLarga:data.useLarga!==false};
-      _aiFlagsCache=fl;
-      try{lsSet(_AI_FLAGS_KEY,JSON.stringify(fl))}catch(e){}
-      cb(fl);
+  var http=(window.BATS&&BATS.http)?BATS.http:null;
+  var p;
+  if(http){
+    p=http.get(url+"/api/ai-flags",{timeoutMs:10000});
+  } else {
+    p=fetch(url+"/api/ai-flags",{method:"GET"}).then(function(r){
+      return r.text().then(function(txt){
+        var hdrs={};r.headers.forEach(function(v,k){hdrs[k]=v});
+        return{status:r.status,headers:hdrs,data:txt,ok:r.ok};
+      });
     });
+  }
+  p.then(function(resp){
+    var raw=resp.data;
+    var data;
+    try{data=typeof raw==="string"?JSON.parse(raw):raw}catch(e){throw new Error("bad json")}
+    if(!resp.ok) throw new Error("http "+resp.status);
+    var fl={useCorta:data.useCorta!==false,useLarga:data.useLarga!==false};
+    _aiFlagsCache=fl;
+    try{lsSet(_AI_FLAGS_KEY,JSON.stringify(fl))}catch(e){}
+    cb(fl);
   }).catch(function(e){
     cb(getAIFlagsCached());
   });
@@ -434,17 +464,33 @@ function adminGetToken(){try{return sessionStorage.getItem(STORE_PFX+"bats-admin
 function adminSetToken(t){try{sessionStorage.setItem(STORE_PFX+"bats-admin-token",t)}catch(e){}}
 function adminClearToken(){try{sessionStorage.removeItem(STORE_PFX+"bats-admin-token")}catch(e){}}
 function adminFetch(method,token,cfg){
-  return fetch(getWorkerURL()+"/api/config",{
-    method:method,
-    headers:{"Content-Type":"application/json","X-Admin-Token":token},
-    body:cfg?JSON.stringify(cfg):undefined
-  }).then(function(r){
-    return r.text().then(function(txt){
-      var data;
-      try{data=JSON.parse(txt)}catch(e){throw new Error("Respuesta no v\u00e1lida del servidor")}
-      if(!r.ok) throw new Error(data.error||"Error del servidor ("+r.status+")");
-      return data;
+  var url=getWorkerURL()+"/api/config";
+  var headers={"Content-Type":"application/json","X-Admin-Token":token};
+  var http=(window.BATS&&BATS.http)?BATS.http:null;
+  var p;
+  if(http){
+    if(method==="GET"){
+      p=http.get(url,{headers:headers,timeoutMs:15000});
+    } else {
+      p=http.post(url,cfg||{},{headers:headers,timeoutMs:15000});
+    }
+  } else {
+    p=fetch(url,{
+      method:method,
+      headers:headers,
+      body:cfg?JSON.stringify(cfg):undefined
+    }).then(function(r){
+      return r.text().then(function(txt){
+        var hdrs={};r.headers.forEach(function(v,k){hdrs[k]=v});
+        return{status:r.status,headers:hdrs,data:txt,ok:r.ok};
+      });
     });
+  }
+  return p.then(function(resp){
+    var data;
+    try{data=typeof resp.data==="string"?JSON.parse(resp.data):resp.data}catch(e){throw new Error("Respuesta no v\u00e1lida del servidor")}
+    if(!resp.ok) throw new Error(data.error||"Error del servidor ("+resp.status+")");
+    return data;
   });
 }
 function adminGetConfig(token){return adminFetch("GET",token)}
