@@ -47,11 +47,22 @@ function aiDecrAsync(s,password){
     if(!crypto)return Promise.resolve(aiDecr(s));
     return crypto.decrypt(s,password||"bats-user-key");
   }
-  return Promise.resolve(aiDecr(s));
+  var crypto=(window.BATS&&BATS.crypto)?BATS.crypto:null;
+  if(!crypto)return Promise.resolve(aiDecr(s));
+  var plain=aiDecr(s);
+  if(!plain)return Promise.resolve("");
+  return crypto.encrypt(plain,password||"bats-user-key").then(function(migrated){
+    var cfg=getAICfg();
+    cfg.key=migrated;
+    saveAICfg(cfg);
+    return plain;
+  }).catch(function(){
+    return plain;
+  });
 }
 function aiEncrAsync(s,password){
   var crypto=(window.BATS&&BATS.crypto)?BATS.crypto:null;
-  if(!crypto)return Promise.resolve(aiEncr(s));
+  if(!crypto)return Promise.reject(new Error("Cifrado AES-GCM no disponible. No se puede guardar la clave de forma segura."));
   return crypto.encrypt(s,password||"bats-user-key");
 }
 
@@ -94,9 +105,8 @@ function guardarAIPropia(){
     aiEncrAsync(key).then(function(encrypted){
       cfg.key=encrypted;
       save();
-    }).catch(function(){
-      cfg.key=aiEncr(key);
-      save();
+    }).catch(function(e){
+      toast("No se pudo guardar la clave de forma segura: "+(e&&e.message||"error desconocido"),true);
     });
   } else {
     save();
