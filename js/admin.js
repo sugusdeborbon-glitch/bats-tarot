@@ -13,7 +13,10 @@ var ADMIN_SISTEMAS_CFGKEY={
   larga:"systemLarga"
 };
 
+function isNativeApp(){return !!(window.Capacitor&&Capacitor.Plugins)}
+
 function initAdmin(){
+  if(isNativeApp())return;
   var box=document.getElementById("admin-box");
   if(!box) return;
   var params=new URLSearchParams(location.search);
@@ -183,4 +186,75 @@ function adminRestaurarTodo(){
   },function(e){
     adminMsg((e&&e.message)||"No se pudieron restaurar los valores.",true);
   });
+}
+
+/* ============ ADMIN EXPORT / IMPORT (AES-GCM) ============ */
+
+function adminExportarConfig(){
+  var pass=prompt("Contraseña para cifrar la configuración exportada:");
+  if(!pass||pass.length<4){toast("La contraseña debe tener al menos 4 caracteres",true);return}
+  var cfg=_adminState.config||{};
+  var exportData={
+    format:"bats-admin-config",
+    version:1,
+    exported:new Date().toISOString(),
+    config:cfg
+  };
+  var plaintext=JSON.stringify(exportData);
+  var crypto=(window.BATS&&BATS.crypto)?BATS.crypto:null;
+  if(!crypto){toast("Error: módulo de cifrado no disponible",true);return}
+  adminMsg("Cifrando configuración\u2026");
+  crypto.encrypt(plaintext,pass).then(function(envelope){
+    var filename="bats-config-"+new Date().toISOString().slice(0,10)+".json";
+    crypto.downloadJSON(envelope,filename);
+    adminMsg("\u2713 Configuración exportada y cifrada: "+filename);
+    toast("Configuración exportada correctamente");
+  }).catch(function(e){
+    adminMsg("Error al exportar: "+(e&&e.message||"desconocido"),true);
+  });
+}
+
+function adminImportarConfig(){
+  var input=document.createElement("input");
+  input.type="file";
+  input.accept=".json";
+  input.onchange=function(){
+    var file=input.files&&input.files[0];
+    if(!file)return;
+    var pass=prompt("Contraseña para descifrar la configuración:");
+    if(!pass){toast("Se necesita la contraseña para importar",true);return}
+    var crypto=(window.BATS&&BATS.crypto)?BATS.crypto:null;
+    if(!crypto){toast("Error: módulo de cifrado no disponible",true);return}
+    adminMsg("Descifrando configuración\u2026");
+    crypto.readFileAsText(file).then(function(envelope){
+      return crypto.decrypt(envelope,pass);
+    }).then(function(plaintext){
+      var data;
+      try{data=JSON.parse(plaintext)}catch(e){throw new Error("Contenido no válido")}
+      if(!data||data.format!=="bats-admin-config"||data.version!==1){
+        throw new Error("Formato de fichero desconocido");
+      }
+      if(!data.config||typeof data.config!=="object"){
+        throw new Error("El fichero no contiene configuración válida");
+      }
+      if(!confirm("\u00bfAplicar la configuración importada? Esto reemplazará la configuración actual.")) return;
+      var tok=adminGetToken();
+      return adminSaveConfig(tok,data.config);
+    }).then(function(result){
+      if(!result)return;
+      _adminState.config=result.config||{};
+      _adminState.pendingOrder=null;
+      _adminState.pendingOn=null;
+      if(result.config){
+        _adminState.aiFlags={useCorta:result.config.useCorta!==false,useLarga:result.config.useLarga!==false};
+      }
+      if(typeof setAIFlagsLocal==="function") setAIFlagsLocal(_adminState.aiFlags);
+      adminPoblar();
+      adminMsg("\u2713 Configuración importada y aplicada correctamente.");
+      toast("Configuración importada correctamente");
+    }).catch(function(e){
+      adminMsg("Error al importar: "+(e&&e.message||"desconocido"),true);
+    });
+  };
+  input.click();
 }

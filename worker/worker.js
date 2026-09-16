@@ -344,16 +344,19 @@ export default {
     };
 
     let last = null;
+    const errors = [];
     for (const provider of providers) {
       const res = await llamarProveedor(provider, msgs, payload);
       if (res.ok) {
         return json({ content: res.content, provider: provider.name, modelo: provider.model }, 200, req, provider.name);
       }
       last = res;
+      errors.push(provider.name + ": " + res.err + " [" + (res.category || "unknown") + "]");
     }
     if (last) {
       const status = last.status && last.status >= 400 ? last.status : 502;
-      return json({ error: last.err }, status, req);
+      const summary = "Todos los proveedores fallaron (" + providers.length + "): " + errors.join(" | ");
+      return json({ error: summary }, status, req);
     }
     return json({ error: "Error desconocido del proveedor" }, 502, req);
   }
@@ -433,33 +436,38 @@ async function llamarProveedor(provider, messages, payload) {
     try {
       data = await upstream.json();
     } catch (parseErr) {
-      const rawSnippet = " (respuesta no JSON del upstream)";
       return {
         ok: false,
         status: upstream.status,
-        err: provider.name + " (" + upstream.status + ")" + rawSnippet
+        err: provider.name + " (" + upstream.status + "): respuesta no JSON del upstream",
+        category: "parse_error"
       };
     }
     if (!upstream.ok) {
       const detalle = data && data.error
         ? (data.error.message || data.error.status || JSON.stringify(data.error))
         : (data && data.error_type ? data.error_type : JSON.stringify(data).slice(0, 300));
+      let category = "provider_error";
+      if (upstream.status === 429) category = "rate_limited";
+      else if (upstream.status >= 500) category = "server_error";
+      else if (upstream.status === 408) category = "timeout";
       return {
         ok: false,
         status: upstream.status,
-        err: provider.name + " (" + upstream.status + "): " + detalle
+        err: provider.name + " (" + upstream.status + "): " + detalle,
+        category: category
       };
     }
     const content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
     if (!content || content.length < 80) {
-      return { ok: false, status: 502, err: "Respuesta vacía o demasiado corta de " + provider.name };
+      return { ok: false, status: 502, err: "Respuesta vacía o demasiado corta de " + provider.name, category: "empty_response" };
     }
     return { ok: true, status: upstream.status, content: content };
   } catch (e) {
     if (e && e.name === "AbortError") {
-      return { ok: false, status: 504, err: provider.name + ": la petición excedió el tiempo de espera (40s)." };
+      return { ok: false, status: 504, err: provider.name + ": la petición excedió el tiempo de espera (40s).", category: "timeout" };
     }
-    return { ok: false, status: 502, err: provider.name + ": error de red — " + (e && e.message || "desconocido") };
+    return { ok: false, status: 502, err: provider.name + ": error de red — " + (e && e.message || "desconocido"), category: "network_error" };
   } finally {
     clearTimeout(timer);
   }

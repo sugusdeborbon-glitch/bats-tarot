@@ -36,6 +36,25 @@ function aiXor(s){
 function aiEncr(s){return btoa(aiXor(s))}
 function aiDecr(s){try{return aiXor(atob(s))}catch(e){return ""}}
 
+function isAESGCM(s){
+  if(!s||s.charAt(0)!=="{")return false;
+  try{var o=JSON.parse(s);return o&&o.v===1&&o.algo==="AES-GCM"}catch(e){return false}
+}
+function aiDecrAsync(s,password){
+  if(!s)return Promise.resolve("");
+  if(isAESGCM(s)){
+    var crypto=(window.BATS&&BATS.crypto)?BATS.crypto:null;
+    if(!crypto)return Promise.resolve(aiDecr(s));
+    return crypto.decrypt(s,password||"bats-user-key");
+  }
+  return Promise.resolve(aiDecr(s));
+}
+function aiEncrAsync(s,password){
+  var crypto=(window.BATS&&BATS.crypto)?BATS.crypto:null;
+  if(!crypto)return Promise.resolve(aiEncr(s));
+  return crypto.encrypt(s,password||"bats-user-key");
+}
+
 function getAICfg(){try{return JSON.parse(lsGet(AI_CFG_KEY))||{}}catch(e){return {}}}
 function saveAICfg(o){lsSet(AI_CFG_KEY,JSON.stringify(o))}
 
@@ -65,11 +84,23 @@ function guardarAIPropia(){
   cfg.provider=provider;
   cfg.base=base;
   cfg.modelo=modelo;
-  if(key) cfg.key=aiEncr(key);
-  saveAICfg(cfg);
-  document.getElementById("cfg-key").value="";
-  cargarPanelConfig();
-  toast("\u2713 Configuraci\u00f3n de IA guardada");
+  var save=function(){
+    saveAICfg(cfg);
+    document.getElementById("cfg-key").value="";
+    cargarPanelConfig();
+    toast("\u2713 Configuraci\u00f3n de IA guardada");
+  };
+  if(key){
+    aiEncrAsync(key).then(function(encrypted){
+      cfg.key=encrypted;
+      save();
+    }).catch(function(){
+      cfg.key=aiEncr(key);
+      save();
+    });
+  } else {
+    save();
+  }
 }
 function borrarAIPropia(){
   if(!confirm("\u00bfEliminar tu clave de IA guardada?")) return;
@@ -106,6 +137,18 @@ function cargarPanelConfig(){
     if(cfg.key){var sp=document.createElement("span");sp.style.color="var(--gold)";sp.textContent="\u2713 Clave guardada";st.appendChild(sp);}
     else{var sp=document.createElement("span");sp.className="subtle";sp.textContent="Sin clave guardada";st.appendChild(sp);}
   }
+  var isNative=!!(window.Capacitor&&Capacitor.Plugins);
+  if(isNative){
+    var hideIds=["cfg-provider","cfg-endpoint","cfg-modelo","cfg-worker"];
+    for(var i=0;i<hideIds.length;i++){
+      var el=document.getElementById(hideIds[i]);
+      if(el){
+        var grp=el.closest(".form-group");
+        if(grp) grp.style.display="none";
+        else el.style.display="none";
+      }
+    }
+  }
   cargarAIInterpretacion();
 }
 
@@ -120,14 +163,17 @@ function llamarIA(payload,tipo){
     return fetchConTimeout(url,body,{token:AI_WORKER_TOKEN,timeoutMs:timeoutMs});
   }
   if(mode==="propia"){
-    var cfg=getAIPropia();
-    if(!cfg.key) return Promise.reject(new Error("No hay clave configurada"));
+    var c=getAICfg(),p=getProvider(c.provider||"openai");
+    if(!c.key) return Promise.reject(new Error("No hay clave configurada"));
     var url2=getWorkerURL();
     if(!url2||!/^https:\/\//i.test(url2)) return Promise.reject(new Error("URL del Worker de IA inv\u00e1lida o vac\u00eda. Rev\u00edsala en Configuraci\u00f3n."));
     body.mode="propia";
-    body.base=cfg.base;
-    body.model=cfg.modelo;
-    return fetchConTimeout(url2,body,{token:AI_WORKER_TOKEN,key:cfg.key,timeoutMs:timeoutMs});
+    body.base=c.base||p.base;
+    body.model=c.modelo||p.modelo;
+    return aiDecrAsync(c.key).then(function(key){
+      if(!key) throw new Error("No se pudo descifrar la clave de IA");
+      return fetchConTimeout(url2,body,{token:AI_WORKER_TOKEN,key:key,timeoutMs:timeoutMs});
+    });
   }
   return Promise.reject(new Error("Modo IA desactivado"));
 }
