@@ -113,6 +113,11 @@
       var j = Math.floor(Math.random() * (i + 1));
       var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
     }
+    if (window._BATS_TEST_COMODIN) {
+      for (var i = 0; i < arr.length; i++) {
+        if (esComodin(arr[i])) { var c = arr.splice(i, 1)[0]; arr.unshift(c); break; }
+      }
+    }
     return arr;
   }
 
