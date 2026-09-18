@@ -98,7 +98,7 @@ function cartasParaAI(cartas){
   cartas.forEach(function(it){
     if(esComodin(it.carta)){
       var laSalida=ci.extension[2];
-      nueva.push({carta:laSalida.carta,invertida:laSalida.invertida,posicion:it.posicion,texto:laSalida.texto||txt(laSalida.carta,laSalida.invertida)});
+      nueva.push({carta:laSalida.carta,invertida:laSalida.invertida,posicion:it.posicion,texto:laSalida.texto||txt(laSalida.carta,laSalida.invertida),_posMeta:it._posMeta||null});
     } else {
       nueva.push(it);
     }
@@ -111,7 +111,7 @@ function cartasExtensionParaAI(cartas){
   var ci=comodinResuelto(cartas);
   if(!ci) return null;
   return ci.extension.map(function(it,i){
-    return {carta:it.carta,invertida:it.invertida,posicion:it.posicion,texto:it.texto};
+    return {carta:it.carta,invertida:it.invertida,posicion:it.posicion,texto:it.texto,_posMeta:{posicion:null,funcion:COMODIN_POS[i]||it.posicion,pregunta:COMODIN_POS[i]||null}};
   });
 }
 
@@ -376,6 +376,7 @@ function tirarDiaria(){hacerDiaria(document.getElementById("diaria-inv")&&docume
 function hacerDiaria(inv){
   var comodin=document.getElementById("diaria-comodin")&&document.getElementById("diaria-comodin").checked;
   var pos=["Centro: energ\u00eda del d\u00eda","Izquierda: qu\u00e9 frenar o minimizar","Derecha: qu\u00e9 impulsar o hacer","Arriba: ayuda disponible","Abajo: posible salida o resultado"];
+  var preguntas=["Qu\u00e9 energ\u00eda se est\u00e1 moviendo hoy","Qu\u00e9 frenar o evitar","Qu\u00e9 activar o hacer","Qu\u00e9 ayuda hay disponible","Cu\u00e1l es el posible resultado o salida"];
   var esSombra=[false,true,false,false,false];
   var m=barajar(añadirComodin(BARAJA.slice(),comodin));
   if(m.length<5) return;
@@ -383,6 +384,8 @@ function hacerDiaria(inv){
   for(var i=0;i<5;i++){
     var invC=inv?Math.random()<.5:false;
     var it={carta:m[i],invertida:invC,posicion:pos[i],texto:txt(m[i],invC,esSombra[i])};
+    var parts=pos[i].split(":");
+    it._posMeta={posicion:parts[0]?parts[0].trim():null,funcion:parts[1]?parts[1].trim():pos[i],pregunta:preguntas[i]||null};
     if(esComodin(m[i])){it.comodinEstado="reverso";it.comodinInvertido=invC;it.comodinImg="comodin_reverso.png";if(invC){it.texto=COMODIN_INV_TEXT;}}
     c.push(it);
   }
@@ -406,10 +409,12 @@ function tirarRelacion(){
   var m=barajar(añadirComodin(BARAJA.slice(),comodin));
   if(m.length<4) return;
   var pos=["Energ\u00eda del momento de la relaci\u00f3n","Energ\u00eda de "+p1,"Energ\u00eda de "+p2,"Posible salida o direcci\u00f3n"];
+  var preguntas=["Qu\u00e9 energ\u00eda define actualmente el v\u00ednculo","Qu\u00e9 energ\u00eda aporta "+p1,"Qu\u00e9 energ\u00eda aporta "+p2,"Hacia qu\u00e9 din\u00e1mica tiende el v\u00ednculo"];
   var c=[];
   for(var i=0;i<4;i++){
     var invC=inv?Math.random()<.5:false;
     var it={carta:m[i],invertida:invC,posicion:pos[i],texto:txt(m[i],invC,false)};
+    it._posMeta={posicion:null,funcion:pos[i],pregunta:preguntas[i]||null};
     if(esComodin(m[i])){it.comodinEstado="reverso";it.comodinInvertido=invC;it.comodinImg="comodin_reverso.png";if(invC){it.texto=COMODIN_INV_TEXT;}}
     c.push(it);
   }
@@ -425,6 +430,7 @@ function tirarLaboral(){hacerLaboral(document.getElementById("laboral-inv")&&doc
 function hacerLaboral(inv){
   var comodin=document.getElementById("laboral-comodin")&&document.getElementById("laboral-comodin").checked;
   var pos=["Centro: energ\u00eda laboral del momento","Izquierda: qu\u00e9 frenar o minimizar en el trabajo","Derecha: qu\u00e9 impulsar o hacer en el trabajo","Arriba: ayuda disponible en el trabajo","Abajo: posible salida o resultado laboral"];
+  var preguntas=["Qu\u00e9 energ\u00eda laboral se est\u00e1 moviendo","Qu\u00e9 frenar o evitar en el trabajo","Qu\u00e9 activar o hacer en el trabajo","Qu\u00e9 ayuda hay disponible en el trabajo","Cu\u00e1l es el posible resultado laboral"];
   var esSombra=[false,true,false,false,false];
   var m=barajar(añadirComodin(BARAJA.slice(),comodin));
   if(m.length<5) return;
@@ -432,6 +438,8 @@ function hacerLaboral(inv){
   for(var i=0;i<5;i++){
     var invC=inv?Math.random()<.5:false;
     var it={carta:m[i],invertida:invC,posicion:pos[i],texto:txt(m[i],invC,esSombra[i])};
+    var parts=pos[i].split(":");
+    it._posMeta={posicion:parts[0]?parts[0].trim():null,funcion:parts[1]?parts[1].trim():pos[i],pregunta:preguntas[i]||null};
     if(esComodin(m[i])){it.comodinEstado="reverso";it.comodinInvertido=invC;it.comodinImg="comodin_reverso.png";if(invC){it.texto=COMODIN_INV_TEXT;}}
     c.push(it);
   }
@@ -495,6 +503,7 @@ function tirarPers(){
     var invC=inv?Math.random()<.5:false;
     var el=document.getElementById("pers-pos-"+(i+1));
     var it={carta:dealt[i],invertida:invC,posicion:el?el.value:"Posici\u00f3n "+(i+1),texto:txt(dealt[i],invC,false)};
+    it._posMeta={posicion:null,funcion:it.posicion,pregunta:null};
     if(esComodin(dealt[i])){it.comodinEstado="reverso";it.comodinInvertido=invC;it.comodinImg="comodin_reverso.png";if(invC){it.texto=COMODIN_INV_TEXT;}}
     c.push(it);
   }
@@ -518,18 +527,20 @@ function hacerAprendizaje(inv){
   var m=barajar(añadirComodin(mazo,comodin));
   if(m.length<6) return;
   var pos=[
-    "El Hecho — ¿Qué ha ocurrido realmente?",
-    "El Maestro — ¿Qué me está mostrando realmente esta experiencia?",
-    "El Punto Ciego — ¿Qué no estoy viendo o qué interpretación me impide aprender?",
-    "La Integración — ¿Qué comprensión quiere integrarse en mí?",
-    "El Don Transformador — ¿Qué capacidad, virtud o cambio nace cuando integro esta verdad?",
-    "El Resultado Posible — ¿Qué transformación ocurrirá en mi experiencia si integro la lección?"
+    "El Hecho — \u00bfQu\u00e9 ha ocurrido realmente?",
+    "El Maestro — \u00bfQu\u00e9 me est\u00e1 mostrando realmente esta experiencia?",
+    "El Punto Ciego — \u00bfQu\u00e9 no estoy viendo o qu\u00e9 interpretaci\u00f3n me impide aprender?",
+    "La Integraci\u00f3n — \u00bfQu\u00e9 comprensi\u00f3n quiere integrarse en m\u00ed?",
+    "El Don Transformador — \u00bfQu\u00e9 capacidad, virtud o cambio nace cuando integro esta verdad?",
+    "El Resultado Posible — \u00bfQu\u00e9 transformaci\u00f3n ocurrir\u00e1 en mi experiencia si integro la lecci\u00f3n?"
   ];
   var esSom=[false,false,true,false,false,false];
   var c=[];
   for(var i=0;i<6;i++){
     var invC=inv?Math.random()<.5:false;
     var it={carta:m[i],invertida:invC,posicion:pos[i],texto:txt(m[i],invC,esSom[i])};
+    var dashIdx=pos[i].indexOf(" \u2014 ");
+    it._posMeta={posicion:dashIdx!==-1?pos[i].substring(0,dashIdx):pos[i],funcion:dashIdx!==-1?pos[i].substring(0,dashIdx):pos[i],pregunta:dashIdx!==-1?pos[i].substring(dashIdx+3):null};
     if(esComodin(m[i])){it.comodinEstado="reverso";it.comodinInvertido=invC;it.comodinImg="comodin_reverso.png";if(invC){it.texto=COMODIN_INV_TEXT;}}
     c.push(it);
   }
