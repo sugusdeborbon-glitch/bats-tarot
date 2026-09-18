@@ -2,10 +2,6 @@ const GOOGLE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat
 const GOOGLE_MODEL = "gemini-3.6-flash";
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GROQ_MODEL = "llama-3.3-70b-versatile";
-const NVIDIA_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
-const NVIDIA_MODEL = "meta/llama-3.3-70b-instruct";
-const SAMBANOVA_URL = "https://api.sambanova.ai/v1/chat/completions";
-const SAMBANOVA_MODEL = "Meta-Llama-3.3-70B-Instruct";
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const OPENROUTER_MODEL = "openrouter/free";
 const MISTRAL_URL = "https://api.mistral.ai/v1/chat/completions";
@@ -65,13 +61,11 @@ function sistemaPorTipo(tipo) {
 
 const PROVIDERS = [
   { id: "groq", name: "Groq", url: GROQ_URL, model: GROQ_MODEL, keyEnv: "GROQ_API_KEY" },
-  { id: "sambanova", name: "SambaNova", url: SAMBANOVA_URL, model: SAMBANOVA_MODEL, keyEnv: "SAMBANOVA_API_KEY" },
   { id: "google", name: "Google", url: GOOGLE_URL, model: GOOGLE_MODEL, keyEnv: "GOOGLE_API_KEY", googleThinking: "low" },
   { id: "openrouter", name: "OpenRouter", url: OPENROUTER_URL, model: OPENROUTER_MODEL, keyEnv: "OPENROUTER_API_KEY" },
-  { id: "nvidia", name: "NVIDIA", url: NVIDIA_URL, model: NVIDIA_MODEL, keyEnv: "NVIDIA_API_KEY" },
   { id: "mistral", name: "Mistral", url: MISTRAL_URL, model: MISTRAL_MODEL, keyEnv: "MISTRAL_API_KEY" }
 ];
-const DEFAULT_ORDER = ["groq", "sambanova", "google", "openrouter", "nvidia"];
+const DEFAULT_ORDER = ["groq", "google", "openrouter", "mistral"];
 
 const hits = new Map();
 
