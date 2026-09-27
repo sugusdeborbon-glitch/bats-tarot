@@ -18,8 +18,7 @@
     lastRenderOpts: null,   // options used in last render call
     lastCtx: null,          // context object for current draw
     ocultarReferencias: false, // hide card references during AI loading
-    iaStatus: null,         // callback for IA status updates
-    testComodin: false      // debug flag for wildcard testing
+    iaStatus: null         // callback for IA status updates
   };
 
   // Expose on BATS namespace
@@ -70,11 +69,6 @@
   Object.defineProperty(window, "_iaStatus", {
     get: function () { return state.iaStatus; },
     set: function (v) { state.iaStatus = v; },
-    configurable: true
-  });
-  Object.defineProperty(window, "_BATS_TEST_COMODIN", {
-    get: function () { return state.testComodin; },
-    set: function (v) { state.testComodin = v; },
     configurable: true
   });
 
