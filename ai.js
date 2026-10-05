@@ -162,11 +162,33 @@ function cargarPanelConfig(){
   cargarAIInterpretacion();
 }
 
+/* Contrato temporal del lado cliente (D-T2, Fase 0.5 de la nueva dirección).
+ *
+ * Estos dos valores NO son el presupuesto de los proveedores: ese lo posee el
+ * Worker y vive en js/ai/contrato-temporal.js (CONTRATO.corta.frontendMs=60000,
+ * CONTRATO.larga.frontendMs=90000). Este es el tope de red del NAVEGADOR.
+ *
+ * La relación que importa es una INVARIANTE, y por eso el cliente espera MÁS
+ * que el presupuesto del Worker:
+ *
+ *   tope del cliente (60/90 s)  >  presupuesto del Worker (50/75 s)
+ *
+ * Si el cliente abortara antes, el usuario vería un error de red opaco en lugar
+ * del error estructurado que el Worker ya sabe explicar ("sin presupuesto",
+ * "todos los proveedores fallaron"). El margen es de 10 s en corta y 15 s en
+ * larga.
+ *
+ * ESTOS NÚMEROS DEBEN COINCIDIR CON CONTRATO[tipo].frontendMs. La coincidencia
+ * está verificada mecánicamente por tests/contrato-temporal-coherencia.test.js:
+ * si se cambia un lado y no el otro, la suite falla.
+ */
+var BATS_AI_TEMPORAL={corta:60000,larga:90000};
+
 function llamarIA(payload,tipo){
   var mode=getAIMode();
   var esMensajes=Array.isArray(payload);
   var body=esMensajes?{messages:payload,tipo:tipo||""}:{tipo:tipo||"",user:payload.user};
-  var timeoutMs=(tipo==="larga")?90000:60000;
+  var timeoutMs=(tipo==="larga")?BATS_AI_TEMPORAL.larga:BATS_AI_TEMPORAL.corta;
   if(mode==="estandar"){
     var url=getWorkerURL();
     if(!url||!/^https:\/\//i.test(url)) return Promise.reject(new Error("URL del Worker de IA inv\u00e1lida o vac\u00eda. Rev\u00edsala en Configuraci\u00f3n."));

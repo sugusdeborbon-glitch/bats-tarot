@@ -1,7 +1,13 @@
-var CACHE = "bats-v35";
+var CACHE = "bats-1.11.0";
 var STATIC_CACHE = CACHE + "-static";
 var IMG_CACHE = CACHE + "-img";
 
+/* Nota (D-T2, Fase 0.5): `js/ai/contrato-temporal.js` NO está en esta lista, y
+ * no es un olvido. Ninguna página lo carga: es un módulo ESM que importa el
+ * Worker, y el Worker lo empaqueta por sí mismo. Cachearlo aquí era lo que
+ * hacía creer que el módulo llegaba "al cliente" cuando nunca lo hizo — y esa falsa
+ * impresión fue la que justificó bumps de caché sin motivo funcional.
+ * El equivalente del lado cliente son los topes BATS_AI_TEMPORAL de ai.js. */
 var ARCHIVOS = [
   "./",
   "index.html",
