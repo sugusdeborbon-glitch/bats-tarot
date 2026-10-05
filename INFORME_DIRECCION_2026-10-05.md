@@ -376,7 +376,7 @@ informe, que es diagnostico prospectivo.
 | Ítem | Resultado |
 |---|---|
 | 0.1 Integridad | Backdoor eliminado del código. Verificado ausente en raíz, `www/` y `android/…/public/`. **Pendiente de publicación en producción** |
-| 0.2 Control del repo | 5 commits por bloque, staging selectivo. `_backups/` (274 MB) y ficheros personales añadidos a `.gitignore` |
+| 0.2 Control del repo | 7 commits con staging selectivo (5 por bloque en `master` + el merge a `dev` + el APK). `_backups/` (274 MB) y ficheros personales añadidos a `.gitignore` |
 | 0.3 Configuración | `maxTokens` corregido. Test L3 nuevo que **falla (5 de 8) al revertir el arreglo** |
 | 0.4 Versión | 1.11.0 unificada en los 5 puntos. Caché del SW pasa de contador `bats-v37` a `bats-1.11.0` |
 | 0.4b Paridad | 108 ficheros idénticos en las 3 copias, verificado por script. **Detectó la divergencia oculta antes de corregirla** |
@@ -385,6 +385,8 @@ informe, que es diagnostico prospectivo.
 ### Verificaciones
 
 - `npx vitest run` → **11 ficheros, 295 tests, 0 fallos** (antes: 9 ficheros, 281).
+- `git add -A --dry-run` tras el `.gitignore` → 15 entradas revisables, antes habría
+  subido las 274 MB de `_backups/` junto con ficheros personales del autor.
 - `npm run verify` (versión + paridad + suite) → correcto.
 - `node tools/version.js --check` → coherente en los 5 puntos.
 - `node tools/sync-assets.js --check` → paridad OK en las 3 copias.
