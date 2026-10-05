@@ -5,6 +5,13 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
+/*
+ * NOTA (FASE 2C-1): estas réplicas locales se conservan sin cambios.
+ * El buildProviders real vive ahora en worker/provider-manager.js y mantiene
+ * el comportamiento v1 que aquí se replica. Este archivo prueba el fallback
+ * secuencial, no el Provider Manager (ver tests/provider-manager.test.js).
+ */
+
 // ── Mock provider logic (extracted from worker.js for testability) ──
 
 function buildProviders(env, cfg) {
