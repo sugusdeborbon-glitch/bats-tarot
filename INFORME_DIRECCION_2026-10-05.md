@@ -36,6 +36,21 @@ Verificado por HTTP contra `https://sugusdeborbon-glitch.github.io/bats-tarot/`:
 - `service-worker.js` en vivo → `var CACHE = "bats-v35"`
 - `android/app/build/intermediates/assets/debug/mergeDebugAssets/public/js/deck.js:82` → mismo backdoor
 
+**Corrección de precisión sobre el APK (verificada el 2026-10-05):** el APK
+distribuido (`bats-tarot.apk`, 16,4 MB, fechado 2026-09-10) **no** contiene
+`js/deck.js`: es un build *anterior* a la extracción en módulos, con el `app.js`
+monolítico, y por tanto carece también de `js/` entero, de H-04.A y de todo lo
+posterior. El backdoor sí está en él, dentro de `assets/public/app.js`:
+
+```
+3:var _BATS_TEST_COMODIN=false; // TODO: remove after testing
+37:function añadirComodin(mazo,activo){if(!activo&&!window._BATS_TEST_COMODIN)return mazo;...}
+```
+
+Es decir: **el APK no es una copia atrasada del producto, es otra versión
+entera del producto**, y lleva 7 semanas sin recibir nada de las últimas fases.
+El backdoor está tanto en la web como en el APK, pero por rutas distintas.
+
 Tres versiones de service worker coexistían: **v35 en producción**, **v36 en la rama `dev` local
 sin pushear**, **v37 en el working tree**. Ninguna era un release. El número de caché había
 dejado de ser un mecanismo de versión y era un contador de intentos.
