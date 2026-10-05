@@ -4,3 +4,24 @@ www/
 *.log
 .DS_Store
 .wrangler/
+
+# ── Fase 0.2 · control del repositorio ──────────────────────────────────────
+# Antes de esto, un `git add -A` (el comando que la documentación sugería en
+# cada despliegue) habría metido 274 MB de copias de seguridad en el
+# repositorio, además de ficheros personales del autor.
+
+# Copias de seguridad: 7 instantáneas de 274 MB en total. Son artefactos
+# locales de `npm run backup`, no historial. No se borran, se ignoran.
+_backups/
+
+# Estado interno de la herramienta de desarrollo.
+.freebuff/
+
+# Paquetes de distribución: se regeneran con `npm run capacitor:build:apk`.
+# El APK histórico sí está versionado a propósito (es el que se distribuye).
+bats-tarot.zip
+
+# Ficheros personales del autor. No forman parte del producto.
+Private.txt.txt
+Datos_Subidas_WEB.txt
+arrancar gemini cli.txt

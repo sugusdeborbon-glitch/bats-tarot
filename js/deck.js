@@ -78,6 +78,13 @@
 
   function esComodin(c) { return c && c.tipo === "comodin"; }
 
+  /**
+   * Añade el Comodín al mazo si la sesión lo ha solicitado.
+   *
+   * El Comodín es opt-in: solo entra cuando `activo` es verdadero, es decir
+   * cuando la tirada lo pidió explícitamente (checkbox "Incluir Comodín").
+   * No existe ninguna vía por test ni por bandera global que lo fuerce.
+   */
   function añadirComodin(mazo, activo) {
     if (!activo) return mazo;
     mazo.push(Object.assign({}, COMODIN));

@@ -7,7 +7,7 @@
   "use strict";
 
   var state = {
-    version: "1.10.0",
+    version: "1.11.0",
 
     // Draw state (set on each tirada)
     ult: null,              // current draw's card array
@@ -18,7 +18,7 @@
     lastRenderOpts: null,   // options used in last render call
     lastCtx: null,          // context object for current draw
     ocultarReferencias: false, // hide card references during AI loading
-    iaStatus: null         // callback for IA status updates
+    iaStatus: null           // callback for IA status updates
   };
 
   // Expose on BATS namespace

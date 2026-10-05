@@ -4,8 +4,14 @@
  */
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
+import { fileURLToPath } from "url";
+import { dirname, resolve } from "path";
 
-const indexHtml = readFileSync("C:/BAPA_Factory/bats-tarot/index.html", "utf8");
+/* Rutas relativas a este fichero, no absolutas a una máquina concreta. */
+const RAIZ = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const leer = (rel) => readFileSync(resolve(RAIZ, rel), "utf8");
+
+const indexHtml = leer("index.html");
 
 describe("Ollama — UI visibility", () => {
   it("ollama option is disabled and hidden in index.html", () => {
@@ -34,16 +40,19 @@ describe("Ollama — UI visibility", () => {
 });
 
 describe("Ollama — Worker provider list", () => {
+  // FASE 2C-1: el catálogo pasó de `const PROVIDERS` en worker.js a
+  // `CATALOG` en worker/provider-manager.js. Se asserta sobre el archivo que
+  // ahora los contiene; el contrato (ollama ausente) no cambia.
+  const pmSrc = leer("worker/provider-manager.js");
+
   it("DEFAULT_ORDER does not include ollama", async () => {
-    const workerSrc = readFileSync("C:/BAPA_Factory/bats-tarot/worker/worker.js", "utf8");
-    const orderMatch = workerSrc.match(/DEFAULT_ORDER\s*=\s*\[([^\]]+)\]/);
+    const orderMatch = pmSrc.match(/DEFAULT_ORDER\s*=\s*\[([^\]]+)\]/);
     expect(orderMatch).not.toBeNull();
     expect(orderMatch[1]).not.toContain("ollama");
   });
 
   it("PROVIDERS array does not include ollama", async () => {
-    const workerSrc = readFileSync("C:/BAPA_Factory/bats-tarot/worker/worker.js", "utf8");
-    const providersMatch = workerSrc.match(/const PROVIDERS\s*=\s*\[([\s\S]*?)\];/);
+    const providersMatch = pmSrc.match(/export const CATALOG\s*=\s*\[([\s\S]*?)\];/);
     expect(providersMatch).not.toBeNull();
     expect(providersMatch[1]).not.toContain("ollama");
   });
@@ -51,7 +60,7 @@ describe("Ollama — Worker provider list", () => {
 
 describe("Ollama — AI_PROVIDERS client list", () => {
   it("AI_PROVIDERS contains ollama entry for future use", async () => {
-    const aiSrc = readFileSync("C:/BAPA_Factory/bats-tarot/ai.js", "utf8");
+    const aiSrc = leer("ai.js");
     expect(aiSrc).toContain('"ollama"');
     expect(aiSrc).toContain("Ollama");
   });
@@ -59,7 +68,7 @@ describe("Ollama — AI_PROVIDERS client list", () => {
 
 describe("Ollama — no active calls in normal flow", () => {
   it("no fetch() call to localhost:11434 in ai.js", async () => {
-    const aiSrc = readFileSync("C:/BAPA_Factory/bats-tarot/ai.js", "utf8");
+    const aiSrc = leer("ai.js");
     // Check there's no fetch/POST to localhost:11434 (only the AI_PROVIDERS definition is allowed)
     const lines = aiSrc.split("\n");
     const fetchLines = lines.filter(l => /fetch\s*\(/.test(l) && l.includes("localhost:11434"));
@@ -67,12 +76,12 @@ describe("Ollama — no active calls in normal flow", () => {
   });
 
   it("no fetch to localhost:11434 in ai-pipeline.js", async () => {
-    const pipelineSrc = readFileSync("C:/BAPA_Factory/bats-tarot/js/ai-pipeline.js", "utf8");
+    const pipelineSrc = leer("js/ai-pipeline.js");
     expect(pipelineSrc).not.toContain("localhost:11434");
   });
 
   it("no fetch to localhost:11434 in app.js", async () => {
-    const appSrc = readFileSync("C:/BAPA_Factory/bats-tarot/app.js", "utf8");
+    const appSrc = leer("app.js");
     expect(appSrc).not.toContain("localhost:11434");
   });
 });

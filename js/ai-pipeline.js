@@ -1,9 +1,94 @@
 /* ============ AI PIPELINE (extracted from app.js) ============ */
+/* H-04: contador de ejecuciones. Cada render de interpretación larga toma un
+   token; una respuesta que llega de un token antiguo se ignora, de modo que
+   una operación terminal permanece terminal. */
 /* Depends on: escHTML, toast, _clear, comodinPendiente (app.js)
                 getAIMode, getFlagCorta, getFlagLarga, etiquetaIA, generarTextosIA, generarInterpretacionLarga (ai.js)
                 vozParar, vozSoporte, vozBarDOM, vozTextoDe, vozPoblarSelect, vozActualizarBarras, VOZ (tts.js)
-                ponerBotones (export-share.js)
-                BATS_VERSION (global) */
+ponerBotones (export-share.js)
+                 BATS_VERSION (global) */
+
+/* H-04.A — IDENTIFICACIÓN DE OPERACIONES CONCURRENTES POR DESTINO
+ *
+ * Finding A: un contador GLOBAL invalidaba operaciones legítimas e
+ * independientes. Renderizar el Arcano Visitante (`r-arcano-visitante`)
+ * mientras una tirada (`r-diaria`) seguía en vuelo descartaba la respuesta de
+ * la tirada, porque el contador global ya había avanzado.
+ *
+ * La regla correcta: una operación solo se invalida cuando otra operación la
+ * SUSTITUYE EN SU MISMO DESTINO. El ámbito que identifica una operación
+ * sustituible es el destino de render, no un contador compartido.
+ *
+ * `dest` puede llegar como string DOM ("r-diaria") o nulo/undefined cuando
+ * viene de window._lastPanelDest; por eso la clave se normaliza con String()
+ * y un respaldo explícito, para que dos destinos distintos nunca colisionen.
+ */
+var TOKEN_POR_DESTINO={};
+var LIMPIADORES_POR_DESTINO={};
+var secuenciaToken=0;
+
+/**
+ * Clave estable y no colisionable para un destino de render.
+ * @param {*} dest  destino (string DOM, null o undefined).
+ * @returns {string} clave comparable.
+ */
+function claveDestino(dest){
+  var d=(dest===null||dest===undefined)?"":String(dest);
+  return d===""?"(sin-destino)":d;
+}
+
+/**
+ * Abre una operación y devuelve su token. Invalida la operación anterior
+ * que hubiera sobre el MISMO destino.
+ * @param {*} dest  destino de render.
+ * @returns {number} token de esta ejecución.
+ */
+function abrirOperacion(dest){
+  var k=claveDestino(dest);
+  /* H-04.A: si había una operación previa sobre ESTE destino, se la retira
+     de forma activa. Sin esto su `setInterval` del contador de segundos
+     quedaría huérfano, porque una operación sustituida nunca resuelve y
+     por tanto nunca llega a `limpiar()`. */
+  var previa=LIMPIADORES_POR_DESTINO[k];
+  if(previa){try{previa()}catch(_){}delete LIMPIADORES_POR_DESTINO[k]}
+  TOKEN_POR_DESTINO[k]=(secuenciaToken++)+1;
+  return TOKEN_POR_DESTINO[k];
+}
+
+/**
+ * Registra la función de limpieza de una operación en vuelo, para poder
+ * retirarla si una operación posterior la sustituye.
+ * @param {*} dest  destino de render.
+ * @param {function} fn  limpieza (limpiar()).
+ */
+function registrarLimpiador(dest,fn){
+  LIMPIADORES_POR_DESTINO[claveDestino(dest)]=fn;
+}
+
+/**
+ * ¿Esta ejecución sigue siendo la vigente para su destino?
+ *
+ * @param {*} dest    destino de render.
+ * @param {number} tok token capturado al abrir.
+ * @returns {boolean}  true si su respuesta puede aplicarse.
+ */
+function operacionVigente(dest,tok){
+  return TOKEN_POR_DESTINO[claveDestino(dest)]===tok;
+}
+
+/**
+ * Cierra la operación: marca el token como retirado para que cualquier
+ * respuesta posterior de esa misma ejecución sea descartada.
+ * @param {*} dest  destino de render.
+ * @param {number} tok token capturado al abrir.
+ */
+function cerrarOperacion(dest,tok){
+  var k=claveDestino(dest);
+  if(TOKEN_POR_DESTINO[k]===tok){
+    delete TOKEN_POR_DESTINO[k];
+    delete LIMPIADORES_POR_DESTINO[k];
+  }
+}
 
 function interpParaHTML(t){
   var h=escHTML(t);
@@ -93,8 +178,15 @@ function renderInterpLarga(dest,cartas,ctx){
   var sEl=document.createElement("span");sEl.className="ai-interp-status";sEl.style.cssText="display:block;font-size:.72em;opacity:.75;margin-top:4px";carg.appendChild(sEl);
   bodyWrap.appendChild(carg);cont.appendChild(bodyWrap);
   var body=bodyWrap;
-  var ini=Date.now(),tick=null,failsafe=null,acabado=false;
-  function limpiar(){acabado=true;if(tick){clearInterval(tick);tick=null}if(failsafe){clearTimeout(failsafe);failsafe=null}}
+  var ini=Date.now(),tick=null,acabado=false;
+  /* H-04.A: el token pertenece al DESTINO, no a un contador global. Otra
+     operación sobre otro destino no invalida esta, y una nueva sobre este
+     mismo destino sí la invalida. */
+  var miToken=abrirOperacion(dest);
+  function limpiar(){acabado=true;if(tick){clearInterval(tick);tick=null}cerrarOperacion(dest,miToken)}
+  /* Permite que una operación posterior sobre este destino retire los timers
+     de esta si la sustituye. */
+  registrarLimpiador(dest,limpiar);
   function mostrarError(e){
     limpiar();
     try{console.error("Error interpretacion larga:",e)}catch(_){}
@@ -129,14 +221,19 @@ function renderInterpLarga(dest,cartas,ctx){
   };
   tickS();
   tick=setInterval(tickS,1000);
-  failsafe=setTimeout(function(){
-    if(acabado) return;
-    if(body&&body.querySelector(".ai-spinner")) mostrarError(new Error("La IA tard\u00f3 demasiado. Reintenta."));
-  },30000);
+  /* H-04: el failsafe de 30 s desaparece. El Worker es la autoridad
+     temporal y su presupuesto LARGA es de 75 s; un corte a los 30 s en el
+     navegador cerraba operaciones que el Worker todavía podía responder.
+     Aquí solo el frontend decide, y decide cuando su propio timeout vence. */
   try{
     generarInterpretacionLarga(cartas,ctx).then(function(t){
+      /* H-04.A: se descarta si esta ejecución ya terminó o si otra operación
+         sustituyó a ESTE MISMO destino. Otra operación sobre otro destino no
+         la invalida. */
+      if(acabado||!operacionVigente(dest,miToken)) return;
       mostrarOK(t);
     }).catch(function(e){
+      if(acabado||!operacionVigente(dest,miToken)) return;
       mostrarError(e);
     });
   }catch(e){
@@ -154,5 +251,12 @@ window.BATS.aiPipeline = {
   renderConIA: renderConIA,
   renderInterpLarga: renderInterpLarga,
   interpParaHTML: interpParaHTML,
-  reintentarInterp: reintentarInterp
+  reintentarInterp: reintentarInterp,
+  /* H-04.A: el mecanismo de identificación por destino se expone para poder
+     verificarlo con tests de comportamiento sobre el módulo real. */
+  claveDestino: claveDestino,
+  abrirOperacion: abrirOperacion,
+  registrarLimpiador: registrarLimpiador,
+  operacionVigente: operacionVigente,
+  cerrarOperacion: cerrarOperacion
 };

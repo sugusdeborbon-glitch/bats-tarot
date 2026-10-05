@@ -1,11 +1,15 @@
-const GOOGLE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
-const GOOGLE_MODEL = "gemini-3.6-flash";
-const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-const GROQ_MODEL = "llama-3.3-70b-versatile";
-const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-const OPENROUTER_MODEL = "openrouter/free";
-const MISTRAL_URL = "https://api.mistral.ai/v1/chat/completions";
-const MISTRAL_MODEL = "mistral-small-latest";
+import {
+  DEFAULT_ORDER,
+  CONFIG_VERSION,
+  MAX_PROVIDERS,
+  redactConfig,
+  probeAll,
+  availableProviders as pmAvailableProviders,
+  buildProviders as pmBuildProviders,
+  sanitizeConfig as pmSanitizeConfig,
+  readConfig as pmReadConfig
+} from "./provider-manager.js";
+
 const ALLOWED_ORIGINS = [
   "https://sugusdeborbon-glitch.github.io",
   "null"
@@ -59,13 +63,47 @@ function sistemaPorTipo(tipo) {
   return SISTEMAS[tipo] || SISTEMAS.default;
 }
 
-const PROVIDERS = [
-  { id: "groq", name: "Groq", url: GROQ_URL, model: GROQ_MODEL, keyEnv: "GROQ_API_KEY" },
-  { id: "google", name: "Google", url: GOOGLE_URL, model: GOOGLE_MODEL, keyEnv: "GOOGLE_API_KEY", googleThinking: "low" },
-  { id: "openrouter", name: "OpenRouter", url: OPENROUTER_URL, model: OPENROUTER_MODEL, keyEnv: "OPENROUTER_API_KEY" },
-  { id: "mistral", name: "Mistral", url: MISTRAL_URL, model: MISTRAL_MODEL, keyEnv: "MISTRAL_API_KEY" }
-];
-const DEFAULT_ORDER = ["groq", "google", "openrouter", "mistral"];
+/* ── Contrato temporal (FASE 2C-3 / H-04) ─────────────────────────────
+ * El Worker es la autoridad temporal. El presupuesto es un reloj COMPARTIDO:
+ * al pasar de proveedor no se reinicia. Cada intento se acota a
+ * min(presupuesto del intento, restante, upstream máximo) y no se abre otro
+ * intento cuando el restante cae por debajo de minSlice.
+ * La aritmética vive en js/ai/contrato-temporal.js (módulo puro). */
+
+import {
+  contratoPara as ctContratoPara,
+  timeoutEfectivo as ctTimeoutEfectivo,
+  puedeIntentar as ctPuedeIntentar,
+  restante as ctRestante,
+  timeoutPropia as ctTimeoutPropia,
+  crearReloj as ctCrearReloj
+} from "../js/ai/contrato-temporal.js";
+
+const RELOJ_CT = ctCrearReloj();
+
+/** Devuelve true si `tipo` pide la interpretación larga. */
+function esTipoLarga(tipo) {
+  return tipo === "larga";
+}
+
+/**
+ * Presupuesto por tipo para este request.
+ * @param {string} tipo  tipo de interpretación.
+ * @returns {object} contrato en ms.
+ */
+function presupuestoDe(tipo) {
+  return ctContratoPara(esTipoLarga(tipo) ? "larga" : "corta");
+}
+
+/**
+ * Mismo contrato que `presupuestoDe`, aislado para el modo propia, que NO
+ * encadena proveedores y solo hereda el techo de upstream.
+ * @param {string} tipo  tipo de interpretación.
+ * @returns {object} contrato en ms.
+ */
+function presupuestoPropia(tipo) {
+  return presupuestoDe(tipo);
+}
 
 const hits = new Map();
 
@@ -106,6 +144,11 @@ function rateLimited(req) {
   return false;
 }
 
+/**
+ * getConfig — Lee la configuración de KV SIN escribir nada.
+ * Devuelve el valor tal cual (v1 o v2); la normalización a v2 se hace en
+ * lectura, de forma no destructiva. Nunca se persiste una migración aquí.
+ */
 async function getConfig(env) {
   try {
     const raw = await env.CONFIG.get(CONFIG_KEY);
@@ -116,25 +159,13 @@ async function getConfig(env) {
   }
 }
 
+/* Provider Manager PRO — la lógica pura vive en ./provider-manager.js */
 function buildProviders(env, cfg) {
-  const order = Array.isArray(cfg.providerOrder) && cfg.providerOrder.length ? cfg.providerOrder : DEFAULT_ORDER;
-  const on = cfg.providersOn || {};
-  const list = [];
-  for (const id of order) {
-    const meta = PROVIDERS.find(function(p){ return p.id === id; });
-    if (!meta) continue;
-    if (on[id] === false) continue;
-    const key = env[meta.keyEnv];
-    if (!key) continue;
-    list.push({ name: meta.name, url: meta.url, key: key, model: meta.model, googleThinking: meta.googleThinking });
-  }
-  return list;
+  return pmBuildProviders(env, cfg);
 }
 
-function availableProviders(env) {
-  return PROVIDERS.map(function(p){
-    return { id: p.id, name: p.name, available: !!env[p.keyEnv] };
-  });
+function availableProviders(env, cfg) {
+  return pmAvailableProviders(env, cfg);
 }
 
 const LEN_LINES = {
@@ -164,36 +195,9 @@ function applyOverrides(messages, cfg, tipo) {
 }
 
 function sanitizeConfig(body) {
-  const cfg = {};
-  if (Array.isArray(body.providerOrder)) {
-    const seen = {};
-    const order = [];
-    for (const id of body.providerOrder) {
-      if (seen[id] || !PROVIDERS.some(function(p){ return p.id === id; })) continue;
-      seen[id] = true;
-      order.push(id);
-    }
-    if (order.length) cfg.providerOrder = order;
-  }
-  if (body.providersOn && typeof body.providersOn === "object") {
-    const on = {};
-    for (const p of PROVIDERS) {
-      on[p.id] = body.providersOn[p.id] !== false;
-    }
-    cfg.providersOn = on;
-  }
-  for (const k of ["systemDiaria", "systemRel", "systemLaboral", "systemAprendizaje", "systemPers", "systemAV", "systemLarga"]) {
-    if (typeof body[k] === "string") cfg[k] = body[k];
-  }
-  if (typeof body.temperature === "number" && body.temperature >= 0 && body.temperature <= 2) {
-    cfg.temperature = body.temperature;
-  }
-  if (Number.isInteger(body.maxTokens) && body.maxTokens >= 128 && body.maxTokens <= 8192) {
-    cfg.maxTokens = body.maxTokens;
-  }
-  if (LEN_LINES[body.lenDefault]) cfg.lenDefault = body.lenDefault;
-  if (typeof body.useCorta === "boolean") cfg.useCorta = body.useCorta;
-  if (typeof body.useLarga === "boolean") cfg.useLarga = body.useLarga;
+  const cfg = pmSanitizeConfig(body);
+  if (LEN_LINES[cfg.lenDefault]) cfg.lenDefault = cfg.lenDefault;
+  else delete cfg.lenDefault;
   return cfg;
 }
 
@@ -210,7 +214,16 @@ export default {
       }
       if (req.method === "GET") {
         const cfg = await getConfig(env);
-        return json({ config: cfg, available: availableProviders(env), defaults: DEFAULT_ORDER, systemDefaults: SISTEMAS, aiFlags: { useCorta: typeof cfg.useCorta === "boolean" ? cfg.useCorta : DEFAULT_USE_CORTA, useLarga: typeof cfg.useLarga === "boolean" ? cfg.useLarga : DEFAULT_USE_LARGA } }, 200, req);
+        return json({
+          config: redactConfig(cfg),
+          configVersion: CONFIG_VERSION,
+          available: availableProviders(env, cfg),
+          probe: probeAll(env, cfg),
+          maxProviders: MAX_PROVIDERS,
+          defaults: DEFAULT_ORDER,
+          systemDefaults: SISTEMAS,
+          aiFlags: { useCorta: typeof cfg.useCorta === "boolean" ? cfg.useCorta : DEFAULT_USE_CORTA, useLarga: typeof cfg.useLarga === "boolean" ? cfg.useLarga : DEFAULT_USE_LARGA }
+        }, 200, req);
       }
       if (req.method === "PUT") {
         let body;
@@ -221,7 +234,7 @@ export default {
         }
         const cfg = sanitizeConfig(body);
         await env.CONFIG.put(CONFIG_KEY, JSON.stringify(cfg));
-        return json({ ok: true, config: cfg }, 200, req);
+        return json({ ok: true, config: redactConfig(cfg), configVersion: CONFIG_VERSION }, 200, req);
       }
       return json({ error: "Método no permitido" }, 405, req);
     }
@@ -316,7 +329,10 @@ export default {
       if (!pkey) {
         return json({ error: "Falta la clave del consultante" }, 401, req);
       }
-      const p = await llamarEndpointPropio(body.base, body.model, msgs, cfg, pkey);
+      const p = await llamarEndpointPropio(
+        body.base, body.model, msgs, cfg, pkey,
+        ctTimeoutPropia(presupuestoPropia(tipo), presupuestoPropia(tipo).totalMs)
+      );
       if (p.ok) {
         return json({ content: p.content, provider: "Mi IA", modelo: (typeof body.model === "string" && body.model) ? body.model : "gpt-4o-mini" }, 200, req, "propia");
       }
@@ -324,7 +340,7 @@ export default {
       return json({ error: p.err }, st, req);
     }
 
-    let providers = buildProviders(env, cfg);
+    let providers = buildProviders(env, pmReadConfig(cfg));
     if (!providers.length) {
       return json({ error: "Configuración del servidor incompleta" }, 500, req);
     }
@@ -340,8 +356,25 @@ export default {
 
     let last = null;
     const errors = [];
-    for (const provider of providers) {
-      const res = await llamarProveedor(provider, msgs, payload);
+
+    /* H-04: el deadline se calcula UNA vez y se comparte. El reloj no se
+       reinicia al cambiar de proveedor: cada intento recibe lo que queda. */
+    const presupuesto = presupuestoDe(tipo);
+    const hasta = RELOJ_CT() + presupuesto.totalMs;
+
+    for (let indice = 0; indice < providers.length; indice++) {
+      const provider = providers[indice];
+      const restante = ctRestante(hasta, RELOJ_CT);
+      if (!ctPuedeIntentar(restante, presupuesto)) {
+        errors.push("sin presupuesto: restante " + Math.round(restante / 1000) + "s < minSlice");
+        break;
+      }
+      const timeoutMs = ctTimeoutEfectivo(restante, presupuesto, indice);
+      if (timeoutMs === null) {
+        errors.push("sin presupuesto: restante " + Math.round(restante / 1000) + "s < minSlice");
+        break;
+      }
+      const res = await llamarProveedor(provider, msgs, payload, timeoutMs);
       if (res.ok) {
         return json({ content: res.content, provider: provider.name, modelo: provider.model }, 200, req, provider.name);
       }
@@ -357,9 +390,10 @@ export default {
   }
 };
 
-async function llamarEndpointPropio(base, model, messages, cfg, key) {
+async function llamarEndpointPropio(base, model, messages, cfg, key, timeoutMs) {
   const ctrl = new AbortController();
-  const timer = setTimeout(function(){ ctrl.abort(); }, 40000);
+  const budget = typeof timeoutMs === "number" && timeoutMs > 0 ? timeoutMs : 40000;
+  const timer = setTimeout(function(){ ctrl.abort(); }, budget);
   const bodyObj = {
     model: (typeof model === "string" && model) ? model : "gpt-4o-mini",
     messages: messages,
@@ -390,7 +424,7 @@ async function llamarEndpointPropio(base, model, messages, cfg, key) {
     return { ok: true, status: upstream.status, content: content };
   } catch (e) {
     if (e && e.name === "AbortError") {
-      return { ok: false, status: 504, err: "El proveedor propio tardó demasiado" };
+      return { ok: false, status: 504, err: "El proveedor propio tardó demasiado (" + Math.round(budget / 1000) + "s)." };
     }
     return { ok: false, status: 502, err: "Error de red con el proveedor propio" };
   } finally {
@@ -398,9 +432,14 @@ async function llamarEndpointPropio(base, model, messages, cfg, key) {
   }
 }
 
-async function llamarProveedor(provider, messages, payload) {
+async function llamarProveedor(provider, messages, payload, timeoutMs) {
   const ctrl = new AbortController();
-  const timer = setTimeout(function(){ ctrl.abort(); }, 40000);
+  /* H-04: el timeout llega hasta la llamada real, desde el presupuesto
+     compartido. Nunca se usa un fijo que ignore el presupuesto recibido. */
+  const budget = typeof timeoutMs === "number" && timeoutMs > 0
+    ? timeoutMs
+    : (payload && payload.timeoutMs) || 40000;
+  const timer = setTimeout(function(){ ctrl.abort(); }, budget);
   const bodyObj = {
     model: provider.model,
     messages: messages,
@@ -460,7 +499,7 @@ async function llamarProveedor(provider, messages, payload) {
     return { ok: true, status: upstream.status, content: content };
   } catch (e) {
     if (e && e.name === "AbortError") {
-      return { ok: false, status: 504, err: provider.name + ": la petición excedió el tiempo de espera (40s).", category: "timeout" };
+      return { ok: false, status: 504, err: provider.name + ": la petición excedió el tiempo de espera (" + Math.round(budget / 1000) + "s).", category: "timeout" };
     }
     return { ok: false, status: 502, err: provider.name + ": error de red — " + (e && e.message || "desconocido"), category: "network_error" };
   } finally {
