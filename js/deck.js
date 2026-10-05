@@ -78,8 +78,15 @@
 
   function esComodin(c) { return c && c.tipo === "comodin"; }
 
+  /**
+   * Añade el Comodín al mazo si la sesión lo ha solicitado.
+   *
+   * El Comodín es opt-in: solo entra cuando `activo` es verdadero, es decir
+   * cuando la tirada lo pidió explícitamente (checkbox "Incluir Comodín").
+   * No existe ninguna vía por test ni por bandera global que lo fuerce.
+   */
   function añadirComodin(mazo, activo) {
-    if (!activo && !window._BATS_TEST_COMODIN) return mazo;
+    if (!activo) return mazo;
     mazo.push(Object.assign({}, COMODIN));
     return mazo;
   }
@@ -112,11 +119,6 @@
     for (var i = arr.length - 1; i > 0; i--) {
       var j = Math.floor(Math.random() * (i + 1));
       var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
-    }
-    if (window._BATS_TEST_COMODIN) {
-      for (var i = 0; i < arr.length; i++) {
-        if (esComodin(arr[i])) { var c = arr.splice(i, 1)[0]; arr.unshift(c); break; }
-      }
     }
     return arr;
   }
