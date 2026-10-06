@@ -1,5 +1,7 @@
 node_modules/
-android/
+# android/ VERSIONADO (N-9): el andamio Capacitor es parte del producto y debe
+# ser auditable desde un clon limpio. Los artefactos generados quedan excluidos
+# por android/.gitignore (build/, .gradle/, local.properties, assets/public/...).
 www/
 *.log
 .DS_Store
