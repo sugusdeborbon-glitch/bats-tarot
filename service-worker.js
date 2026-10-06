@@ -1,6 +1,14 @@
-var CACHE = "bats-1.11.1";
+var CACHE = "bats-1.11.2";
 var STATIC_CACHE = CACHE + "-static";
 var IMG_CACHE = CACHE + "-img";
+
+/* N-11: presupuesto de red para el HTML. index.html no lleva ?v= (es la
+ * entrada), así que era el único punto donde un HTML viejo podía convivir con
+ * JS nuevo: fetch() sin alternativa rápida colgaba minutos en redes lentas y
+ * el usuario acababa con bundle mixto. Con un tope de 3 s, si la red no
+ * contesta se sirve la caché AL INSTANTE y la red revalida en segundo plano
+ * (la siguiente visita ya trae la versión nueva). */
+var HTML_TIMEOUT_MS = 3000;
 
 /* Nota (D-T2, Fase 0.5): `js/ai/contrato-temporal.js` NO está en esta lista, y
  * no es un olvido. Ninguna página lo carga: es un módulo ESM que importa el
@@ -132,14 +140,29 @@ function cacheFirst(req){
   });
 }
 
+/* N-11: network-first CON TIEMPO LÍMITE. Sustituye al fetch() pelado, que
+ * dejaba la ventana de bundle mixto abierta mientras la red tardaba. */
 function networkFirst(req){
-  return fetch(req).then(function(resp){
-    if (resp && resp.ok) {
-      var clone = resp.clone();
-      caches.open(STATIC_CACHE).then(function(c){ c.put(req, clone); });
-    }
-    return resp;
+  var timeoutId;
+  var contraReloj = Promise.race([
+    fetch(req).then(function(resp){
+      if (resp && resp.ok) {
+        var clone = resp.clone();
+        caches.open(STATIC_CACHE).then(function(c){ c.put(req, clone); });
+      }
+      return resp;
+    }),
+    new Promise(function(resolve){
+      timeoutId = setTimeout(function(){ resolve(null); }, HTML_TIMEOUT_MS);
+    })
+  ]);
+  return contraReloj.then(function(resp){
+    clearTimeout(timeoutId);
+    if (resp) return resp;
+    /* red tonta o lenta: caché al instante; la revalida ya está en marcha */
+    return caches.match(req).then(function(r){ return r || caches.match("offline.html"); });
   }).catch(function(){
+    clearTimeout(timeoutId);
     return caches.match(req).then(function(r){ return r || caches.match("offline.html"); });
   });
 }
