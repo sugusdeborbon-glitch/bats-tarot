@@ -154,7 +154,10 @@ function adminGuardar(){
   }
   var tok=adminGetToken();
   adminMsg("Guardando\u2026");
-  adminSaveConfig(tok,cfg).then(function(data){
+  /* N-10: guardado PARCIAL y fusionado. El cuerpo solo lleva lo que edita el
+     panel; el worker lo fusiona con la config viva de KV, así que ningún
+     guardado puede destruir claves que este panel no gestiona. */
+  adminSaveConfig(tok,cfg,{merge:true}).then(function(data){
     _adminState.config=data.config||cfg;
     _adminState.pendingOrder=null;
     _adminState.pendingOn=null;
@@ -175,7 +178,9 @@ function adminRestaurarSistema(g){
 function adminRestaurarTodo(){
   if(!confirm("\u00bfVolver a los valores originales de f\u00e1brica para la IA de todos los usuarios?")) return;
   var tok=adminGetToken();
-  adminSaveConfig(tok,{}).then(function(){
+  /* N-10: el reinicio a fábrica es una acción explícita en la URL del PUT.
+     Un cuerpo vacío SIN ?reset=true ya no borra nada: el worker lo ignora. */
+  adminSaveConfig(tok,{},{reset:true}).then(function(){
     _adminState.config={};
     _adminState.pendingOrder=null;
     _adminState.pendingOn=null;

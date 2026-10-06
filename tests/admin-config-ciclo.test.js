@@ -26,7 +26,7 @@
 
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { redactConfig, sanitizeConfig } from "../worker/provider-manager.js";
+import { redactConfig, sanitizeConfig, mergeConfig } from "../worker/provider-manager.js";
 
 const ADMIN_SRC = readFileSync(new URL("../js/admin.js", import.meta.url), "utf8");
 
@@ -107,11 +107,11 @@ function makeKv(initial) {
     apiGet() {
       return { config: redactConfig(JSON.parse(raw)) };
     },
-    /** PUT /api/config */
+    /** PUT /api/config — semántica N-10 del worker real: FUSIONA. */
     apiPut(body) {
-      const cfg = sanitizeConfig(body);
-      raw = JSON.stringify(cfg);
-      return { ok: true, config: redactConfig(cfg) };
+      const r = mergeConfig(JSON.parse(raw), body);
+      raw = JSON.stringify(r.merged);
+      return { ok: true, config: redactConfig(r.merged) };
     },
     /** lectura cruda, como la haría un operador inspeccionando KV */
     readRaw() { return JSON.parse(raw); }

@@ -470,6 +470,60 @@ export function sanitizeConfig(body) {
   return cfg;
 }
 
+/* ───────────────────────── MERGE (PUT seguro) ───────────────────────── */
+
+/**
+ * mergeConfig — Fusión segura para PUT /api/config (defecto N-10).
+ *
+ * POR QUÉ EXISTE: el PUT reemplazaba la config de KV con sanitizeConfig(body).
+ * El panel envía un cuerpo PARCIAL y además recibió antes un cuerpo
+ * REDACTADO (GET), de modo que un guardado normal podía destruir claves
+ * vivas de la configuración (temperature, maxTokens, system*, providers).
+ * Con merge, el cuerpo del PUT describe QUÉ cambiar; el resto sobrevive.
+ *
+ * Reglas:
+ *  - Bloques estructurales (providers/order/on/providerOrder/providersOn):
+ *    el cuerpo del PUT manda — son bloques que la UI edita como conjunto.
+ *  - Resto de claves (escalares y system*): solo se cambian si vienen
+ *    explícitas en el cuerpo; si no, se conserva el valor existente.
+ *  - Un centinela de redacción ("[redactado]") JAMÁS entra: se descarta y
+ *    se conserva el valor existente. Es el cinturón contra el eco del GET.
+ *  - Devuelve { base, patch, merged } para auditar la operación.
+ */
+export function mergeConfig(existing, body) {
+  const base = isPlainObject(existing) ? existing : {};
+  const src = isPlainObject(body) ? body : {};
+  const patch = sanitizeConfig(src);
+  const REDACTADO = "[redactado]";
+  const STRUCTURAL = {
+    order: true,
+    on: true,
+    providerOrder: true,
+    providersOn: true,
+    providers: true
+  };
+
+  /* 1) Punto de partida: todo lo existente. */
+  const merged = {};
+  for (const k of Object.keys(base)) merged[k] = base[k];
+
+  /* 2) Bloques estructurales: el PUT los define por completo. */
+  for (const k of Object.keys(patch)) {
+    if (STRUCTURAL[k]) merged[k] = patch[k];
+  }
+
+  /* 3) Escalares y system*: solo lo que vino explícito y no redactado. */
+  for (const k of Object.keys(patch)) {
+    if (STRUCTURAL[k] || k === "version") continue;
+    if (src[k] === undefined) continue;
+    if (patch[k] === REDACTADO) continue;
+    merged[k] = patch[k];
+  }
+
+  merged.version = CONFIG_VERSION;
+  return { base: base, patch: patch, merged: merged };
+}
+
 /**
  * buildProviders — Preservado de PRO. Devuelve los proveedores ACTIVOS y con
  * credencial, en orden, para la llamada saliente. Es el único punto donde se

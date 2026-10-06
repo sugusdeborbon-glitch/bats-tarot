@@ -7,7 +7,8 @@ import {
   availableProviders as pmAvailableProviders,
   buildProviders as pmBuildProviders,
   sanitizeConfig as pmSanitizeConfig,
-  readConfig as pmReadConfig
+  readConfig as pmReadConfig,
+  mergeConfig as pmMergeConfig
 } from "./provider-manager.js";
 
 const ALLOWED_ORIGINS = [
@@ -226,13 +227,22 @@ export default {
         }, 200, req);
       }
       if (req.method === "PUT") {
-        let body;
-        try {
-          body = await req.json();
-        } catch (e) {
-          return json({ error: "Cuerpo JSON inválido" }, 400, req);
+        /* N-10: un PUT ya no reemplaza la config de KV. Por defecto FUSIONA:
+           el cuerpo describe qué cambiar y el resto sobrevive. El reinicio a
+           valores de fábrica es una acción explícita (?reset=true) y acotada,
+           porque sanitizeConfig({}) vacía los escalares de propósito. */
+        const esReset = new URL(req.url).searchParams.get("reset") === "true";
+        let body = null;
+        if (!esReset) {
+          try {
+            body = await req.json();
+          } catch (e) {
+            return json({ error: "Cuerpo JSON inválido" }, 400, req);
+          }
         }
-        const cfg = sanitizeConfig(body);
+        const prev = esReset ? {} : await getConfig(env);
+        const resultado = pmMergeConfig(prev, esReset ? sanitizeConfig({}) : body);
+        const cfg = resultado.merged;
         await env.CONFIG.put(CONFIG_KEY, JSON.stringify(cfg));
         return json({ ok: true, config: redactConfig(cfg), configVersion: CONFIG_VERSION }, 200, req);
       }

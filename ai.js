@@ -584,8 +584,9 @@ function setFlagPanel(panelId,corta,larga){
 function adminGetToken(){try{return sessionStorage.getItem(STORE_PFX+"bats-admin-token")}catch(e){return null}}
 function adminSetToken(t){try{sessionStorage.setItem(STORE_PFX+"bats-admin-token",t)}catch(e){}}
 function adminClearToken(){try{sessionStorage.removeItem(STORE_PFX+"bats-admin-token")}catch(e){}}
-function adminFetch(method,token,cfg){
+function adminFetch(method,token,cfg,opts){
   var url=getWorkerURL()+"/api/config";
+  if(opts&&opts.reset) url+="?reset=true";
   var headers={"Content-Type":"application/json","X-Admin-Token":token};
   var http=(window.BATS&&BATS.http)?BATS.http:null;
   var p;
@@ -615,4 +616,4 @@ function adminFetch(method,token,cfg){
   });
 }
 function adminGetConfig(token){return adminFetch("GET",token)}
-function adminSaveConfig(token,cfg){return adminFetch("PUT",token,cfg)}
+function adminSaveConfig(token,cfg,opts){return adminFetch("PUT",token,cfg,opts)}
