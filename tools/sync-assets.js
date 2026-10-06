@@ -140,10 +140,38 @@ function diff(dest, files) {
   return out;
 }
 
+/**
+ * Ficheros presentes en un destino que NO están declarados en el payload.
+ *
+ * `diff()` solo recorre el payload declarado, así que cualquier fichero suelto
+ * en `www/` o en los assets del APK pasaba inadvertido y entraba igualmente en
+ * el paquete distribuido. Eso es lo que había de verdad: `package.json` (con una
+ * versión desfasada) y `vitest.config.js` viajando dentro del APK.
+ *
+ * El destino de Android admite además los dos ficheros que genera Capacitor: no
+ * vienen de este repositorio y no deben declararse como payload.
+ */
+const EXTRAS = {
+  www: [],
+  android: ["cordova.js", "cordova_plugins.js"]
+};
+
+function extras(dest, files, permitidos) {
+  const declarados = new Set(files);
+  const ok = new Set(permitidos || []);
+  if (!fs.existsSync(dest)) return [];
+  return walk(dest, "", [])
+    .filter((rel) => !declarados.has(rel) && !ok.has(rel))
+    .sort();
+}
+
 function main() {
   const check = process.argv.includes("--check");
   const files = payload();
-  const targets = [["www/", WWW], ["android/app/src/main/assets/public/", ANDROID]];
+  const targets = [
+    ["www/", WWW, EXTRAS.www],
+    ["android/app/src/main/assets/public/", ANDROID, EXTRAS.android]
+  ];
 
   if (!check) {
     for (const [, dest] of targets) {
@@ -155,25 +183,40 @@ function main() {
   }
 
   let bad = 0;
-  for (const [label, dest] of targets) {
+  for (const [label, dest, permitidos] of targets) {
     if (!fs.existsSync(dest)) {
       console.error(`PARIDAD — ${label} no existe`);
       bad++;
       continue;
     }
     const d = diff(dest, files);
-    const total = d.missing.length + d.changed.length;
+    const ex = extras(dest, files, permitidos);
+    const total = d.missing.length + d.changed.length + ex.length;
     if (total) {
       console.error(`PARIDAD ROTA — ${label}`);
       for (const m of d.missing) console.error(`  ausente : ${m}`);
       for (const c of d.changed) console.error(`  distinto: ${c}`);
-      console.error(`  ejecuta: node tools/sync-assets.js`);
+      for (const e of ex) console.error(`  extra   : ${e}`);
+      console.error(`  ejecuta: node tools/sync-assets.js (o borra el fichero no declarado)`);
       bad++;
     } else {
-      console.log(`paridad OK — ${label} (${d.ok} ficheros idénticos)`);
+      console.log(`paridad OK — ${label} (${d.ok} ficheros idénticos, sin extras)`);
     }
   }
   return bad ? 1 : 0;
 }
 
-process.exit(main());
+if (require.main === module) process.exit(main());
+
+module.exports = {
+  payload,
+  diff,
+  walk,
+  hash,
+  extras,
+  EXTRAS,
+  PAYLOAD_FILES,
+  PAYLOAD_DIRS,
+  PAYLOAD_EXTRA,
+  main
+};
