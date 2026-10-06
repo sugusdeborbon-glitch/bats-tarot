@@ -25,3 +25,13 @@ bats-tarot.zip
 Private.txt.txt
 Datos_Subidas_WEB.txt
 arrancar gemini cli.txt
+
+# ── Comodín: fuente de los 3 PNG del payload ─────────────────────────────────
+# Los PNG que se distribuyen (comodin_*.png) ya están versionados en la raíz y
+# son los que copia tools/sync-assets.js. Esta carpeta es el original de
+# autoría (4,8 MB): el mismo contenido duplicado. No se versiona.
+Comodin/
+
+# Informes de validación locales (artefacto de auditoría, untracked a propósito).
+FASE_1D_INFORME_VALIDACION.md
+docs/
