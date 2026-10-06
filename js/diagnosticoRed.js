@@ -22,12 +22,6 @@
       headers: {}
     },
     {
-      name: "NVIDIA NIM",
-      url: "https://integrate.api.nvidia.com/v1/models",
-      method: "GET",
-      headers: {}
-    },
-    {
       name: "Mistral AI",
       url: "https://api.mistral.ai/v1/models",
       method: "GET",

@@ -37,12 +37,36 @@ const ROOT = path.resolve(__dirname, "..");
 const read = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
 const write = (p, s) => fs.writeFileSync(path.join(ROOT, p), s);
 
+/**
+ * Android exige un `versionCode` entero y monótono. Mapeo determinista desde la
+ * versión de producto: major*10000 + minor*100 + patch (1.11.1 -> 11101).
+ * minor y patch deben caber en dos dígitos; si no, el bump deja de ser
+ * representable y es mejor fallar aquí que publicar un código equivocado.
+ */
+function versionCode(v) {
+  const m = /^(\d+)\.(\d+)\.(\d+)$/.exec(v);
+  if (!m) throw new Error("version.json no usa MAJOR.MINOR.PATCH: " + v);
+  const major = Number(m[1]);
+  const minor = Number(m[2]);
+  const patch = Number(m[3]);
+  if (minor > 99 || patch > 99) throw new Error("minor y patch deben ser <= 99: " + v);
+  return major * 10000 + minor * 100 + patch;
+}
+
 const TARGETS = {
   "version.json": (v) => JSON.stringify({ version: v, date: jsonDate() }, null, 2) + "\n",
   "package.json": (v, src) => src.replace(/("version":\s*")[^"]*(")/, `$1${v}$2`),
   "js/state.js": (v, src) => src.replace(/version:\s*"[^"]*"/, `version: "${v}"`),
   "index.html": (v, src) => src.replace(/\?v=[0-9]+\.[0-9]+\.[0-9]+/g, `?v=${v}`),
   "service-worker.js": (v, src) => src.replace(/var CACHE = "[^"]*";/, `var CACHE = "bats-${v}";`)
+  ,
+  // El APK es un entregable aparte: su versionCode llevaba desde el principio
+  // en 1 y ninguna comprobación lo miraba.
+  "android/app/build.gradle": (v, src) =>
+    src
+      .replace(/versionCode\s+\d+/, "versionCode " + versionCode(v))
+      .replace(/versionName\s+"[^"]*"/, 'versionName "' + v + '"')
+
 };
 
 function jsonDate() {
@@ -70,8 +94,16 @@ function main() {
   const check = process.argv.includes("--check");
   const version = currentVersion();
   const drifted = [];
+  const ausentes = [];
 
   for (const [file, apply] of Object.entries(TARGETS)) {
+    // Los derivados que no existen en este árbol se omiten con aviso: `android/`
+    // está en .gitignore, de modo que un clon limpio no lo trae y un ENOENT sin
+    // contexto no le dice a nadie qué hacer. Si el fichero existe, se comprueba.
+    if (!fs.existsSync(path.join(ROOT, file))) {
+      ausentes.push(file);
+      continue;
+    }
     const src = read(file);
     const next = apply(version, src);
     if (norm(next) !== norm(src)) drifted.push(file);
@@ -80,17 +112,21 @@ function main() {
 
   if (!check) {
     console.log(`bats ${version} — ${drifted.length ? "sincronizado: " + drifted.join(", ") : "ya estaba sincronizado"}`);
-    console.log(`  version.json, package.json, js/state.js, index.html, service-worker.js`);
+    console.log(`  ${Object.keys(TARGETS).join(", ")}`);
+    if (ausentes.length) console.log("  omitidos (no existen en este árbol): " + ausentes.join(", "));
     return 0;
   }
 
   if (drifted.length) {
     console.error("DESFASE DE VERSIÓN — ejecuta `node tools/version.js`:");
     for (const f of drifted) console.error("  - " + f);
-    process.exit(1);
+    return 1;
   }
-  console.log(`bats ${version} — versión coherente en los ${Object.keys(TARGETS).length} puntos.`);
+    if (ausentes.length) console.log("  omitidos (no existen en este árbol): " + ausentes.join(", "));
+  console.log(`bats ${version} — versión coherente en los ${Object.keys(TARGETS).length - ausentes.length} puntos.`);
   return 0;
 }
 
-process.exit(main());
+if (require.main === module) process.exit(main());
+
+module.exports = { TARGETS, versionCode, currentVersion, main };

@@ -28,7 +28,10 @@ describe("Ollama — UI visibility", () => {
   });
 
   it("other providers are NOT disabled", () => {
-    const providers = ["openai", "nvidia", "groq", "openrouter", "mistral"];
+    // nvidia salio de la lista: ya no existe en el catalogo del Worker
+    // (f70cdf7) y la UI la ofrecia como opcion muerta. Ver medida 2 del
+    // encargo post-auditoria.
+    const providers = ["openai", "groq", "openrouter", "mistral"];
     for (const p of providers) {
       const re = new RegExp('<option[^>]*value="' + p + '"[^>]*>', "i");
       const match = indexHtml.match(re);

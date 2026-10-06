@@ -35,7 +35,7 @@ function adminEntrar(token){
   adminGetConfig(token).then(function(data){
     adminSetToken(token);
     _adminState.config=data.config||{};
-    _adminState.defaults=data.defaults||["groq","sambanova","google","openrouter","nvidia"];
+    _adminState.defaults=data.defaults||["groq","google","openrouter","mistral"];
     _adminState.available=data.available||[];
     _adminState.systemDefaults=data.systemDefaults||{};
     _adminState.aiFlags=data.aiFlags||{useCorta:true,useLarga:true};

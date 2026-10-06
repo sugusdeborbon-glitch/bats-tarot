@@ -7,7 +7,7 @@
   "use strict";
 
   var state = {
-    version: "1.11.0",
+    version: "1.11.1",
 
     // Draw state (set on each tirada)
     ult: null,              // current draw's card array
