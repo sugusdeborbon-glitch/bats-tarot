@@ -195,6 +195,16 @@ function renderInterpLarga(dest,cartas,ctx){
     var btns=document.createElement("div");btns.className="ai-interp-btns";
     var rb=document.createElement("button");rb.className="btn btn-outline btn-sm";rb.textContent="Reintentar";rb.onclick=(function(dd){return function(){reintentarInterp(dd)}})(dest);
     btns.appendChild(rb);body.appendChild(btns);
+    /* El fallo de IA no impide escuchar la tirada: la barra de voz lee los
+       textos de las cartas (vozTextoDe(cartas,ctx)), no la interpretación
+       generada, así que también se ofrece en el panel de error. */
+    if(typeof vozSoporte==="function"&&vozSoporte()){
+      var vd=String(dest).replace(/"/g,"");
+      body.appendChild(vozBarDOM(vd));
+      VOZ.textos[vd]=vozTextoDe(cartas,ctx);
+      vozPoblarSelect(body.querySelector(".voz-select"));
+      vozActualizarBarras();
+    }
   }
   function mostrarOK(t){
     limpiar();
