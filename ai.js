@@ -13,7 +13,7 @@ var AI_WORKER_TOKEN="cc983d628f91dd472207d8b210489722e6d6";
 
 var AI_PROVIDERS=[
   {id:"openai",nombre:"OpenAI",base:"https://api.openai.com/v1",modelo:"gpt-4o-mini"},
-  {id:"groq",nombre:"Groq",base:"https://api.groq.com/openai/v1",modelo:"llama-3.3-70b-versatile"},
+  {id:"groq",nombre:"Groq",base:"https://api.groq.com/openai/v1",modelo:"openai/gpt-oss-120b"},
   {id:"openrouter",nombre:"OpenRouter",base:"https://openrouter.ai/api/v1",modelo:"deepseek/deepseek-chat"},
   {id:"mistral",nombre:"Mistral",base:"https://api.mistral.ai/v1",modelo:"mistral-small-latest"},
   {id:"ollama",nombre:"Ollama (local)",base:"http://localhost:11434/v1",modelo:"llama3"}

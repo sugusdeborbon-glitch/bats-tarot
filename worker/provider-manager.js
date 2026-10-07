@@ -41,7 +41,7 @@ export const CATALOG = [
     id: "groq",
     name: "Groq",
     url: "https://api.groq.com/openai/v1/chat/completions",
-    model: "llama-3.3-70b-versatile",
+    model: "openai/gpt-oss-120b",
     keyEnv: "GROQ_API_KEY"
   },
   {

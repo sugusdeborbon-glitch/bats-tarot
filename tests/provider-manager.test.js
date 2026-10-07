@@ -72,7 +72,11 @@ describe("C-1 — configuración actual de PRO preservada", () => {
     const groq = CATALOG.find(function (p) { return p.id === "groq"; });
     expect(groq.keyEnv).toBe("GROQ_API_KEY");
     expect(groq.url).toBe("https://api.groq.com/openai/v1/chat/completions");
-    expect(groq.model).toBe("llama-3.3-70b-versatile");
+    /* N-14: llama-3.3-70b-versatile fue retirado de los tiers Free/Developer
+       de Groq el 16-ago-2026 (solo Enterprise). El modelo vigente es
+       openai/gpt-oss-120b; el test lo fija para que un retroceso futuro
+       vuelva a romper aquí. */
+    expect(groq.model).toBe("openai/gpt-oss-120b");
     const google = CATALOG.find(function (p) { return p.id === "google"; });
     expect(google.googleThinking).toBe("low");
   });
