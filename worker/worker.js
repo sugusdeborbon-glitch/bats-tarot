@@ -357,6 +357,13 @@ export default {
 
     if (typeof body.provider === "string" && body.provider) {
       providers = providers.filter(function(p){ return p.name === body.provider; });
+      /* N-16: el filtro puede dejar la lista vacía. Sin esta rama, el bucle
+         no ejecuta ningún intento y se respondía "Error desconocido del
+         proveedor" (502), que culpaba al proveedor en vez de anunciar que
+         ese proveedor no existe aquí. */
+      if (!providers.length) {
+        return json({ error: "Proveedor no disponible en el servidor: " + body.provider }, 400, req);
+      }
     }
 
     const payload = {
@@ -392,9 +399,12 @@ export default {
       errors.push(provider.name + ": " + res.err + " [" + (res.category || "unknown") + "]");
     }
     if (last) {
-      const status = last.status && last.status >= 400 ? last.status : 502;
+      /* N-17: el status agregado NO es el del último proveedor. Devolver
+         (404) cuando TODOS fallaron diagnostica mal: el fallo es del
+         conjunto, no de un código concreto. El detalle de cada proveedor ya
+         viaja en `errors` con su status y su categoría. */
       const summary = "Todos los proveedores fallaron (" + providers.length + "): " + errors.join(" | ");
-      return json({ error: summary }, status, req);
+      return json({ error: summary }, 502, req);
     }
     return json({ error: "Error desconocido del proveedor" }, 502, req);
   }
@@ -442,7 +452,9 @@ async function llamarEndpointPropio(base, model, messages, cfg, key, timeoutMs) 
   }
 }
 
-async function llamarProveedor(provider, messages, payload, timeoutMs) {
+/* Exportado para tests: el comportamiento de este adaptador es el que
+   diagnostica los incidentes (N-13), así que se prueba REAL, no replicado. */
+export async function llamarProveedor(provider, messages, payload, timeoutMs) {
   const ctrl = new AbortController();
   /* H-04: el timeout llega hasta la llamada real, desde el presupuesto
      compartido. Nunca se usa un fijo que ignore el presupuesto recibido. */
@@ -476,14 +488,42 @@ async function llamarProveedor(provider, messages, payload, timeoutMs) {
       body: JSON.stringify(bodyObj),
       signal: ctrl.signal
     });
-    let data;
+    /* N-13: el cuerpo se lee COMO TEXTO antes de parsear. Antes, `.json()`
+       consumía el stream y, si fallaba, se devolvía un error sin cuerpo ni
+       Content-Type: la evidencia del incidente quedaba destruida. Además,
+       un corte del presupuesto compartido (AbortError) se categorizaba como
+       parse_error con status 200, ocultando que fue un timeout real. */
+    let rawBody;
     try {
-      data = await upstream.json();
-    } catch (parseErr) {
+      rawBody = await upstream.text();
+    } catch (readErr) {
+      if (readErr && readErr.name === "AbortError") {
+        return {
+          ok: false,
+          status: 504,
+          err: provider.name + " (" + upstream.status + "): cuerpo interrumpido por el presupuesto de tiempo (" + Math.round(budget / 1000) + "s)",
+          category: "timeout_budget"
+        };
+      }
       return {
         ok: false,
         status: upstream.status,
-        err: provider.name + " (" + upstream.status + "): respuesta no JSON del upstream",
+        err: provider.name + " (" + upstream.status + "): no se pudo leer el cuerpo del upstream — " + (readErr && readErr.message || "desconocido"),
+        category: "parse_error"
+      };
+    }
+    let data;
+    try {
+      data = rawBody ? JSON.parse(rawBody) : {};
+    } catch (parseErr) {
+      const ctype = (upstream.headers && typeof upstream.headers.get === "function")
+        ? (upstream.headers.get("content-type") || "sin content-type")
+        : "sin content-type";
+      const muestra = String(rawBody).replace(/\s+/g, " ").trim().slice(0, 300);
+      return {
+        ok: false,
+        status: upstream.status,
+        err: provider.name + " (" + upstream.status + "): respuesta no JSON del upstream [" + ctype + "] " + (muestra || "(cuerpo vacío)"),
         category: "parse_error"
       };
     }
