@@ -42,6 +42,8 @@ Tiradas: Cruz Diaria, Relación, BATS Laboral, Personalizada, El Aprendizaje, El
 - GitHub: sugusdeborbon-glitch/bats-tarot
 - URL: https://sugusdeborbon-glitch.github.io/bats-tarot/
 - Rama principal: master
+- **CRÍTICO: GitHub Pages deploya desde la rama `dev`, NO `master`**
+  - Siempre hacer `git checkout dev; git merge master --no-edit; git push origin dev` después de push a master
 - Último tag: v1.0.0
 
 ## Comandos útiles
@@ -52,12 +54,28 @@ cd android && ./gradlew.bat assembleDebug
 # Sincronizar web → Android
 npx cap sync
 
-# Desplegar cambios
-git add -A && git commit -m "mensaje" && git push
+# Desplegar Worker PRO (SOLO desde este repositorio PRO)
+cd worker && npx wrangler deploy
+
+# Desplegar frontend (DEBE sincronizar dev para GitHub Pages)
+# NUNCA `git add -A`: mete _backups/ (274 MB), ficheros personales y
+# artefactos locales en el historial, y de ahi no se quitan.
+# Añadir SIEMPRE fichero por fichero, revisando `git status` antes.
+npm run verify                    # version:check + parity:check + vitest
+git add <fichero1> <fichero2>     # explicitos, nunca -A
+git commit -m "mensaje" && git push origin master
+git checkout dev && git merge master --no-edit && git push origin dev
+git checkout master
 
 # Versionar
 git tag -a v1.x.x -m "mensaje" && git push origin v1.x.x
 ```
+
+## SEGURIDAD — DEPLOY
+- **NUNCA ejecutar `wrangler deploy` desde el repositorio DEV (`bats-tarot-dev`)**
+- Este repositorio despliega SOLO a `bats-tarot-ai` (Worker PRO)
+- El repositorio DEV despliega SOLO a `bats-tarot-ai-dev` (Worker DEV)
+- Si hay dudas, preguntar a Gus antes de deployar
 
 ## Próximas mejoras pendientes
 - [ ] Implementar Content Security Policy (CSP) en index.html
