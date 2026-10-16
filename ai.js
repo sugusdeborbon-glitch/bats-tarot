@@ -593,9 +593,20 @@ function adminFetch(method,token,cfg,opts){
   if(http){
     if(method==="GET"){
       p=http.get(url,{headers:headers,timeoutMs:15000});
-    } else {
+    } else if(method==="PUT" && typeof http.put==="function"){
+      /* El Worker de /api/config solo acepta GET y PUT: enviar POST devolvia
+         405 "Método no permitido" y hacia imposible guardar la configuracion.
+         Si `put` no existiera (clienteHttp.js antiguo en cache), se cae a la
+         rama `fetch` de abajo en lugar de degradar a POST. */
+      p=http.put(url,cfg||{},{headers:headers,timeoutMs:15000});
+    } else if(method!=="PUT"){
       p=http.post(url,cfg||{},{headers:headers,timeoutMs:15000});
+    } else {
+      p=null;
     }
+  }
+  if(p){
+    /* continua con la normalizacion de respuesta */
   } else {
     p=fetch(url,{
       method:method,

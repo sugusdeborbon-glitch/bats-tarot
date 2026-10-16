@@ -13,28 +13,48 @@
 
   /**
    * httpPost(url, body, opts) → Promise<{status, headers, data, ok}>
-   * opts: {headers, timeoutMs, responseType}
+   * opts: {headers, timeoutMs, responseType, method}
    * responseType: "json" (default) or "text"
+   * method: "POST" (default) or "PUT"
+   *
+   * El método es un parámetro, no un literal fijo. Se añadió por el bug del
+   * panel de administración: el Worker de /api/config solo acepta GET y PUT, y
+   * `adminFetch` acababa enviando POST para todo lo que no fuera GET, lo que
+   * producía 405 "Método no permitido" y hacía que guardar fuera imposible.
    */
   function httpPost(url, body, opts) {
     opts = opts || {};
     var headers = opts.headers || {};
     var timeoutMs = opts.timeoutMs || 60000;
     var responseType = opts.responseType || "json";
+    var method = opts.method || "POST";
 
     if (_isNative) {
-      return _nativePost(url, body, headers, timeoutMs, responseType);
+      return _nativePost(url, body, headers, timeoutMs, responseType, method);
     }
-    return _fetchPost(url, body, headers, timeoutMs, responseType);
+    return _fetchPost(url, body, headers, timeoutMs, responseType, method);
   }
 
-  function _nativePost(url, body, headers, timeoutMs, responseType) {
+  /**
+   * httpPut(url, body, opts) — como httpPost pero con el método PUT.
+   * @param {string} url  destino.
+   * @param {*} body  cuerpo de la petición.
+   * @param {object} [opts]  {headers, timeoutMs, responseType}.
+   * @returns {Promise<object>} {status, headers, data, ok}.
+   */
+  function httpPut(url, body, opts) {
+    var o = opts || {};
+    o.method = "PUT";
+    return httpPost(url, body, o);
+  }
+
+  function _nativePost(url, body, headers, timeoutMs, responseType, method) {
     var ctrl = new AbortController();
     var timer = setTimeout(function () { ctrl.abort(); }, timeoutMs);
 
     return _httpPlugin.request({
       url: url,
-      method: "POST",
+      method: method,
       headers: headers,
       data: body,
       responseType: responseType === "json" ? "json" : "text"
@@ -60,7 +80,7 @@
     });
   }
 
-  function _fetchPost(url, body, headers, timeoutMs, responseType) {
+  function _fetchPost(url, body, headers, timeoutMs, responseType, method) {
     var ctrl = new AbortController();
     var timer = setTimeout(function () { ctrl.abort(); }, timeoutMs);
 
@@ -71,7 +91,7 @@
     }
 
     var fetchOpts = {
-      method: "POST",
+      method: method,
       headers: fetchHeaders,
       body: JSON.stringify(body),
       signal: ctrl.signal
@@ -157,6 +177,7 @@
   window.BATS = window.BATS || {};
   window.BATS.http = {
     post: httpPost,
+    put: httpPut,
     get: httpGet,
     isNative: isNative
   };
